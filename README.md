@@ -6,3 +6,5 @@ Members (alpha order): Hilary Dugan, Kait Farrell, Paul Hanson, Ian McCullough, 
 Who wants to see a moose?
 
 Derek wants a moose!
+
+What would you do with a moose at Lake Tahoe? 
