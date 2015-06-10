@@ -11,3 +11,5 @@ What would you do with a moose at Lake Tahoe?
 
 Are there moose in New Zealand?
 
+Funny you should ask... 
+http://en.wikipedia.org/wiki/Moose#New_Zealand
