@@ -13,3 +13,5 @@ Are there moose in New Zealand?
 
 Funny you should ask... 
 http://en.wikipedia.org/wiki/Moose#New_Zealand
+
+Oooh the illusive Fiordland moose! 
