@@ -8,3 +8,5 @@ Who wants to see a moose?
 Derek wants a moose!
 
 What would you do with a moose at Lake Tahoe? 
+
+Are there moose in New Zealand? 
