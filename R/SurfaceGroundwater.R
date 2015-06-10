@@ -187,7 +187,7 @@ xyplot(POC~DOC, group=lakeid, data=lake_chem_9193, Xlim=c(-4,10), ylim=c(-4,10),
 # Data file: Northern Wisconsin Temperate Lakes fluxes project, random lake survey (2004)
 # Citation: Hanson PC, Carpenter S, Cardille JA, Coe MT, Winslow LA.  2007.  Small lakes dominate a random sample of regional lake characteristics. Freshwater Biology. 52:814-22
 
-RLS_data = read.csv("randomWIlakes/randomWIlakes_DOC2.csv") # contains column for DOC
+RLS_data = read.csv("H:/Ian_GIS/gleon/SOS/Data/randomWIlakes_DOC.csv") # contains column for DOC
 
 # Merge DOC and wetland area data by lake code name
 DOCdata = merge(RLS_data, wetlands_area_df, by='WATERBODY_')
