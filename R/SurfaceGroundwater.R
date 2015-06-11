@@ -1,19 +1,28 @@
 ### Modeling DOC inputs to lakes from surface and groundwater flow ###
+### Sub-process leads: Ian McC, Kait F
 
+# Install (if necessary) & load all packages ####
+#install.packages('car')
+# install.packages('drc')
 #install.packages('fmsb')
+#install.packages('lattice')
 #install.packages('lmtest')
 #install.packages('raster')
-#install.packages('car')
+#install.packages('rgdal')
+library(car)
+library(drc)
 library(fmsb)
+library(lattice)
 library(lmtest)
 library(raster)
-library(car)
+library(rgdal)
 
-# Set working directory
-setwd("H:/Ian_GIS/gleon/surfaceflow")
+# Set working directory: Must change each time ####
+setwd('/Users/FarrellKJ/Desktop/R/SOS')
 
 # All spatial data in projected coordinate system NAD 1983 HARN Transverse Mercator
 
+### THIS SECTION NOT ATTACHED TO GITHUB: Testing wetland buffer approach ####
 # Import lakes shapefile
 #lakes = shapefile("WI_lakes/WI_NTL.shp") # NTL lakes
 lakes = shapefile("randomWIlakes/randomWIlakes.shp") # random lakes from Hanson 2004 study
@@ -111,9 +120,7 @@ dino_wetlands_area_df$Wetland_Lake_Ratio = dino_wetlands_area_df$Wetlands_sqm/we
 #lake_chem_9193$POC <- (lake_chem_9193$TOC - lake_chem_9193$DOC) 
 
 
-# Plot DOC over time from 1991-1993 in each lake ####
-library(lattice) # Package for xyplot
-
+# Plot DOC over time from 1991-1993 in each lake ###
 xyplot(DOC~sampledate, group=lakeid, data=lake_chem_9193, type=c('p','r'),
        lwd=3, pch=16, cex=.6, 
        col=rainbow(5),
@@ -152,7 +159,7 @@ xyplot(POC~DOC, group=lakeid, data=lake_chem_9193, Xlim=c(-4,10), ylim=c(-4,10),
                 points=list(pch="-", cex=5,
                             col=rainbow(5)),
                 columns=1, border=T, corner=c(.05,.98), 
-                title='Lake ID'))
+                title='Lake ID')))
 
 # Merge DOC and wetland area data by lake code name
 #DOCdata = merge(test_lakes_DOC_mean, wetlands_area_df, by='WATERBODY_')
@@ -183,11 +190,12 @@ xyplot(POC~DOC, group=lakeid, data=lake_chem_9193, Xlim=c(-4,10), ylim=c(-4,10),
 #label = bquote(italic(R)^2 == .(format(r2,digits=2)))
 #text(x=1.9,y=0.5, labels=label) # will need to adjust x and y based on data distribution
 
-## Northern Wisconsin 2004 Dataset ##
+### Northern Wisconsin 2004 Dataset ####
 # Data file: Northern Wisconsin Temperate Lakes fluxes project, random lake survey (2004)
 # Citation: Hanson PC, Carpenter S, Cardille JA, Coe MT, Winslow LA.  2007.  Small lakes dominate a random sample of regional lake characteristics. Freshwater Biology. 52:814-22
 
-RLS_data = read.csv("H:/Ian_GIS/gleon/SOS/Data/randomWIlakes_DOC.csv") # contains column for DOC
+RLS_data = read.csv('./data/randomWIlakes_DOC.csv', header=T) # contains column for DOC
+names(RLS_data)
 
 # Merge DOC and wetland area data by lake code name
 DOCdata = merge(RLS_data, wetlands_area_df, by='WATERBODY_')
@@ -230,8 +238,7 @@ plot(DOC ~ Secchi, DOCdata, pch=16)
 ## Non-linear model of DOC predicted by Secchi
 
 # with package drc
-#install.packages('drc')
-library(drc)
+
 # fixed vector: NA for unfixed, value is fixed at that value, names=names of fixed vector 
 drc = drm(DOC~Secchi, data=DOCdata, fct=EXD.3(fixed =c(NA,NA,NA),names=c("init", "plateau", "k")))       
 plot(drc,pch=16, main='#GroanZoan')
