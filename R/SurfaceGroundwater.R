@@ -22,7 +22,7 @@ setwd('/Users/FarrellKJ/Desktop/R/SOS')
 
 # All spatial data in projected coordinate system NAD 1983 HARN Transverse Mercator
 
-### THIS SECTION NOT ATTACHED TO GITHUB: Testing wetland buffer approach ####
+### DATA FOR THIS SECTION NOT ATTACHED TO GITHUB: Wetland buffer approach ####
 # Import lakes shapefile
 #lakes = shapefile("WI_lakes/WI_NTL.shp") # NTL lakes
 lakes = shapefile("randomWIlakes/randomWIlakes.shp") # random lakes from Hanson 2004 study
@@ -198,8 +198,10 @@ RLS_data = read.csv('./data/randomWIlakes_DOC.csv', header=T) # contains column 
 names(RLS_data)
 
 # Merge DOC and wetland area data by lake code name
-DOCdata = merge(RLS_data, wetlands_area_df, by='WATERBODY_')
-#DOCdata$logDOC = log(DOCdata$DOC) log-transforming seems to be done in linear modeling, but not non-linear?
+#DOCdata = merge(RLS_data, wetlands_area_df, by='WATERBODY_')
+
+#Create "DOCdata" file == RLS_data if not using GIS data portion of code
+DOCdata <- RLS_data
 
 # Correlation matrix for all variables in dataset
 cor(x=DOCdata[-1],y=NULL, use="na.or.complete") #[-1] omits objectid column
@@ -222,7 +224,7 @@ predvsobs = data.frame(WBIC=DOCdata$WATERBODY_) # create new data frame of predi
 predvsobs$obs = DOCdata$DOC # $DOC is a placeholder for column name of DOC in DOCdata
 predvsobs$pred = predicted
 
-plot(obs~pred, predvsobs, xlab='Observed DOC UNIT', ylab='Modeled DOC unit', pch=16, 
+plot(obs~pred, data=predvsobs, xlab='Observed DOC UNIT', ylab='Modeled DOC unit', pch=16, 
      main='DOC, Northern Wisconsin 2004 Lake Dataset')
 #abline(0,1) # add 1:1 fit line
 
@@ -235,8 +237,16 @@ text(x=-5,y=27, labels=label) # will need to adjust x and y based on data distri
 # Basic plot of DOC ~ Secchi relationship
 plot(DOC ~ Secchi, DOCdata, pch=16)
 
-## Non-linear model of DOC predicted by Secchi
+# LM  & plot of logDOC ~ logSecchi
+logDOCSecchi <- lm(log(DOC)~log(Secchi), data=DOCdata)
+plot(log(DOC)~log(Secchi), data=DOCdata, pch=16, main='log-log DOC ~ Secchi')
+abline(logDOCSecchi, col='red', lwd='2')
+r.sq <- summary(logDOCSecchi)$r.squared
+label = bquote(italic(R)^2 == .(format(r.sq,digits=3)))
+text(x=0,y=0.5, labels=label)
+text(x=0, y=0.3, 'P = <2e-16')
 
+## Non-linear model of DOC predicted by Secchi
 # with package drc
 
 # fixed vector: NA for unfixed, value is fixed at that value, names=names of fixed vector 
@@ -251,7 +261,7 @@ TSS = sum((DOCdata$DOC - mean(DOCdata$DOC))^2)
 a = round((1-RSS/TSS),2) # R squared
 print(a)
 label = bquote(italic(R)^2 == .(format(a,digits=2)))
-text(x=7, y=28, labels=label)
+text(x=6, y=28, labels=label)
 
 # modeled vs observed plot
 modeled = predict(drc)
@@ -259,8 +269,10 @@ modvsobs = data.frame(WBIC=DOCdata$WATERBODY_) # create new data frame of predic
 modvsobs$obs = DOCdata$DOC # $DOC is a placeholder for column name of DOC in DOCdata
 modvsobs$mod = modeled
 
-plot(obs~mod, modvsobs, xlab='Observed DOC UNIT', ylab='Modeled DOC unit', pch=16, 
-     main='DOC, Northern Wisconsin 2004 Lake Dataset')
+plot(obs~mod, data=modvsobs, xlab='Observed DOC UNIT', 
+     ylab='Modeled DOC unit', pch=16, 
+     main='DOC, Northern Wisconsin 2004 Lake Dataset',
+     xlim=c(0,30), ylim=c(0,30))
 abline(0,1) # add 1:1 fit line
 
 # with nls function THIS IS NOT COMPLETE; NEED TIPS ON NEG EXPONENTIAL CURVE FITTING
