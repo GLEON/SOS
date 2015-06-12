@@ -8,13 +8,16 @@
 #install.packages('lattice')
 #install.packages('lmtest')
 #install.packages('raster')
+#install.packages('relaimpo')
 #install.packages('rgdal')
 library(car)
 library(drc)
 library(fmsb)
 library(lattice)
 library(lmtest)
+library(MASS)
 library(raster)
+library(relaimpo)
 library(rgdal)
 
 # Set working directory: Must change each time ####
@@ -156,15 +159,15 @@ xyplot(POC~DOC, group=lakeid, data=lake_chem_9193, Xlim=c(-4,10), ylim=c(-4,10),
          panel.abline(0,  1, lwd=2)
        },
        key=list(text=list(c("AL", "BM","CB","CR", "SP", "TB", "TR"), cex=1,
-                points=list(pch="-", cex=5,
-                            col=rainbow(5)),
-                columns=1, border=T, corner=c(.05,.98), 
-                title='Lake ID')))
+                          points=list(pch="-", cex=5,
+                                      col=rainbow(5)),
+                          columns=1, border=T, corner=c(.05,.98), 
+                          title='Lake ID')))
 
 # Merge DOC and wetland area data by lake code name
 #DOCdata = merge(test_lakes_DOC_mean, wetlands_area_df, by='WATERBODY_')
 #DOCdata$DOC = DOCdata$test_lakes_DOC_mean 
-       
+
 #DOClm = lm(DOC ~ Wetland_Lake_Ratio, DOCdata)
 #summary(DOClm)
 #VIF(DOClm) # Variance Inflation Factors (multicollinearity check)
@@ -204,7 +207,8 @@ names(RLS_data)
 DOCdata <- RLS_data
 
 # Correlation matrix for all variables in dataset
-cor(x=DOCdata[-1],y=NULL, use="na.or.complete") #[-1] omits objectid column
+cor.matrix <- cor(x=DOCdata[-1],y=NULL, use="na.or.complete") #[-1] omits objectid column
+print(cor.matrix)
 
 # Linear regression between lake DOC and wetlands within buffered distance (m)
 DOClm = lm(DOC ~ Secchi, DOCdata)
@@ -245,6 +249,7 @@ r.sq <- summary(logDOCSecchi)$r.squared
 label = bquote(italic(R)^2 == .(format(r.sq,digits=3)))
 text(x=0,y=0.5, labels=label)
 text(x=0, y=0.3, 'P = <2e-16')
+# outlier points are row 39 (object ID 5703) & row 61 (object ID 6992)
 
 ## Non-linear model of DOC predicted by Secchi
 # with package drc
@@ -278,3 +283,19 @@ abline(0,1) # add 1:1 fit line
 # with nls function THIS IS NOT COMPLETE; NEED TIPS ON NEG EXPONENTIAL CURVE FITTING
 #nls = nls(DOC~I(Secchi^power), data=DOCdata, start=list(power=2), trace=T)
 #summary(nls)
+
+### Test multiple regression of predictors from DOCdata to predict DOC
+# Stepwise Regression
+fit <- lm(DOC~SHAPE_Leng+SHAPE_Area+Depth+Wshed_area+Wshed_perim+Secchi,
+          data=DOCdata) #Includes Secchi --> most important predictor
+step <- stepAIC(fit, direction="both")
+step$anova # display results
+
+# Calculate Relative Importance for Each Predictor
+calc.relimp(fit,type=c("lmg","last","first","pratt"), rela=TRUE)
+
+# Bootstrap Measures of Relative Importance (1000 samples) 
+boot <- boot.relimp(fit, b = 1000, type = c("lmg", "last", "first", "pratt"), 
+                    rank = TRUE, diff = TRUE, rela = TRUE)
+booteval.relimp(boot) # print result
+plot(booteval.relimp(boot,sort=TRUE)) # plot result
