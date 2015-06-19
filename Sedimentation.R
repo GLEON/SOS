@@ -1,5 +1,5 @@
 #POC Sedimentation Sub-Routine for SOS Carbon Flux Code
-#Last Update: 5/13/2015, DR
+#Last Update: 5/28/2015, DR
 
 #Inputs from main program
 lakeDepth <- 25 #m
@@ -21,10 +21,12 @@ TimeStepConversion <- 1/TimeStep #days/days
 rho_POC <- 1050   #kg/m^3, this value is roughly estimated ##FIND IT!
 rho_H2O <- 999.9720 #kg/m^3, 
 
+DOC_avg <- 0.01   #g/L or kg/m3 Average DOC value in lake to initialize estimate of average POC
+
 #Burial rate algorithms
-  POC_conc_avg <- 0.001  #Average POC concentration (g/L) ##HOW DO WE DETERMINE THIS PRE-MODEL-RUN?##
-  MAR_sed_avg <- 50 #Mass accumulation rate of sediment (g sed/m^2/yr) ##REQUIRES DATA##
-  Sed_oc_avg <-  50 #Percent of sediment estimated to be OC (%) ##REQUIRES DATA##
+  POC_conc_avg <- 0.1*DOC_avg  #Average POC concentration in water column (g/L or kg/m3) ##HOW DO WE DETERMINE THIS PRE-MODEL-RUN?##
+  MAR_sed_avg <- 1000 #Mass accumulation rate of sediment (g sed/m^2/yr) ##REQUIRES DATA##
+  Sed_oc_avg <-  4.5 #Percent of sediment estimated to be OC (%) ##REQUIRES DATA##
   
   #Initialize POC concentration as baseline average
   POC_conc[StartDay] <- POC_conc_avg
@@ -37,9 +39,13 @@ rho_H2O <- 999.9720 #kg/m^3,
   
   
   #Allochthonous POC inputs
-  LeafParameter <-  0.3 #g/m/d   #Need more research for dynamic input
-  LeafLitter[i] <- (lakePerim/lakeArea)*LeafParameter[i] #g/m^2/d
-  POC_in_alloch[i] <- LeafLitter[i]*lakeArea #+ other potential inputs #g/d
+  LeafParameter <-  0.01 #g/m of shoreline/d   #Need more research for dynamic input
+  LeafLitter[i] <- lakePerim*LeafParameter[i] #g/d
+
+  DOC_SW-GW[i] <-     #g/d Input from SW/GW subroutine.
+  POC_SW-GW[i] <- DOC_SW-GW[i]*0.1  #g/d POC roughly estimated as 0.1*DOC.
+
+  POC_in_alloch[i] <- LeafLitter[i] + POC_SW-GW[i]  #g/d Total allochthonous inputs from the air and SW and GW.
   
   #Autochthonous POC inputs
   NPP[i] <-  #g/d Input from GPP subroutine
@@ -51,10 +57,10 @@ rho_H2O <- 999.9720 #kg/m^3,
   POC_in[i] <- POC_in_alloch[i] + POC_in_autoch[i] #g/d
    
   ##OUTPUTS############################
-  POC_burial[i] <- MAR_oc[i]*(365/1)*lakeArea #g/d Timestep with conversion from years to timestep units - days)
+  POC_burial[i] <- MAR_oc[i]*(1/365)*lakeArea #g/d; Timestep with conversion from years to timestep units - days)
   POC_grazed_DIC[i] <- POC_conc[i]*0.105*lakeVol/TimeStepConversion #g (Consumption, respiration, etc. See Connolly and COffin 1995)
-  #Updated POC concentration in water column
-  POC_conc[i+1] <-  POC_conc[i] - (POC_grazed_DIC[i])/lakeVol + (POC_in[i] - POC_burial[i])*TimeStep/(lakeVol/1000)  #g/L
+  #Updated POC concentration in water column. Assume 0.105 consumed per day (thus TimeStepConversion)
+  POC_conc[i+1] <-  POC_conc[i] - (POC_grazed_DIC[i])/(lakeVol*1000) + (POC_in[i] - POC_burial[i])*TimeStep/(lakeVol*1000)  #g/L
 
 
 
