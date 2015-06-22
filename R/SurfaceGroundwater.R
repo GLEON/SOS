@@ -210,7 +210,7 @@ DOCdata <- RLS_data
 cor.matrix <- cor(x=DOCdata[-1],y=NULL, use="na.or.complete") #[-1] omits objectid column
 print(cor.matrix)
 
-# Linear regression between lake DOC and wetlands within buffered distance (m)
+# Linear regression between lake DOC and wetlands within buffered distance (m) ####
 DOClm = lm(DOC ~ Secchi, DOCdata)
 summary(DOClm)
 VIF(DOClm) # Variance Inflation Factors (multicollinearity check)
@@ -238,12 +238,16 @@ r2= sumlm$r.squared
 label = bquote(italic(R)^2 == .(format(r2,digits=2)))
 text(x=-5,y=27, labels=label) # will need to adjust x and y based on data distribution
 
-# Basic plot of DOC ~ Secchi relationship
+# Basic plot of DOC ~ Secchi relationship ####
 plot(DOC ~ Secchi, DOCdata, pch=16)
 
-# LM  & plot of logDOC ~ logSecchi
+# Linear Model  & plot of logDOC ~ logSecchi
 logDOCSecchi <- lm(log(DOC)~log(Secchi), data=DOCdata)
-plot(log(DOC)~log(Secchi), data=DOCdata, pch=16, main='log-log DOC ~ Secchi')
+intercept <- summary(logDOCSecchi)$coefficients[1]
+slope <- summary(logDOCSecchi)$coefficients[2]
+
+plot(log(DOC)~log(Secchi), data=DOCdata, pch=16, main='log-log DOC ~ Secchi',
+     xlab='log Secchi Depth (m)', ylab='log DOC (mg/L)')
 abline(logDOCSecchi, col='red', lwd='2')
 r.sq <- summary(logDOCSecchi)$r.squared
 label = bquote(italic(R)^2 == .(format(r.sq,digits=3)))
@@ -251,7 +255,22 @@ text(x=0,y=0.5, labels=label)
 text(x=0, y=0.3, 'P = <2e-16')
 # outlier points are row 39 (object ID 5703) & row 61 (object ID 6992)
 
-## Non-linear model of DOC predicted by Secchi
+### Calculate DOC (g/m3) from Secchi depth ####
+log_DOC_est <- (intercept + (slope*log(DOCdata$Secchi)))
+# gives logDOC for each Secchi depth; need to transform units of DOC
+
+DOC_est <- exp(log_DOC_est)
+
+# Plot estimate of DOC from log-log regression (black) vs data (blue)
+plot(DOC_est~DOCdata$Secchi, pch=16)
+points(DOC ~ Secchi, DOCdata, pch=16, col='blue')
+
+# Transform DOC (mg/L) to g/m3 (based on lake volume)
+DOCdata$DOC_vol_est <- DOC_est * (DOCdata$SHAPE_Area * DOCdata$Depth)
+# NOTE: In this dataset, 'Depth' is not lake mean depth, so volume calculated
+# not actual volume
+
+## Non-linear model of DOC predicted by Secchi ####
 # with package drc
 
 # fixed vector: NA for unfixed, value is fixed at that value, names=names of fixed vector 
@@ -284,7 +303,7 @@ abline(0,1) # add 1:1 fit line
 #nls = nls(DOC~I(Secchi^power), data=DOCdata, start=list(power=2), trace=T)
 #summary(nls)
 
-### Test multiple regression of predictors from DOCdata to predict DOC
+### Test multiple regression of predictors from DOCdata to predict DOC ####
 # Stepwise Regression
 fit <- lm(DOC~SHAPE_Leng+SHAPE_Area+Depth+Wshed_area+Wshed_perim+Secchi,
           data=DOCdata) #Includes Secchi --> most important predictor
