@@ -21,38 +21,38 @@ library(relaimpo)
 library(rgdal)
 
 # Set working directory: Must change each time ####
-setwd('/Users/FarrellKJ/Desktop/R/SOS')
+setwd('H:/Ian_GIS/gleon/SOS')
 
 # All spatial data in projected coordinate system NAD 1983 HARN Transverse Mercator
 
 ### DATA FOR THIS SECTION NOT ATTACHED TO GITHUB: Wetland buffer approach ####
 # Import lakes shapefile
 #lakes = shapefile("WI_lakes/WI_NTL.shp") # NTL lakes
-lakes = shapefile("randomWIlakes/randomWIlakes.shp") # random lakes from Hanson 2004 study
-Wisconsin = shapefile('H:/Ian_GIS/gleon/WI_state_outline/WI_state_outline.shp')
-plot(Wisconsin)
-plot(lakes, col='dodgerblue', add=T)
+#lakes = shapefile("randomWIlakes/randomWIlakes.shp") # random lakes from Hanson 2004 study
+#Wisconsin = shapefile('H:/Ian_GIS/gleon/WI_state_outline/WI_state_outline.shp')
+#plot(Wisconsin)
+#plot(lakes, col='dodgerblue', add=T)
 
 # Buffer lakes
-bufferwidth = 750 # meter (meter=linear unit of lake shapefile)
-lakebuffer = buffer(lakes, width=bufferwidth, dissolve=F)
+#bufferwidth = 750 # meter (meter=linear unit of lake shapefile)
+#lakebuffer = buffer(lakes, width=bufferwidth, dissolve=F)
 
 # Import wetland shapefile
-wetlands_shp = shapefile("WI_shapefile_wetlands/WI_Wetlands_NTL_HARN_Clip.shp")#NTL area
-wetlands_shp = shapefile("WI_shapefile_wetlands/WI_Wetlands_Hanson_HARN_Clip.shp")#Hanson 2004 study area
+#wetlands_shp = shapefile("WI_shapefile_wetlands/WI_Wetlands_NTL_HARN_Clip.shp")#NTL area
+#wetlands_shp = shapefile("WI_shapefile_wetlands/WI_Wetlands_Hanson_HARN_Clip.shp")#Hanson 2004 study area
 #wetlands from: http://dnr.wi.gov/maps/gis/datalandcover.html
 
 ## Make wetlands shapefile into raster ##
-cell_size = 100 # 30 m is common spatial resolution of land cover datasets 
+#cell_size = 100 # 30 m is common spatial resolution of land cover datasets 
 
 # Create blank raster based on extent of wetland shapefile
-wetlands_raster = raster(wetlands_shp, resolution=c(cell_size,cell_size), vals=1)
+#wetlands_raster = raster(wetlands_shp, resolution=c(cell_size,cell_size), vals=1)
 
 # Use shapefile as mask to get wetlands raster (areas in blank raster that actually have wetlands)
-wetlands_raster = mask(wetlands_raster, wetlands_shp, inverse=F)
+#wetlands_raster = mask(wetlands_raster, wetlands_shp, inverse=F)
 
 # Extract wetlands in buffered area around lakes
-buffer_wetlands = mask(wetlands_raster,lakebuffer, inverse=F)
+#buffer_wetlands = mask(wetlands_raster,lakebuffer, inverse=F)
 
 # Map of Northern Highland lakes
 #plot(buffer_wetlands, col='lightblue', main='Northern Highland Lakes', legend=F, xlim=c(540000,550000), ylim=c(610000,625000)) # adjust xlim, ylim based on extent of specific analysis
@@ -65,34 +65,34 @@ buffer_wetlands = mask(wetlands_raster,lakebuffer, inverse=F)
 #plot(lakes, col='dodgerblue', add=T)
 
 # Map of Hanson 2004 northern WI lakes
-plot(buffer_wetlands, col='lightblue', main='Hanson 2004 Northern WI Lakes', legend=F, xlim=c(480000,610000), ylim=c(560000,650000)) # adjust xlim, ylim based on extent of specific analysis
-plot(lakebuffer, add=T)
-plot(lakes, col='dodgerblue', add=T)
+#plot(buffer_wetlands, col='lightblue', main='Hanson 2004 Northern WI Lakes', legend=F, xlim=c(480000,610000), ylim=c(560000,650000)) # adjust xlim, ylim based on extent of specific analysis
+#plot(lakebuffer, add=T)
+#plot(lakes, col='dodgerblue', add=T)
 
 # Calculate wetland area within lake bufferwidth by counting # of cells and compile in data frame
-wetlands_cells = extract(buffer_wetlands, lakebuffer, fun=sum, na.rm=T)
-wetlands_sqm = wetlands_cells * cell_size^2 # multiply # of cells by cell area to get wetlands area
-wetlands_area_df = data.frame(WATERBODY_=lakes$WATERBODY_, Wetlands_sqm = wetlands_sqm, LakeArea_sqm = lakes$SHAPE_Area)
-wetlands_area_df$Wetland_Lake_Ratio = wetlands_area_df$Wetlands_sqm/wetlands_area_df$LakeArea_sqm # ratio of wetland area in buffer to lake area
+#wetlands_cells = extract(buffer_wetlands, lakebuffer, fun=sum, na.rm=T)
+#wetlands_sqm = wetlands_cells * cell_size^2 # multiply # of cells by cell area to get wetlands area
+#wetlands_area_df = data.frame(WATERBODY_=lakes$WATERBODY_, Wetlands_sqm = wetlands_sqm, LakeArea_sqm = lakes$SHAPE_Area)
+#wetlands_area_df$Wetland_Lake_Ratio = wetlands_area_df$Wetlands_sqm/wetlands_area_df$LakeArea_sqm # ratio of wetland area in buffer to lake area
 
 ## Optionally, create dynamic lake buffer width weighted by lake area ##
-area = lakes$SHAPE_Area
-lakeid = lakes$Lake
-dino_width = area / bufferwidth
+#area = lakes$SHAPE_Area
+#lakeid = lakes$Lake
+#dino_width = area / bufferwidth
 #dino_width = data.frame(dino_width = dino_width, Lake=lakeid)
 
 # apply weighted lake buffer
-dino_buffers = buffer(lakes, width=dino_width, dissolve=F)
-dino_buffers$dino_width = dino_width
+#dino_buffers = buffer(lakes, width=dino_width, dissolve=F)
+#dino_buffers$dino_width = dino_width
 
 # Extract wetlands in buffered areas around lakes using weighted buffer width
-dino_wetlands = mask(wetlands_raster, dino_buffers, inverse=F)
+#dino_wetlands = mask(wetlands_raster, dino_buffers, inverse=F)
 
 # Calculate wetland area within dino bufferwidth by counting # of cells and compile in data frame
-dino_wetlands_cells = extract(dino_wetlands, dino_buffers, fun=sum, na.rm=T)
-dino_wetlands_sqm = dino_wetlands_cells * cell_size^2 # multiply # of cells by cell area to get wetlands area
-dino_wetlands_area_df = data.frame(WATERBODY_=lakes$WATERBODY_, Wetlands_sqm = dino_wetlands_sqm, LakeArea_sqm = lakes$SHAPE_Area)
-dino_wetlands_area_df$Wetland_Lake_Ratio = dino_wetlands_area_df$Wetlands_sqm/wetlands_area_df$LakeArea_sqm # ratio of wetland area in buffer to lake area
+#dino_wetlands_cells = extract(dino_wetlands, dino_buffers, fun=sum, na.rm=T)
+#dino_wetlands_sqm = dino_wetlands_cells * cell_size^2 # multiply # of cells by cell area to get wetlands area
+#dino_wetlands_area_df = data.frame(WATERBODY_=lakes$WATERBODY_, Wetlands_sqm = dino_wetlands_sqm, LakeArea_sqm = lakes$SHAPE_Area)
+#dino_wetlands_area_df$Wetland_Lake_Ratio = dino_wetlands_area_df$Wetlands_sqm/wetlands_area_df$LakeArea_sqm # ratio of wetland area in buffer to lake area
 
 ### Examine relationship between lake DOC and wetlands within buffer distance of lake ###
 
@@ -200,7 +200,7 @@ xyplot(POC~DOC, group=lakeid, data=lake_chem_9193, Xlim=c(-4,10), ylim=c(-4,10),
 RLS_data = read.csv('./data/randomWIlakes_DOC.csv', header=T) # contains column for DOC
 names(RLS_data)
 
-# Merge DOC and wetland area data by lake code name
+# Merge DOC and wetland area data by lake code name (not using these data as of June 24,2015)
 #DOCdata = merge(RLS_data, wetlands_area_df, by='WATERBODY_')
 
 #Create "DOCdata" file == RLS_data if not using GIS data portion of code
@@ -208,51 +208,35 @@ DOCdata <- RLS_data
 
 # Correlation matrix for all variables in dataset
 cor.matrix <- cor(x=DOCdata[-1],y=NULL, use="na.or.complete") #[-1] omits objectid column
-print(cor.matrix)
-
-# Linear regression between lake DOC and wetlands within buffered distance (m) ####
-DOClm = lm(DOC ~ Secchi, DOCdata)
-summary(DOClm)
-VIF(DOClm) # Variance Inflation Factors (multicollinearity check)
-layout(matrix(c(1,2,3,4),2,2)) # view all 4 diagnostic plots at once
-plot(DOClm)
-shapiro.test(rstudent(DOClm)) # Shapriro-Wilks test for normality (of residuals)
-bptest(DOClm) # Breusch-Pagan test for heteroskedasticity (non-constant variance)
-outlierTest(DOClm)
-#DOCdata = DOCdata[-39,] # remove outlier row by row number
-
-# Plot observed vs. predicted DOC
-par(mfrow=c(1,1))
-predicted = predict(DOClm)
-predvsobs = data.frame(WBIC=DOCdata$WATERBODY_) # create new data frame of predicted vs. obs DOC
-predvsobs$obs = DOCdata$DOC # $DOC is a placeholder for column name of DOC in DOCdata
-predvsobs$pred = predicted
-
-plot(obs~pred, data=predvsobs, xlab='Observed DOC UNIT', ylab='Modeled DOC unit', pch=16, 
-     main='DOC, Northern Wisconsin 2004 Lake Dataset')
-#abline(0,1) # add 1:1 fit line
-
-# Add R squared to plot
-sumlm = summary(DOClm)
-r2= sumlm$r.squared
-label = bquote(italic(R)^2 == .(format(r2,digits=2)))
-text(x=-5,y=27, labels=label) # will need to adjust x and y based on data distribution
+cor.matrix
 
 # Basic plot of DOC ~ Secchi relationship ####
 plot(DOC ~ Secchi, DOCdata, pch=16)
 
-# Linear Model  & plot of logDOC ~ logSecchi
+## Linear Model of logDOC ~ logSecchi ##
 logDOCSecchi <- lm(log(DOC)~log(Secchi), data=DOCdata)
+summary(logDOCSecchi)
 intercept <- summary(logDOCSecchi)$coefficients[1]
 slope <- summary(logDOCSecchi)$coefficients[2]
 
+# Check regression assumptions and view diagnostic plots
+VIF(logDOCSecchi) # Variance Inflation Factors (multicollinearity check; won't be an issue with few predictors)
+layout(matrix(c(1,2,3,4),2,2)) # view all 4 diagnostic plots at once
+plot(logDOCSecchi)
+shapiro.test(rstudent(logDOCSecchi)) # Shapriro-Wilks test for normality (of residuals)
+bptest(logDOCSecchi) # Breusch-Pagan test for heteroskedasticity (non-constant variance)
+outlierTest(logDOCSecchi) # Bonferonni outlier test
+#DOCdata = DOCdata[-c(39,61),] # remove outlier row by row number
+
+# Plot linear model of logDOC ~ logSecchi
+par(mfrow=c(1,1))
 plot(log(DOC)~log(Secchi), data=DOCdata, pch=16, main='log-log DOC ~ Secchi',
      xlab='log Secchi Depth (m)', ylab='log DOC (mg/L)')
-abline(logDOCSecchi, col='red', lwd='2')
+abline(logDOCSecchi, col='red', lwd='2') #add regression line
 r.sq <- summary(logDOCSecchi)$r.squared
 label = bquote(italic(R)^2 == .(format(r.sq,digits=3)))
-text(x=0,y=0.5, labels=label)
-text(x=0, y=0.3, 'P = <2e-16')
+text(x=1.9,y=3.25, labels=label)
+text(x=1.9, y=3.1, 'P = <2e-16')
 # outlier points are row 39 (object ID 5703) & row 61 (object ID 6992)
 
 ### Calculate DOC (g/m3) from Secchi depth ####
@@ -262,46 +246,50 @@ log_DOC_est <- (intercept + (slope*log(DOCdata$Secchi)))
 DOC_est <- exp(log_DOC_est)
 
 # Plot estimate of DOC from log-log regression (black) vs data (blue)
-plot(DOC_est~DOCdata$Secchi, pch=16)
+plot(DOC_est~DOCdata$Secchi, pch=16, xlab='Secchi Depth (m)', 
+     ylab='DOC (g/m3)', main='Dissolved Organic Carbon (DOC), Northern Wisconsin Lakes')
 points(DOC ~ Secchi, DOCdata, pch=16, col='blue')
+legend('topright', legend=c('Observed', 'Modeled'), col=c('blue', 'black'), pch=16)
 
 # Transform DOC (mg/L) to g/m3 (based on lake volume)
 DOCdata$DOC_vol_est <- DOC_est * (DOCdata$SHAPE_Area * DOCdata$Depth)
 # NOTE: In this dataset, 'Depth' is not lake mean depth, so volume calculated
 # not actual volume
 
+# How off are we? Calculate mean absolute error (MAE)
+AE = abs(DOCdata$DOC_est - DOCdata$DOC) 
+MAE = round(mean(AE), digits=3)
+MAE #g/m3
+
+# Examine modeled vs. observed DOC
+DOCdata$DOC_est = DOC_est
+plot(DOC~DOC_est, DOCdata, pch=16, xlab='Observed DOC (g/m3)', ylab='Modeled DOC (g/m3)',
+     main='Dissolved Organic Carbon (DOC), Northern Wisconsin Lakes', xlim=c(0,25), ylim=c(0,25))
+abline(0,1) #1:1 fit line
+
+predobs = lm(DOC~DOC_est, DOCdata)
+r.sq <- summary(predobs)$r.squared
+label = bquote(italic(R)^2 == .(format(r.sq,digits=3)))
+MAElabel = bquote(italic(MAE) ==.(format(MAE,digits=3)))
+text(x=24,y=1.2, labels=label)
+text(x=24, y=0, labels=MAElabel)
+
 ## Non-linear model of DOC predicted by Secchi ####
-# with package drc
+# with package drc NOT BEING USED AS OF June 2015
 
 # fixed vector: NA for unfixed, value is fixed at that value, names=names of fixed vector 
-drc = drm(DOC~Secchi, data=DOCdata, fct=EXD.3(fixed =c(NA,NA,NA),names=c("init", "plateau", "k")))       
-plot(drc,pch=16, main='#GroanZoan')
-summary(drc)
-getInitial(drc) # print model starting parameters
+#drc = drm(DOC~Secchi, data=DOCdata, fct=EXD.3(fixed =c(NA,NA,NA),names=c("init", "plateau", "k")))       
+#plot(drc,pch=16, main='#GroanZoan')
+#summary(drc)
+#getInitial(drc) # print model starting parameters
 #identify(DOCdata$DOC, DOCdata$Secchi, labels=row.names(DOCdata), plot=T) DOES NOT WORK
 
-RSS = sum(residuals(drc)^2)
-TSS = sum((DOCdata$DOC - mean(DOCdata$DOC))^2)
-a = round((1-RSS/TSS),2) # R squared
-print(a)
-label = bquote(italic(R)^2 == .(format(a,digits=2)))
-text(x=6, y=28, labels=label)
-
-# modeled vs observed plot
-modeled = predict(drc)
-modvsobs = data.frame(WBIC=DOCdata$WATERBODY_) # create new data frame of predicted vs. obs DOC
-modvsobs$obs = DOCdata$DOC # $DOC is a placeholder for column name of DOC in DOCdata
-modvsobs$mod = modeled
-
-plot(obs~mod, data=modvsobs, xlab='Observed DOC UNIT', 
-     ylab='Modeled DOC unit', pch=16, 
-     main='DOC, Northern Wisconsin 2004 Lake Dataset',
-     xlim=c(0,30), ylim=c(0,30))
-abline(0,1) # add 1:1 fit line
-
-# with nls function THIS IS NOT COMPLETE; NEED TIPS ON NEG EXPONENTIAL CURVE FITTING
-#nls = nls(DOC~I(Secchi^power), data=DOCdata, start=list(power=2), trace=T)
-#summary(nls)
+#RSS = sum(residuals(drc)^2)
+#TSS = sum((DOCdata$DOC - mean(DOCdata$DOC))^2)
+#a = round((1-RSS/TSS),2) # R squared
+#print(a)
+#label = bquote(italic(R)^2 == .(format(a,digits=2)))
+#text(x=6, y=28, labels=label)
 
 ### Test multiple regression of predictors from DOCdata to predict DOC ####
 # Stepwise Regression
