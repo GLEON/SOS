@@ -1,7 +1,7 @@
 # Example code adapted from LakeMetabolizer
 # This code returns the gas exchange velocity for gas of interest
 # Uses both a packaged function and an internal function called 'k.cole'
-# This function must be first 'sourced' for the code to run. 
+# This function must be first 'sourced' for the code to run. (In this case, just run the function). 
 # If using RStudio, loaded Functions are listed in the global environment on the 
 # right side of the screen, at the bottom under all the Data and Values
 
