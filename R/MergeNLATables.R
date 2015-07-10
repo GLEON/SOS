@@ -1,13 +1,20 @@
 ## Merge statenames to NLA dataset and subset by state ##
 
 # Created Jul 8, 2015
-# Author: Ian McCullough, immccull@gmail.com
+# Author: Kait Farrel, Ian McCullough, immccull@gmail.com
+
+library(plyr)
+library(maptools)
+library(rgdal)
+library(dplyr)
+library(ggmap) #ggplot2 is dependency
+library(RColorBrewer)
 
 # Ian's working directory
-#setwd('H:/Ian_GIS/gleon/SOS/Data')
+setwd('H:/Ian_GIS/gleon/SOS/Data')
 
 # Kait's working directory
-setwd('/Users/FarrellKJ/Desktop/R/SOS/Data')
+#setwd('/Users/FarrellKJ/Desktop/R/SOS/Data')
 
 # Read in water quality data file ####
 wq = read.csv('NTL water chem.csv', header=T)
@@ -30,7 +37,6 @@ merger = merger[, -grep("STATE_NAME", colnames(merger[2:length(merger)]))] # del
 write.csv(merger, 'NTL_water_chem_allstates.csv')
 
 # Split data by state into new list 'by_state' ####
-library(plyr)
 splt.by <- c('STATE_NAME')
 by_state <- split(merger, merger[,splt.by] )
 
@@ -39,7 +45,7 @@ by_state <- split(merger, merger[,splt.by] )
 # p-value indicates whether slope is different from zero
 state_slopes <- ldply(by_state, function(by_state) {
   lm1 <-lm((log(DOC))~log(SECMEAN), data=by_state)
-  N    = (df.residual(lm1)+2) # Number of data points per state
+  N    = (df.residual(lm1)+2) # Number of data points per state (model degrees of freedom + 2 = n)
   r.sq <- summary(lm1)$r.squared # R-squared value for model fit
   slope <- (summary(lm1)$coefficients[2]) # Slope of log-log model
   int <- (summary(lm1)$coefficients[1]) # Intercept of log-log model
@@ -48,10 +54,34 @@ state_slopes <- ldply(by_state, function(by_state) {
   P <- ifelse(!ss, 1-pf(Fv[1],Fv[2],Fv[3]),NA) #Is slope sig. diff. from zero
   data.frame(N, slope, int, r.sq, P)
 })
-colnames(state_slopes) <- c('State', 'N', 'Slope', 'Intercept', 'R-Squared', 'P-Value')
+colnames(state_slopes) <- c('STATE_NAME', 'N', 'Slope', 'Intercept', 'RSquared', 'P-Value')
 
 write.csv(state_slopes, 'NTL_water_chem_model_slopes_allstates.csv')
 
+### Map strength of log-log DOC Secchi relationship across USA ###
+
+# Get state shapefile
+USA = readShapePoly('states_shapefile/states.shp') #from ESRI Online
+USA_DOC = merge(USA, state_slopes, by='STATE_NAME', all.x=F) #all.x=F returns only matching values in join
+
+## With help from: http://www.r-bloggers.com/basic-mapping-and-attribute-joins-in-r/ ##
+# accessed Jul 10, 2015
+
+# Basic map
+colors = brewer.pal(n=4, name='Blues')
+lcolors = cut(USA_DOC$RSquared, breaks=quantile(USA_DOC$RSquared), labels=colors)
+plot(USA_DOC, col=as.character(lcolors), main='R Squared by State')
+mtext('log-log Secchi-DOC Relationship', side=3)
+legend('bottomright', c('Q1, poor fit','Q2','Q3','Q4, best fit'), col=colors, lwd=c(4,4,4,4))
+
+# using ggmap
+USA_DOCF = fortify(USA_DOC, region='STATE_NAME')
+USA_DOCF = rename(USA_DOCF, STATE_NAME=id)
+USA_DOCF = left_join(USA_DOCF, USA_DOC@data)
+
+ggplot(USA_DOCF) + 
+  geom_polygon(aes(x=long, y=lat, group=group, fill=RSquared))
+                                    
 # Plot each state on its own panel ####
 library(lattice)
 xyplot(log(DOC)~log(SECMEAN)|STATE_NAME, group=STATE_NAME, data=merger,
@@ -59,34 +89,34 @@ xyplot(log(DOC)~log(SECMEAN)|STATE_NAME, group=STATE_NAME, data=merger,
        scales=list(alternating=1,tck=c(1,0), cex=1))
 
 ## Subset by state name and output state-specific CSV####
-Ohio = subset(merger, grepl("Ohio", merger$STATE_NAME), select=STATE_NAME:FID_1)
-write.csv(Ohio, "OhioNLA.csv")
+#Ohio = subset(merger, grepl("Ohio", merger$STATE_NAME), select=STATE_NAME:FID_1)
+#write.csv(Ohio, "OhioNLA.csv")
 
-Maine = subset(merger, grepl("Maine", merger$STATE_NAME), select=STATE_NAME:FID_1)
-write.csv(Maine, "MaineNLA.csv")
+#Maine = subset(merger, grepl("Maine", merger$STATE_NAME), select=STATE_NAME:FID_1)
+#write.csv(Maine, "MaineNLA.csv")
 
-Michigan = subset(merger, grepl("Michigan", merger$STATE_NAME), select=STATE_NAME:FID_1)
-write.csv(Michigan, "MichiganNLA.csv")
+#Michigan = subset(merger, grepl("Michigan", merger$STATE_NAME), select=STATE_NAME:FID_1)
+#write.csv(Michigan, "MichiganNLA.csv")
 
-Minnesota = subset(merger, grepl("Minnesota", merger$STATE_NAME), select=STATE_NAME:FID_1)
-write.csv(Minnesota, "MinnesotaNLA.csv")
+#Minnesota = subset(merger, grepl("Minnesota", merger$STATE_NAME), select=STATE_NAME:FID_1)
+#write.csv(Minnesota, "MinnesotaNLA.csv")
 
-NewHampshire = subset(merger, grepl("New Hampshire", merger$STATE_NAME), select=STATE_NAME:FID_1)
-write.csv(NewHampshire, "NewHampshireNLA.csv")
+#NewHampshire = subset(merger, grepl("New Hampshire", merger$STATE_NAME), select=STATE_NAME:FID_1)
+#write.csv(NewHampshire, "NewHampshireNLA.csv")
 
-Indiana = subset(merger, grepl("Indiana", merger$STATE_NAME), select=STATE_NAME:FID_1)
-write.csv(Indiana, "IndianaNLA.csv")
+#Indiana = subset(merger, grepl("Indiana", merger$STATE_NAME), select=STATE_NAME:FID_1)
+#write.csv(Indiana, "IndianaNLA.csv")
 
-NewYork = subset(merger, grepl("New York", merger$STATE_NAME), select=STATE_NAME:FID_1)
-write.csv(NewYork, "NewYorkNLA.csv")
+#NewYork = subset(merger, grepl("New York", merger$STATE_NAME), select=STATE_NAME:FID_1)
+#write.csv(NewYork, "NewYorkNLA.csv")
 
 ## All New England ##
-Maine = subset(merger, grepl("Maine", merger$STATE_NAME), select=STATE_NAME:FID_1)
-NewHampshire = subset(merger, grepl("New Hampshire", merger$STATE_NAME), select=STATE_NAME:FID_1)
-Connecticut = subset(merger, grepl("Connecticut", merger$STATE_NAME), select=STATE_NAME:FID_1)
-RhodeIsland = subset(merger, grepl("Rhode Island", merger$STATE_NAME), select=STATE_NAME:FID_1)
-Vermont = subset(merger, grepl("Vermont", merger$STATE_NAME), select=STATE_NAME:FID_1)
-Massachusetts = subset(merger, grepl("Massachusetts", merger$STATE_NAME), select=STATE_NAME:FID_1)
+#Maine = subset(merger, grepl("Maine", merger$STATE_NAME), select=STATE_NAME:FID_1)
+#NewHampshire = subset(merger, grepl("New Hampshire", merger$STATE_NAME), select=STATE_NAME:FID_1)
+#Connecticut = subset(merger, grepl("Connecticut", merger$STATE_NAME), select=STATE_NAME:FID_1)
+#RhodeIsland = subset(merger, grepl("Rhode Island", merger$STATE_NAME), select=STATE_NAME:FID_1)
+#Vermont = subset(merger, grepl("Vermont", merger$STATE_NAME), select=STATE_NAME:FID_1)
+#Massachusetts = subset(merger, grepl("Massachusetts", merger$STATE_NAME), select=STATE_NAME:FID_1)
 
-NewEngland = rbind(Maine, NewHampshire, Vermont, Massachusetts, RhodeIsland, Connecticut)
-write.csv(NewEngland, "NewEnglandNLA.csv")
+#NewEngland = rbind(Maine, NewHampshire, Vermont, Massachusetts, RhodeIsland, Connecticut)
+#write.csv(NewEngland, "NewEnglandNLA.csv")
