@@ -21,8 +21,8 @@ RLS_data = read.csv('./randomWIlakes_DOC.csv', header=T) # N. WI dataset from Su
 # Regress DOC vs Secchi to calculate dataframe-specific slope & intercept
 calc.doc.regress = function(df) {
   DOClm = lm(log(DOC)~log(Secchi), data=df, na.action=na.omit)
-  doc.slope <- summary(DOClm)$coefficients[1]
-  doc.intercept <- summary(DOClm)$coefficients[2]
+  doc.slope <- summary(DOClm)$coefficients[2]
+  doc.intercept <- summary(DOClm)$coefficients[1]
   DOC_regress_df = data.frame(Slope=doc.slope, Intercept=doc.intercept)
   return(DOC_regress_df)
 }
@@ -36,11 +36,13 @@ regress = calc.doc.regress(RLS_data)
 # Initial parameters 
 # Pulls from output calculated in calc.doc.regress above. If calc.doc.regress not used or yields NA value,
 # defaults to slope & intercept from N. Wisc. dataset
+default.slope <- -0.6468028 
+default.intercept <- 2.350748
 
 doc.slope <- ifelse(regress$Slope!='NA', regress$Slope,
-                    ifelse(2.350748))
+                    ifelse(default.slope))
 doc.intercept <- ifelse(regress$Intercept!='NA', regress$Intercept,
-                        ifelse(-0.6468028))
+                        ifelse(default.intercept))
 
 doc.lake = function(df) {
   logDOC = apply(df, 2, function(x) (doc.slope*df$Secchi)+doc.intercept)# in mg/L
