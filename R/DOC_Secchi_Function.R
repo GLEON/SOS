@@ -1,29 +1,59 @@
 ### Create R function to predict lake DOC from Secchi depth ###
 
 # Created: Jul 10, 2015
-# Author: Ian McCullough, immccull@gmail.com
+# Updated: Jul 14, 2015
+# Author: Ian McCullough (immccull@gmail.com) & Kait Farrell (farrellkj2@gmail.com)
 
-setwd("H:/Ian_GIS/gleon/SOS/data")
+# setwd("H:/Ian_GIS/gleon/SOS/data") # Ian's working directory
+setwd('/Users/FarrellKJ/Desktop/R/SOS/Data') # Kait's working directory
 
 # test data
-test_data = read.csv("DOCfunction_test_data.csv")
+test_data2 = read.csv('DOCfunction_test_data2.csv')
+RLS_data = read.csv('./randomWIlakes_DOC.csv', header=T) # N. WI dataset from SurfaceGroundwater_SecchiApproach file
 
-## Very simple function ##
+## SwGw DOC function in 2 parts ##
 
-# function doc.lake
+#Part 1: function calc.doc.regress
+#This function calculates slope and intercept of the linear model log(DOC)~log(Secchi depth).
+#User supplies data frame (eg, csv) of Secchi depth values (m) and in-lake DOC (mg/L).
+#Output is slope and intercept of log-log linear model that can be used to estimate DOC values for lakes where only Secchi is available
+
+# Regress DOC vs Secchi to calculate dataframe-specific slope & intercept
+calc.doc.regress = function(df) {
+  DOClm = lm(log(DOC)~log(Secchi), data=df, na.action=na.omit)
+  doc.slope <- summary(DOClm)$coefficients[1]
+  doc.intercept <- summary(DOClm)$coefficients[2]
+  DOC_regress_df = data.frame(Slope=doc.slope, Intercept=doc.intercept)
+  return(DOC_regress_df)
+}
+
+regress = calc.doc.regress(RLS_data)
+
+# Part 2: function doc.lake
+#This function uses pre-determined regression coefficient and intercept (calculated above or manually input)
+#User supplies data frame (eg, csv) of Secchi values from which to estimate DOC
+
+# Initial parameters 
+# Pulls from output calculated in calc.doc.regress above. If calc.doc.regress not used or yields NA value,
+# defaults to slope & intercept from N. Wisc. dataset
+
+doc.slope <- ifelse(regress$Slope!='NA', regress$Slope,
+                    ifelse(2.350748))
+doc.intercept <- ifelse(regress$Intercept!='NA', regress$Intercept,
+                        ifelse(-0.6468028))
+
 doc.lake = function(df) {
-  #This function uses pre-determined regression coefficient and intercept
-  #User supplies data frame (eg, csv) of Secchi values from which to predict DOC
-  #Initial paramters are based on Wisconsin model calibration only
-  #Possible issue: only works with csv of just Secchi, nothing else
-  DOC = apply(df, 2, function(x) 2.35075 + (-0.6468*df$Secchi))# in g/m3
-  DOCdf = data.frame(Secchi=df$Secchi, DOC=DOC)
-  colnames(DOCdf) = c('Secchi', 'DOC')
+  logDOC = apply(df, 2, function(x) (doc.slope*df$Secchi)+doc.intercept)# in mg/L
+  DOC.mgL = exp(logDOC)
+  DOC.gm3 = DOC.mgL * 0.001 * 0.001 # transform DOC into g/m3
+  DOCdf = data.frame(Lake=df$Lake, Secchi=df$Secchi, DOC=DOC.gm3)
+  colnames(DOCdf) = c('Lake ID', 'Secchi (m)', 'DOC (g/m3)')
   return(DOCdf)
 }
 
-doc = doc.lake(test_data)
+doc = doc.lake(test_data2)
 
+### Not sure we want/need to keep code below this line(?) ###
 ## Function with built-in regression ##
 
 # test data
