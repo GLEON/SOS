@@ -87,36 +87,3 @@ library(lattice)
 xyplot(log(DOC)~log(SECMEAN)|STATE_NAME, group=STATE_NAME, data=merger,
        type=c('r','p'), pch=15, lwd=2, layout=c(4,3,4),
        scales=list(alternating=1,tck=c(1,0), cex=1))
-
-## Subset by state name and output state-specific CSV####
-#Ohio = subset(merger, grepl("Ohio", merger$STATE_NAME), select=STATE_NAME:FID_1)
-#write.csv(Ohio, "OhioNLA.csv")
-
-#Maine = subset(merger, grepl("Maine", merger$STATE_NAME), select=STATE_NAME:FID_1)
-#write.csv(Maine, "MaineNLA.csv")
-
-#Michigan = subset(merger, grepl("Michigan", merger$STATE_NAME), select=STATE_NAME:FID_1)
-#write.csv(Michigan, "MichiganNLA.csv")
-
-#Minnesota = subset(merger, grepl("Minnesota", merger$STATE_NAME), select=STATE_NAME:FID_1)
-#write.csv(Minnesota, "MinnesotaNLA.csv")
-
-#NewHampshire = subset(merger, grepl("New Hampshire", merger$STATE_NAME), select=STATE_NAME:FID_1)
-#write.csv(NewHampshire, "NewHampshireNLA.csv")
-
-#Indiana = subset(merger, grepl("Indiana", merger$STATE_NAME), select=STATE_NAME:FID_1)
-#write.csv(Indiana, "IndianaNLA.csv")
-
-#NewYork = subset(merger, grepl("New York", merger$STATE_NAME), select=STATE_NAME:FID_1)
-#write.csv(NewYork, "NewYorkNLA.csv")
-
-## All New England ##
-#Maine = subset(merger, grepl("Maine", merger$STATE_NAME), select=STATE_NAME:FID_1)
-#NewHampshire = subset(merger, grepl("New Hampshire", merger$STATE_NAME), select=STATE_NAME:FID_1)
-#Connecticut = subset(merger, grepl("Connecticut", merger$STATE_NAME), select=STATE_NAME:FID_1)
-#RhodeIsland = subset(merger, grepl("Rhode Island", merger$STATE_NAME), select=STATE_NAME:FID_1)
-#Vermont = subset(merger, grepl("Vermont", merger$STATE_NAME), select=STATE_NAME:FID_1)
-#Massachusetts = subset(merger, grepl("Massachusetts", merger$STATE_NAME), select=STATE_NAME:FID_1)
-
-#NewEngland = rbind(Maine, NewHampshire, Vermont, Massachusetts, RhodeIsland, Connecticut)
-#write.csv(NewEngland, "NewEnglandNLA.csv")
