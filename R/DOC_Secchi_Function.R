@@ -59,16 +59,16 @@ doc = doc.lake(test_data2)
 ## Function with built-in regression ##
 
 # test data
-test_data2 = read.csv('DOCfunction_test_data2.csv')
+#test_data2 = read.csv('DOCfunction_test_data2.csv')
 
 #function doc.lake.regress
-doc.lake.regress = function(df) {
-  #This function takes data frame of DOC and Secchi 
+#doc.lake.regress = function(df) {
+#  #This function takes data frame of DOC and Secchi 
   #Performs regression to predict DOC of lakes with unknown DOC
-  DOClm = lm(log(DOC)~log(Secchi), data=df)
-  unknownDOC = predict(DOClm)
-  unknownDOC_df = data.frame(DOC=unknownDOC)
-  return(unknownDOC_df)
-}
+#  DOClm = lm(log(DOC)~log(Secchi), data=df)
+#  unknownDOC = predict(DOClm)
+#  unknownDOC_df = data.frame(DOC=unknownDOC)
+#  return(unknownDOC_df)
+#}
 
-doc2 = doc.lake.regress(test_data2)
+#doc2 = doc.lake.regress(test_data2)
