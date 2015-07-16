@@ -102,5 +102,10 @@ O2 = (PAR*GPP_react_par) - R + (kO2 (DO-DOsat)/Z) #mg / L / day
 
 ###### Carbon Mass Flux Equations#############
 OC_GPP = GPP * lakeVol # g/day double check unit coversion from model above
+<<<<<<< HEAD:NPP.R
 OC_NPP = O2 * lakeVol #g/day
   
+=======
+OC_NPP = O2 * stoichometric conversion factor #g/day
+  
+>>>>>>> dde1e903699565297afb8bae2c1bcc8d15269df5:R/NPP.R
