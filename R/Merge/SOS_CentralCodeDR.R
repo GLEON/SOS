@@ -35,15 +35,20 @@ NEP.data$datetime<-as.POSIXct(NEP.data$datetime,tz="GMT")
 
 ##### Sub-Topic Inputs: sw/GW ##############
 Q_in <- 5 #m3/s: total inflow (Sw + Gw) Will be changed to dynamic input
-Q_out <- 5
-AOC_year <-
-PC <- 
-Woc_year <-
-PW <-
-DOC_GW <-
-DOC_SW <-
-prop_GW <-
-rainfall <- 2 #mm/d: precipitation input from meteorological timeseries(?)
+Q_out <- 5 #m3/s: total outflow. Assume steady state pending dynamic output
+
+PC <- 0.7 #unitless: proportion of lake shore with canopy
+PW <- 0.2 #unitless: proportion of lake shore with wetlands
+
+AOC_year <- 1 #g/m/yr: aerial loading factor
+Woc_year <- 1 #g/m/yr: adjacent wetland loading factor
+
+prop_GW <- .3 # Unitless: proportion of Q_in that is from groundwater
+DOC_GW <- 10 # g/m3: DOC concentration in groundwater. 2-40 g/m3 per Hanson et al 2014
+DOC_SW <- 1 # g/m3: DOC concentration in surface water
+DOC_Precip <- 2 #g/m3: DOC concentration in precipitation
+
+Rainfall <- 2 #mm/d: precipitation input from meteorological timeseries(?)
 ############################################
 
 ##### Declare Output Data Storage ##########
