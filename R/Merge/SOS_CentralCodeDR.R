@@ -3,22 +3,28 @@
 library(LakeMetabolizer)
 ############################################
 
+##### READ MAIN INPUT FILE #################
+InputData <- read.csv("ExampleInput.csv",header=T)
+InputData$datetime<-as.POSIXct(InputData$datetime,tz="GMT")
+############################################
+
 ##### General Lake Inputs ##################
-lakeDepth <- 25 #m
+#lakeDepth <- In Input file
 lakePerim <- 1000 #m
-lakeArea <- 62500 #m^2
-lakeVol <- lakeDepth*lakeArea #m^3
-resTime <-  3 #days
+#lakeArea <- 62500 #m^2 In Input file
+#lakeVol <- lakeDepth*lakeArea #m^3 In Input file
+#resTime <-  3 #days Not needed
 g <- 9.81 #m/s^2
 rho_H2O <- 999.9720 #kg/m^3
+Days2Seconds <- 1*24*60*60 #s/d
 DOC_conc_init <- 10  #g/m3
 ############################################
 
 ###### Run Period and Time Step Inputs #####
-TimeStep <- 1 #days
-StartDay <- 1  #Julian day
-EndDay <- 10 #Julian day
-steps <- (EndDay-StartDay+1)/TimeStep
+TimeStep <- InputData$Datenum[2]-InputData$Datenum[1] #days
+StartDay <- InputData$Datenum[1]  #Julian day
+EndDay <- InputData$Datenum[length(InputData)] #Julian day
+steps <- length(InputData)
 ############################################
 
 
@@ -29,13 +35,13 @@ Sed_oc_avg <-  4.5 #Percent of sediment estimated to be OC (%) ##REQUIRES DATA##
 ############################################
 
 ##### Sub-Topic Inputs: GPP/NPP ############
-NEP.data<-read.csv("NPP_Test_Data",header=T) 
-NEP.data$datetime<-as.POSIXct(NEP.data$datetime,tz="GMT")
+#NEP.data<-read.csv("NPP_Test_Data.csv",header=T) #Included in general InputData file
+#NEP.data$datetime<-as.POSIXct(NEP.data$datetime,tz="GMT")
 ############################################
 
 ##### Sub-Topic Inputs: sw/GW ##############
-Q_in <- 5 #m3/s: total inflow (Sw + Gw) Will be changed to dynamic input
-Q_out <- 5 #m3/s: total outflow. Assume steady state pending dynamic output
+#Q_in <- 5 #m3/s: total inflow (Sw + Gw) Will be changed to dynamic input
+#Q_out <- 5 #m3/s: total outflow. Assume steady state pending dynamic output
 
 PC <- 0.7 #unitless: proportion of lake shore with canopy
 PW <- 0.2 #unitless: proportion of lake shore with wetlands
@@ -88,7 +94,7 @@ DOC_conc[1,1] <- DOC_conc_init #Initialize DOC concentration g/m3
 ##### GPP/NPP Sub Function #################
 #Run lake metabolizer code for GPP/NPP contribution to OC using GLM data. This function runs outside of the the primary
 #program loop because it does not require feedback from other OC flux sub-functions.
-NEP <- metab(NEP.data,"ols",wtr.name="wtr",irr.name="irr",do.obs.name="do.obs") #Calculate metabolism for sample data with simple OLS model; 4 other model options: bayesian, bookkeep, kalman, mle
+NEP <- metab(InputData,"ols",wtr.name="wtr",irr.name="irr",do.obs.name="do.obs") #Calculate metabolism for sample data with simple OLS model; 4 other model options: bayesian, bookkeep, kalman, mle
 #Calculate mass outputs and populate new columns
 ### unit housekeeping ###
 #OC_GPP = O2 (mg/L/day) * (1L/0.001 m3) * (1g/1000mg) * mlVol (m3)
@@ -98,7 +104,13 @@ NEP$OC_R   <- NEP$R * lakeVOl #g/day
 NEP$OC_NEP <- NEP$NEP * lakeVOl #g/day
 
 
-for (i in 1:(EndDay-StartDay)){
+for (i in 1:(steps-1)){
+  
+  lakeDepth <- InputData$LakeLevel[i] #m
+  lakeArea <- InputData$SurfaceArea[i] #m^2
+  lakeVol <- InputData$Volume[i] #m^3
+  Q_in <- InputData$TotInflowVol[i]/(TimeStep*Days2Seconds) #m3/s: 
+  Q_out <- InputData$TotOutflowVol[i]/(TimeStep*Days2Seconds) #m3/s: total outflow. Assume steady state pending dynamic output
   
   #Call SWGW
   SWGWoutput <- SWGWFunction(Q_in,rainfall,Aoc_year, PC, lakePerim, Woc_year, PW, DOC_GW, prop_GW, 
@@ -112,7 +124,7 @@ for (i in 1:(EndDay-StartDay)){
   #Call Sed Function
   SedOutput <- SedimentationFunction(TimeStepConversion,lAkePerim,lakeArea,lakeVol,DOC_avg,MAR_sed_avg,Sed_oc_avg,POC_conc[i,1])
   SedData[i,1:11] = SedOutput
-  POC_sed_out[i,1] <- (SedData$POC_grazed_DIC[i])/(lakeVol) + (SedData$POC_in[i] - SedData$POC_burial[i])*TimeStep/(lakeVol)  #g/m^3
+  POC_sed_out[i,1] <- SedData$POC_grazed_DIC[i] + SedData$POC_in[i] - SedData$POC_burial[i]*TimeStep  #g
   
   #Calc outflow subtractions (assuming outflow concentrations = mixed lake concentrations)
   POC_outflow[i,1] <- POC_conc[i,1]*Q_out*60*60*24*TimeStep #g
@@ -120,10 +132,11 @@ for (i in 1:(EndDay-StartDay)){
   
   
   #Update POC and DOC concentration values for whole lake
-  POC_conc[i+1,1] <-  POC_conc[i,1] + NEP$OC_NEP[i]/lakeVol + POC_SWGW_in/lakeVol - POC_outflow[i,1]/lakeVol - POC_sed_out[i,1] #g/m3
-  DOC_conc[i+1,1] <-  DOC_conc[i,1] + DOC_SWGW_in/lakeVol - DOC_outflow[i,1]/lakeVol #g/m3
+  POC_conc[i+1,1] <-  POC_conc[i,1] + (NEP$OC_NEP[i] + POC_SWGW_in - POC_outflow[i,1] - POC_sed_out[i,1])/lakeVol #g/m3
+  DOC_conc[i+1,1] <-  DOC_conc[i,1] + (DOC_SWGW_in - DOC_outflow[i,1])lakeVol #g/m3
   
 }
+
 #######################################################################################
 #######################################################################################
 
