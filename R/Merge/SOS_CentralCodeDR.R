@@ -24,7 +24,7 @@ DOC_conc_init <- 10  #g/m3
 TimeStep <- InputData$Datenum[2]-InputData$Datenum[1] #days
 StartDay <- InputData$Datenum[1]  #Julian day
 EndDay <- InputData$Datenum[length(InputData)] #Julian day
-steps <- length(InputData)
+steps <- length(InputData$Datenum)
 ############################################
 
 
