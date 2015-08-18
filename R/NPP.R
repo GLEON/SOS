@@ -28,6 +28,7 @@ WT <- 20 # degrees C : averaged over photic zone depth
 CHL <- 0.01 #chlorophyll-a concentration (g/L)
 DO <- 0.0085 #g/L dissolved oxygen concentration
 DOsat <- 100 #% temperature corrected oxygen saturation
+wnd <- #wind speed (m/s)
 
 
 #Constants
@@ -81,13 +82,18 @@ R<- 0.01 #Respiration coefficient. Literature value. Need to update.
 GPP = PAR * (PAR*GPP_react_par) # Linear relationship between PSN, light
 #OR could model as non-linear saturation function accounting for max psn & 
 # light limitation
+#These units need attention.
 
 FluxAtm = kO2 (DO - DOsat)/Zeu #allows for dynamic euphotic zone depth
 
 #Full NPP Model
 
 O2 = (PAR*GPP_react_par) - R + (kO2 (DO-DOsat)/Z) #mg / L / day
-#Insert stoichometric conversion to C
+# fixed C:O2 is 1:1 because CO2+H2O -> (CH2O) + O2 
+
+#So, unit housekeeping:
+#OC_NPP = O2 (mg/L/day) * (1L/0.001 m3) * (1g/1000mg) * lakeVol (m3)
+      # = C g/day
 
 
 
@@ -96,5 +102,10 @@ O2 = (PAR*GPP_react_par) - R + (kO2 (DO-DOsat)/Z) #mg / L / day
 
 ###### Carbon Mass Flux Equations#############
 OC_GPP = GPP * lakeVol # g/day double check unit coversion from model above
+<<<<<<< HEAD:NPP.R
+OC_NPP = O2 * lakeVol #g/day
+  
+=======
 OC_NPP = O2 * stoichometric conversion factor #g/day
   
+>>>>>>> dde1e903699565297afb8bae2c1bcc8d15269df5:R/NPP.R
