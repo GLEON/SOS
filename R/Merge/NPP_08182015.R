@@ -1,5 +1,5 @@
 
-NPP<-function(CHL,P,WT=20)
+NPP<-function(CHL,P,WT)
 {
   
   #coefficients to predict chla from TP
@@ -26,13 +26,13 @@ NPP<-function(CHL,P,WT=20)
     
   }
   NPP<-b0+b1*log10(CHL)+b2*WT
-  
+  return(NPP)
 }
 
-P <- rnorm(10,80,2) #ug/L phosphorus concentration 
-WT <- rnorm(10,30,1) # degrees C : averaged over photic zone depth 
-CHL <- rnorm(10,100,0.3) #chlorophyll-a concentration (ug/L)
+#P <- rnorm(10,80,2) #ug/L phosphorus concentration 
+#WT <- rnorm(10,30,1) # degrees C : averaged over photic zone depth 
+#CHL <- rnorm(10,100,0.3) #chlorophyll-a concentration (ug/L)
 
 
-x<-NPP(CHL,P,WT) #mgC/ m-2/ day-1
-x
+#x<-NPP(CHL,P,WT) #mgC/ m-2/ day-1
+

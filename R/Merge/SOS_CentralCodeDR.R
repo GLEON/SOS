@@ -1,11 +1,28 @@
 
 ##### LOAD PACKAGES ########################
 library(LakeMetabolizer)
+library(signal)
+library(zoo)
+############################################
+
+##### LOAD FUNCTIONS ########################
+source("SedimentationFunctionDR.R")
+source("SwGwComplexFunctionDR.R")
+source("NPP_08182015.R")
 ############################################
 
 ##### READ MAIN INPUT FILE #################
-InputData <- read.csv("ExampleInput.csv",header=T)
-InputData$datetime<-as.POSIXct(InputData$datetime,tz="GMT")
+RawData <- read.csv("TestData1.csv",header=T)
+RawData$datetime <- as.POSIXct(strptime(RawData$datetime,"%m/%d/%Y %H:%M"))
+
+ts_new <- data.frame(datetime = seq(RawData$datetime[1],RawData$datetime[nrow(RawData)],by="day"))
+
+InputData <- merge(RawData,ts_new,all=T)
+InputData <- as.data.frame(InputData)
+
+for (col in 2:ncol(InputData)){
+  InputData[,col] <- na.approx(InputData[,col])
+}
 ############################################
 
 ##### General Lake Inputs ##################
@@ -20,14 +37,9 @@ Days2Seconds <- 1*24*60*60 #s/d
 DOC_conc_init <- 10  #g/m3
 ############################################
 
-###### Run Period and Time Step Inputs #####
-TimeStep <- InputData$Datenum[2]-InputData$Datenum[1] #days
-StartDay <- InputData$Datenum[1]  #Julian day
-
-EndDay <- InputData$Datenum[nrow(InputData)] #Julian day
+###### Run Period and Time Step Setup #####
+TimeStep <- as.numeric(InputData$datetime[2]-InputData$datetime[1]) #days
 steps <- nrow(InputData)
-EndDay <- InputData$Datenum[length(InputData)] #Julian day
-steps <- length(InputData$Datenum)
 ############################################
 
 
@@ -38,8 +50,7 @@ Sed_oc_avg <-  4.5 #Percent of sediment estimated to be OC (%) ##REQUIRES DATA##
 ############################################
 
 ##### Sub-Topic Inputs: GPP/NPP ############
-NEP.data<-read.csv("NPP_Test_Data.csv",header=T) #Included in general InputData file
-NEP.data$datetime<-as.POSIXct(NEP.data$datetime,tz="GMT")
+
 ############################################
 
 ##### Sub-Topic Inputs: sw/GW ##############
@@ -52,7 +63,7 @@ PW <- 0.2 #unitless: proportion of lake shore with wetlands
 AOC_year <- 1 #g/m/yr: aerial loading factor
 Woc_year <- 1 #g/m/yr: adjacent wetland loading factor
 
-prop_GW <- .3 # Unitless: proportion of Q_in that is from groundwater
+prop_GW <- 0 # Unitless: proportion of Q_in that is from groundwater
 DOC_GW <- 10 # g/m3: DOC concentration in groundwater. 2-40 g/m3 per Hanson et al 2014
 DOC_SW <- 1 # g/m3: DOC concentration in surface water
 DOC_Precip <- 2 #g/m3: DOC concentration in precipitation
@@ -74,7 +85,7 @@ POC_sed_out <- data.frame(numeric(steps))
 ############################################
 
 ##### Declare Data Storage - GPP ###########
-#Included in input declaration
+NPP <- data.frame(numeric(steps))
 ############################################
 
 ##### Declare Data Storage - SW/GW #########
@@ -97,7 +108,7 @@ DOC_conc[1,1] <- DOC_conc_init #Initialize DOC concentration g/m3
 ##### GPP/NPP Sub Function #################
 #Run lake metabolizer code for GPP/NPP contribution to OC using GLM data. This function runs outside of the the primary
 #program loop because it does not require feedback from other OC flux sub-functions.
-NEP <- metab(NEP.data,"ols",wtr.name="wtr",irr.name="irr",do.obs.name="do.obs") #Calculate metabolism for sample data with simple OLS model; 4 other model options: bayesian, bookkeep, kalman, mle
+#NEP <- metab(NEP.data,"ols",wtr.name="wtr",irr.name="irr",do.obs.name="do.obs") #Calculate metabolism for sample data with simple OLS model; 4 other model options: bayesian, bookkeep, kalman, mle
 #Calculate mass outputs and populate new columns
 ### unit housekeeping ###
 #OC_GPP = O2 (mg/L/day) * (1L/0.001 m3) * (1g/1000mg) * mlVol (m3)
@@ -109,12 +120,12 @@ for (i in 1:(steps-1)){
   lakeDepth <- InputData$LakeLevel[i] #m
   lakeArea <- InputData$SurfaceArea[i] #m^2
   lakeVol <- InputData$Volume[i] #m^3
-  Q_in <- InputData$TotInflowVol[i]/(TimeStep*Days2Seconds) #m3/s: 
-  Q_out <- InputData$TotOutflowVol[i]/(TimeStep*Days2Seconds) #m3/s: total outflow. Assume steady state pending dynamic output
+  Q_in <- InputData$TotInflow[i] #m3/s: 
+  Q_out <- InputData$TotOutflow[i] #m3/s: total outflow. Assume steady state pending dynamic output
   
-  NEP$OC_GPP[i] <- NEP$GPP[i] * lakeVOl #g/day
-  NEP$OC_R[i]   <- NEP$R[i] * lakeVOl #g/day
-  NEP$OC_NEP[i] <- NEP$NEP[i] * lakeVOl #g/day
+  #Call NPP Function
+  NPP[i] <- NPP(InputData$Chla[i],InputData$TP[i],InputData$SurfaceTemp[i])
+
   
   #Call SWGW
   SWGWoutput <- SWGWFunction(Q_in,rainfall,Aoc_year, PC, lakePerim, Woc_year, PW, DOC_GW, prop_GW, 
@@ -137,7 +148,7 @@ for (i in 1:(steps-1)){
   
   #Update POC and DOC concentration values for whole lake
   POC_conc[i+1,1] <-  POC_conc[i,1] + (NEP$OC_NEP[i] + POC_SWGW_in - POC_outflow[i,1] - POC_sed_out[i,1])/lakeVol #g/m3
-  DOC_conc[i+1,1] <-  DOC_conc[i,1] + (DOC_SWGW_in - DOC_outflow[i,1])lakeVol #g/m3
+  DOC_conc[i+1,1] <-  DOC_conc[i,1] + (DOC_SWGW_in - DOC_outflow[i,1])*lakeVol #g/m3
   
 }
 
