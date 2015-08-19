@@ -1,13 +1,13 @@
 SWGWFunction <- function(Q_in,rainfall,Aoc_year, PC, lakePerim, Woc_year, PW, DOC_GW, prop_GW, 
                          DOC_SW, lakeArea) {
   
-  InflowData = data.frame(DOC_Aerial=NA, DOC_Wetland=NA, 
+  InflowData = data.frame(POC_Aerial=NA, DOC_Wetland=NA, 
                           DOC_GW=NA, DOC_SW=NA, DailyRain=NA, 
                           DOC_Precip=NA, Load_DOC=NA, Load_POC=NA)
     
-  # Aerial DOC (g/d)
+  # Aerial POC (g/d)
   Aoc = Aoc_year/365 #g/m/d: aerial loading factor
-  InflowData$DOC_Aerial <- (PC*Aoc*lakePerim) + ((1-PC) *0.2* Aoc * lakePerim)
+  InflowData$POC_Aerial <- (PC*Aoc*lakePerim) + ((1-PC) *0.2* Aoc * lakePerim)
   
   # Wetland DOC (g/d)
   Woc = Woc_year/365 #g/m/d: adjacent wetland loading factor
@@ -25,8 +25,8 @@ SWGWFunction <- function(Q_in,rainfall,Aoc_year, PC, lakePerim, Woc_year, PW, DO
   InflowData$DOC_Precip <- DOC_Precip * InflowData$DailyRain #g/d
   
   # MAIN OUTPUTS: LOAD DOC & POC (g/d)
-  InflowData$Load_DOC <- InflowData$DOC_Aerial + InflowData$DOC_Wetland + InflowData$DOC_GW + InflowData$DOC_SW + InflowData$DOC_Precip # g/d DOC
-  InflowData$Load_POC <- InflowData$Load_DOC * 0.1 # g/d POC roughly estimated as (0.1 * DOC)
+  InflowData$Load_DOC <- InflowData$DOC_Wetland + InflowData$DOC_GW + InflowData$DOC_SW + InflowData$DOC_Precip # g/d DOC
+  InflowData$Load_POC <- InflowData$POC_Aerial + InflowData$Load_DOC*0.1 # g/d POC roughly estimated as (0.1 * DOC)
   
   return(InflowData)
 }

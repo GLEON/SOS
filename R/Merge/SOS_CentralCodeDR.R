@@ -25,10 +25,8 @@ for (col in 2:ncol(InputData)){
 
 ##### General Lake Inputs and Parameters ###
 lakePerim <- 1000 #m
-g <- 9.81 #m/s^2
-rho_H2O <- 999.9720 #kg/m^3
 Days2Seconds <- 1*24*60*60 #s/d
-DOC_conc_init <- 10  #g/m3
+DOC_conc_init <- 2.9  #g/m3
 ############################################
 
 ###### Run Period and Time Step Setup #####
@@ -38,7 +36,8 @@ steps <- nrow(InputData)
 
 
 ##### Sub-Topic Inputs: Sedimentation ######
-DOC_avg <- 2.2   #g/m3  Average DOC value in lake to initialize estimate of average POC
+DOC_avg <- DOC_conc_init   #g/m3  Average DOC value in lake to initialize estimate of average POC
+POC_conc_avg <- 0.1*DOC_avg  #Average POC concentration in water column (g/m^3) ##HOW DO WE DETERMINE THIS PRE-MODEL-RUN?##
 MAR_sed_avg <- 72 #Mass accumulation rate of sediment (g sed/m^2/yr) ##REQUIRES DATA##
 Sed_oc_avg <-  4.5 #Percent of sediment estimated to be OC (%) ##REQUIRES DATA##
 ############################################
@@ -48,15 +47,15 @@ Sed_oc_avg <-  4.5 #Percent of sediment estimated to be OC (%) ##REQUIRES DATA##
 ############################################
 
 ##### Sub-Topic Inputs: sw/GW ##############
-PC <- 0.7 #unitless: proportion of lake shore with canopy
-PW <- 0.2 #unitless: proportion of lake shore with wetlands
+PC <- 0.76 #unitless: proportion of lake shore with canopy
+PW <- 0.0 #unitless: proportion of lake shore with wetlands
 
 Aoc_year <- 1 #g/m/yr: aerial loading factor
 Woc_year <- 1 #g/m/yr: adjacent wetland loading factor
 
 prop_GW <- 0 # Unitless: proportion of Q_in that is from groundwater
 DOC_GW <- 10 # g/m3: DOC concentration in groundwater. 2-40 g/m3 per Hanson et al 2014
-DOC_SW <- 10 # g/m3: DOC concentration in surface water
+DOC_SW <- 5.8 # g/m3: DOC concentration in surface water
 DOC_Precip <- 2 #g/m3: DOC concentration in precipitation
 ############################################
 
@@ -67,7 +66,7 @@ DOC_conc <- data.frame(numeric(steps))
 
 ##### Declare Data Storage - Sed ###########
 SedData <- data.frame(BurialScalingFactor=numeric(steps),MAR_oc=numeric(steps),
-                      POC_burial=numeric(steps),POC_grazed_DIC=numeric(steps))
+                      POC_burial=numeric(steps),POC_to_DIC=numeric(steps))
 POC_sed_out <- data.frame(numeric(steps))
 ############################################
 
@@ -84,8 +83,7 @@ POC_outflow <- data.frame(numeric(steps))
 DOC_outflow <- data.frame(numeric(steps))
 ############################################
 
-##### Genearl Lake Variable Initialization ###############
-POC_conc_avg <- 0.1*DOC_avg  #Average POC concentration in water column (g/m^3) ##HOW DO WE DETERMINE THIS PRE-MODEL-RUN?##
+##### General Lake Variable Initialization ###############
 POC_conc[1,1] <- POC_conc_avg # #Initialize POC concentration as baseline average
 DOC_conc[1,1] <- DOC_conc_init #Initialize DOC concentration g/m3
 ############################################
@@ -103,7 +101,7 @@ for (i in 1:(steps)){
   Rainfall <- InputData$Rain[i]
   
   #Call NPP Function
-  NPPoutput$NPP[i] <- NPP(InputData$Chla[i],InputData$TP[i],InputData$SurfaceTemp[i]) #mg C/m2/d
+  NPPoutput$NPP[i] <- NPP(InputData$Chla[i],InputData$TP[i],InputData$SurfaceTemp[i]) #mg C/m^2/d
   NPPoutput$NPP_mass[i] <- NPPoutput$NPP[i]*lakeArea*TimeStep*1000 #g
 
   #Call SWGW Function
@@ -116,9 +114,9 @@ for (i in 1:(steps)){
   SWGW_mass_in$POC[i] <- SWGWData$Load_POC[i]*TimeStep #g
   
   #Call Sedimentation Function
-  SedOutput <- SedimentationFunction(lakeArea,lakeVol,DOC_avg,MAR_sed_avg,Sed_oc_avg,POC_conc[i,1])
+  SedOutput <- SedimentationFunction(TimeStep,lakeArea,lakeVol,DOC_avg,MAR_sed_avg,Sed_oc_avg,POC_conc[i,1])
   SedData[i,1:4] = SedOutput
-  POC_sed_out[i,1] <- SedData$POC_burial[i]*TimeStep + SedData$POC_grazed_DIC[i] #g
+  POC_sed_out[i,1] <- SedData$POC_burial[i]*TimeStep + SedData$POC_to_DIC[i] #g
   
   #Calc outflow subtractions (assuming outflow concentrations = mixed lake concentrations)
   POC_outflow[i,1] <- POC_conc[i,1]*Q_out*60*60*24*TimeStep #g
@@ -126,8 +124,8 @@ for (i in 1:(steps)){
   
   
   #Update POC and DOC concentration values for whole lake
-  POC_conc[i+1,1] <-  POC_conc[i,1] + (NPPoutput$NPP_mass[i] + SWGW_mass_in$POC[i] - POC_outflow[i,1] - POC_sed_out[i,1])/lakeVol #g/m3
-  DOC_conc[i+1,1] <-  DOC_conc[i,1] + (SWGW_mass_in$DOC[i] - DOC_outflow[i,1])*lakeVol #g/m3
+  POC_conc[i+1,1] <-  POC_conc[i,1] + ((NPPoutput$NPP_mass[i] + SWGW_mass_in$POC[i] - POC_outflow[i,1] - POC_sed_out[i,1])/lakeVol) #g/m3
+  DOC_conc[i+1,1] <-  DOC_conc[i,1] + ((SWGW_mass_in$DOC[i] - DOC_outflow[i,1])/lakeVol) #g/m3
   
 }
 
