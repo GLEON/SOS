@@ -28,8 +28,8 @@ SedimentationFunction <- function(lakeArea,lakeVol,DOC_avg,MAR_sed_avg,Sed_oc_av
   #FunData$POC_in <- FunData$POC_in_alloch + FunData$POC_in_autoch #g/d
   
   ##OUTPUTS############################
-  FunData$POC_burial <- FunData$MAR_oc*(1/365)*lakeArea #g/d; Timestep with conversion from years to timestep units - days)
-  FunData$POC_grazed_DIC <- POC_conc*0.105*lakeVol #g (Consumption, respiration, etc. See Connolly and COffin 1995)
+  FunData$POC_burial <- FunData$MAR_oc*(1/365)*TimeStep*lakeArea #g/d; Timestep with conversion from years to timestep units - days)
+  FunData$POC_grazed_DIC <- POC_conc*lakeVol*0.105 #g (Consumption, respiration, etc. See Connolly and COffin 1995)
   #Assume 0.105 consumed per day (thus TimeStepConversion)
   
   return(FunData)

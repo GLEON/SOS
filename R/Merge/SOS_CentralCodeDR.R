@@ -12,25 +12,19 @@ source("NPP_08182015.R")
 ############################################
 
 ##### READ MAIN INPUT FILE #################
-RawData <- read.csv("TestData1.csv",header=T)
-RawData$datetime <- as.POSIXct(strptime(RawData$datetime,"%m/%d/%Y %H:%M"))
+RawData <- read.csv("TestData1.csv",header=T) #Read main data file with GLM outputs (physical input) and NPP input
+RawData$datetime <- as.POSIXct(strptime(RawData$datetime,"%m/%d/%Y %H:%M")) #Convert time to POSIX
 
-ts_new <- data.frame(datetime = seq(RawData$datetime[1],RawData$datetime[nrow(RawData)],by="day"))
-
+#Fill time-series gaps
+ts_new <- data.frame(datetime = seq(RawData$datetime[1],RawData$datetime[nrow(RawData)],by="day")) #Interpolate gapless time-series
 InputData <- merge(RawData,ts_new,all=T)
 InputData <- as.data.frame(InputData)
-
 for (col in 2:ncol(InputData)){
-  InputData[,col] <- na.approx(InputData[,col])
-}
+  InputData[,col] <- na.approx(InputData[,col])}
 ############################################
 
-##### General Lake Inputs ##################
-#lakeDepth <- In Input file
+##### General Lake Inputs and Parameters ###
 lakePerim <- 1000 #m
-#lakeArea <- 62500 #m^2 In Input file
-#lakeVol <- lakeDepth*lakeArea #m^3 In Input file
-#resTime <-  3 #days Not needed
 g <- 9.81 #m/s^2
 rho_H2O <- 999.9720 #kg/m^3
 Days2Seconds <- 1*24*60*60 #s/d
@@ -44,19 +38,16 @@ steps <- nrow(InputData)
 
 
 ##### Sub-Topic Inputs: Sedimentation ######
-DOC_avg <- 10   #g/m3  Average DOC value in lake to initialize estimate of average POC
-MAR_sed_avg <- 1000 #Mass accumulation rate of sediment (g sed/m^2/yr) ##REQUIRES DATA##
+DOC_avg <- 2.2   #g/m3  Average DOC value in lake to initialize estimate of average POC
+MAR_sed_avg <- 72 #Mass accumulation rate of sediment (g sed/m^2/yr) ##REQUIRES DATA##
 Sed_oc_avg <-  4.5 #Percent of sediment estimated to be OC (%) ##REQUIRES DATA##
 ############################################
 
 ##### Sub-Topic Inputs: GPP/NPP ############
-
+#Currently all inputs are time-series data in main input file
 ############################################
 
 ##### Sub-Topic Inputs: sw/GW ##############
-#Q_in <- 5 #m3/s: total inflow (Sw + Gw) Will be changed to dynamic input
-#Q_out <- 5 #m3/s: total outflow. Assume steady state pending dynamic output
-
 PC <- 0.7 #unitless: proportion of lake shore with canopy
 PW <- 0.2 #unitless: proportion of lake shore with wetlands
 
@@ -65,10 +56,8 @@ Woc_year <- 1 #g/m/yr: adjacent wetland loading factor
 
 prop_GW <- 0 # Unitless: proportion of Q_in that is from groundwater
 DOC_GW <- 10 # g/m3: DOC concentration in groundwater. 2-40 g/m3 per Hanson et al 2014
-DOC_SW <- 1 # g/m3: DOC concentration in surface water
+DOC_SW <- 10 # g/m3: DOC concentration in surface water
 DOC_Precip <- 2 #g/m3: DOC concentration in precipitation
-
-Rainfall <- 2 #mm/d: precipitation input from meteorological timeseries(?)
 ############################################
 
 ##### Declare Output Data Storage ##########
@@ -83,13 +72,14 @@ POC_sed_out <- data.frame(numeric(steps))
 ############################################
 
 ##### Declare Data Storage - GPP ###########
-NPPoutput <- data.frame(NPP=numeric(steps))
+NPPoutput <- data.frame(NPP=numeric(steps),NPP_mass=numeric(steps))
 ############################################
 
 ##### Declare Data Storage - SW/GW #########
 SWGWData = data.frame(DOC_Aerial=numeric(steps), DOC_Wetland=numeric(steps), 
                         DOC_GW=numeric(steps), DOC_SW=numeric(steps), DailyRain=numeric(steps), 
                         DOC_Precip=numeric(steps), Load_DOC=numeric(steps), Load_POC=numeric(steps))
+SWGW_mass_in <- data.frame(POC=numeric(steps),DOC=numeric(steps))
 POC_outflow <- data.frame(numeric(steps))
 DOC_outflow <- data.frame(numeric(steps))
 ############################################
@@ -103,41 +93,32 @@ DOC_conc[1,1] <- DOC_conc_init #Initialize DOC concentration g/m3
 ####################### MAIN PROGRAM #############################################
 ##################################################################################
 
-##### GPP/NPP Sub Function #################
-#Run lake metabolizer code for GPP/NPP contribution to OC using GLM data. This function runs outside of the the primary
-#program loop because it does not require feedback from other OC flux sub-functions.
-#NEP <- metab(NEP.data,"ols",wtr.name="wtr",irr.name="irr",do.obs.name="do.obs") #Calculate metabolism for sample data with simple OLS model; 4 other model options: bayesian, bookkeep, kalman, mle
-#Calculate mass outputs and populate new columns
-### unit housekeeping ###
-#OC_GPP = O2 (mg/L/day) * (1L/0.001 m3) * (1g/1000mg) * mlVol (m3)
-#       = OC g/day
-
-
-for (i in 1:(steps-1)){
+for (i in 1:(steps)){
   
   lakeDepth <- InputData$LakeLevel[i] #m
   lakeArea <- InputData$SurfaceArea[i] #m^2
   lakeVol <- InputData$Volume[i] #m^3
   Q_in <- InputData$TotInflow[i] #m3/s
   Q_out <- InputData$TotOutflow[i] #m3/s: total outflow. Assume steady state pending dynamic output
+  Rainfall <- InputData$Rain[i]
   
   #Call NPP Function
-  NPPoutput$NPP[i] <- NPP(InputData$Chla[i],InputData$TP[i],InputData$SurfaceTemp[i])
+  NPPoutput$NPP[i] <- NPP(InputData$Chla[i],InputData$TP[i],InputData$SurfaceTemp[i]) #mg C/m2/d
+  NPPoutput$NPP_mass[i] <- NPPoutput$NPP[i]*lakeArea*TimeStep*1000 #g
 
-  
-  #Call SWGW
-  SWGWoutput <- SWGWFunction(Q_in,rainfall,Aoc_year, PC, lakePerim, Woc_year, PW, DOC_GW, prop_GW, 
+  #Call SWGW Function
+  SWGWoutput <- SWGWFunction(Q_in,Rainfall,Aoc_year, PC, lakePerim, Woc_year, PW, DOC_GW, prop_GW, 
                              DOC_SW, lakeArea) #change these inputs to iterative [i] values when inputs are dynamic
   SWGWData[i,1:8] <- SWGWoutput
   
   #Calculate load from SWGW_in
-  DOC_SWGW_in <- SWGWData$Load_DOC[i]*TimeStep #g
-  POC_SWGW_in <- SWGWData$Load_POC[i]*TimeStep #g
+  SWGW_mass_in$DOC[i] <- SWGWData$Load_DOC[i]*TimeStep #g
+  SWGW_mass_in$POC[i] <- SWGWData$Load_POC[i]*TimeStep #g
   
-  #Call Sed Function
+  #Call Sedimentation Function
   SedOutput <- SedimentationFunction(lakeArea,lakeVol,DOC_avg,MAR_sed_avg,Sed_oc_avg,POC_conc[i,1])
   SedData[i,1:4] = SedOutput
-  POC_sed_out[i,1] <- SedData$POC_grazed_DIC[i] + SedData$POC_burial[i]*TimeStep  #g
+  POC_sed_out[i,1] <- SedData$POC_burial[i]*TimeStep + SedData$POC_grazed_DIC[i] #g
   
   #Calc outflow subtractions (assuming outflow concentrations = mixed lake concentrations)
   POC_outflow[i,1] <- POC_conc[i,1]*Q_out*60*60*24*TimeStep #g
@@ -145,12 +126,22 @@ for (i in 1:(steps-1)){
   
   
   #Update POC and DOC concentration values for whole lake
-  POC_conc[i+1,1] <-  POC_conc[i,1] + (NPPoutput$NPP[i] + POC_SWGW_in - POC_outflow[i,1] - POC_sed_out[i,1])/lakeVol #g/m3
-  DOC_conc[i+1,1] <-  DOC_conc[i,1] + (DOC_SWGW_in - DOC_outflow[i,1])*lakeVol #g/m3
+  POC_conc[i+1,1] <-  POC_conc[i,1] + (NPPoutput$NPP_mass[i] + SWGW_mass_in$POC[i] - POC_outflow[i,1] - POC_sed_out[i,1])/lakeVol #g/m3
+  DOC_conc[i+1,1] <-  DOC_conc[i,1] + (SWGW_mass_in$DOC[i] - DOC_outflow[i,1])*lakeVol #g/m3
   
 }
 
 #######################################################################################
 #######################################################################################
+
+plot(InputData$datetime,NPPoutput$NPP_mass,type="l")
+plot(InputData$datetime,SWGW_mass_in$POC,type="l")
+plot(InputData$datetime,POC_outflow[,1],type="l")
+plot(InputData$datetime,POC_sed_out[,1],type="l")
+plot(InputData$datetime,SWGW_mass_in$DOC,type="l")
+plot(InputData$datetime,DOC_outflow[,1],type="l")
+
+
+
 
 
