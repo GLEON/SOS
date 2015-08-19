@@ -1,10 +1,8 @@
-SedimentationFunction <- function(TimeStepConversion,lAkePerim,lakeArea,lakeVol,DOC_avg,MAR_sed_avg,Sed_oc_avg,POC_conc){
+SedimentationFunction <- function(lakeArea,lakeVol,DOC_avg,MAR_sed_avg,Sed_oc_avg,POC_conc){
 
   #Setup output data frame for returning scalars to central code from function
   FunData = data.frame(BurialScalingFactor=NA,MAR_oc=NA,POC_burial=NA,POC_grazed_DIC=NA)
                      
-
-  
   #Burial
   FunData$BurialScalingFactor <-  POC_conc/POC_conc_avg  #current POC divided by average POC to scale accumulation rate
   #using varied POC inputs (alloch and autoch) -- (unitless)
@@ -31,7 +29,7 @@ SedimentationFunction <- function(TimeStepConversion,lAkePerim,lakeArea,lakeVol,
   
   ##OUTPUTS############################
   FunData$POC_burial <- FunData$MAR_oc*(1/365)*lakeArea #g/d; Timestep with conversion from years to timestep units - days)
-  FunData$POC_grazed_DIC <- POC_conc*0.105*lakeVol*TimeStepConversion #g (Consumption, respiration, etc. See Connolly and COffin 1995)
+  FunData$POC_grazed_DIC <- POC_conc*0.105*lakeVol #g (Consumption, respiration, etc. See Connolly and COffin 1995)
   #Assume 0.105 consumed per day (thus TimeStepConversion)
   
   return(FunData)

@@ -5,7 +5,7 @@ library(signal)
 library(zoo)
 ############################################
 
-##### LOAD FUNCTIONS ########################
+##### LOAD FUNCTIONS #######################
 source("SedimentationFunctionDR.R")
 source("SwGwComplexFunctionDR.R")
 source("NPP_08182015.R")
@@ -60,7 +60,7 @@ Sed_oc_avg <-  4.5 #Percent of sediment estimated to be OC (%) ##REQUIRES DATA##
 PC <- 0.7 #unitless: proportion of lake shore with canopy
 PW <- 0.2 #unitless: proportion of lake shore with wetlands
 
-AOC_year <- 1 #g/m/yr: aerial loading factor
+Aoc_year <- 1 #g/m/yr: aerial loading factor
 Woc_year <- 1 #g/m/yr: adjacent wetland loading factor
 
 prop_GW <- 0 # Unitless: proportion of Q_in that is from groundwater
@@ -77,19 +77,17 @@ DOC_conc <- data.frame(numeric(steps))
 ############################################
 
 ##### Declare Data Storage - Sed ###########
-SedData <- data.frame(BurialScalingFactor=numeric(steps),MAR_oc=numeric(steps),LeafLitter=numeric(steps),
-                      LeafParameter=numeric(steps),DOC_SWGW=numeric(steps),POC_SWGW=numeric(steps),
-                      POC_in_alloch=numeric(steps),POC_in_autoch=numeric(steps),POC_in=numeric(steps),
+SedData <- data.frame(BurialScalingFactor=numeric(steps),MAR_oc=numeric(steps),
                       POC_burial=numeric(steps),POC_grazed_DIC=numeric(steps))
 POC_sed_out <- data.frame(numeric(steps))
 ############################################
 
 ##### Declare Data Storage - GPP ###########
-NPP <- data.frame(numeric(steps))
+NPPoutput <- data.frame(NPP=numeric(steps))
 ############################################
 
 ##### Declare Data Storage - SW/GW #########
-SWGWData = data.frame(Q_in=numeric(steps), Aoc=numeric(steps), DOC_Aerial=numeric(steps), DOC_Wetland=numeric(steps), 
+SWGWData = data.frame(DOC_Aerial=numeric(steps), DOC_Wetland=numeric(steps), 
                         DOC_GW=numeric(steps), DOC_SW=numeric(steps), DailyRain=numeric(steps), 
                         DOC_Precip=numeric(steps), Load_DOC=numeric(steps), Load_POC=numeric(steps))
 POC_outflow <- data.frame(numeric(steps))
@@ -120,26 +118,26 @@ for (i in 1:(steps-1)){
   lakeDepth <- InputData$LakeLevel[i] #m
   lakeArea <- InputData$SurfaceArea[i] #m^2
   lakeVol <- InputData$Volume[i] #m^3
-  Q_in <- InputData$TotInflow[i] #m3/s: 
+  Q_in <- InputData$TotInflow[i] #m3/s
   Q_out <- InputData$TotOutflow[i] #m3/s: total outflow. Assume steady state pending dynamic output
   
   #Call NPP Function
-  NPP[i] <- NPP(InputData$Chla[i],InputData$TP[i],InputData$SurfaceTemp[i])
+  NPPoutput$NPP[i] <- NPP(InputData$Chla[i],InputData$TP[i],InputData$SurfaceTemp[i])
 
   
   #Call SWGW
   SWGWoutput <- SWGWFunction(Q_in,rainfall,Aoc_year, PC, lakePerim, Woc_year, PW, DOC_GW, prop_GW, 
                              DOC_SW, lakeArea) #change these inputs to iterative [i] values when inputs are dynamic
-  SWGWData[i,1:10] <- SWGWoutput
+  SWGWData[i,1:8] <- SWGWoutput
   
   #Calculate load from SWGW_in
   DOC_SWGW_in <- SWGWData$Load_DOC[i]*TimeStep #g
   POC_SWGW_in <- SWGWData$Load_POC[i]*TimeStep #g
   
   #Call Sed Function
-  SedOutput <- SedimentationFunction(TimeStepConversion,lAkePerim,lakeArea,lakeVol,DOC_avg,MAR_sed_avg,Sed_oc_avg,POC_conc[i,1])
-  SedData[i,1:11] = SedOutput
-  POC_sed_out[i,1] <- SedData$POC_grazed_DIC[i] + SedData$POC_in[i] - SedData$POC_burial[i]*TimeStep  #g
+  SedOutput <- SedimentationFunction(lakeArea,lakeVol,DOC_avg,MAR_sed_avg,Sed_oc_avg,POC_conc[i,1])
+  SedData[i,1:4] = SedOutput
+  POC_sed_out[i,1] <- SedData$POC_grazed_DIC[i] + SedData$POC_burial[i]*TimeStep  #g
   
   #Calc outflow subtractions (assuming outflow concentrations = mixed lake concentrations)
   POC_outflow[i,1] <- POC_conc[i,1]*Q_out*60*60*24*TimeStep #g
@@ -147,7 +145,7 @@ for (i in 1:(steps-1)){
   
   
   #Update POC and DOC concentration values for whole lake
-  POC_conc[i+1,1] <-  POC_conc[i,1] + (NEP$OC_NEP[i] + POC_SWGW_in - POC_outflow[i,1] - POC_sed_out[i,1])/lakeVol #g/m3
+  POC_conc[i+1,1] <-  POC_conc[i,1] + (NPPoutput$NPP[i] + POC_SWGW_in - POC_outflow[i,1] - POC_sed_out[i,1])/lakeVol #g/m3
   DOC_conc[i+1,1] <-  DOC_conc[i,1] + (DOC_SWGW_in - DOC_outflow[i,1])*lakeVol #g/m3
   
 }

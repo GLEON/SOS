@@ -1,7 +1,7 @@
 SWGWFunction <- function(Q_in,rainfall,Aoc_year, PC, lakePerim, Woc_year, PW, DOC_GW, prop_GW, 
                          DOC_SW, lakeArea) {
   
-  InflowData = data.frame(Q_in=NA, Aoc=NA, DOC_Aerial=NA, DOC_Wetland=NA, 
+  InflowData = data.frame(DOC_Aerial=NA, DOC_Wetland=NA, 
                           DOC_GW=NA, DOC_SW=NA, DailyRain=NA, 
                           DOC_Precip=NA, Load_DOC=NA, Load_POC=NA)
     
@@ -14,10 +14,10 @@ SWGWFunction <- function(Q_in,rainfall,Aoc_year, PC, lakePerim, Woc_year, PW, DO
   InflowData$DOC_Wetland <- PW * Woc * lakePerim
   
   # Gw DOC (g/d)
-  InflowData$DOC_GW <- DOC_GW * (prop_GW * InflowData$Q_in) * 86400 #g/d
+  InflowData$DOC_GW <- DOC_GW * (prop_GW * Q_in) * 86400 #g/d
   
   # Sw DOC (g/d)
-  InflowData$DOC_SW <- DOC_SW * ((1-prop_GW)*InflowData$Q_in) * 86400 #g/d
+  InflowData$DOC_SW <- DOC_SW * ((1-prop_GW)*Q_in) * 86400 #g/d
 
   # Precipitation DOC (g/d)
   #Rainfall <- 2 #mm/d: precipitation input from meteorological timeseries(?) #commented out - met would be read in main program (DR, 7/26)
@@ -25,7 +25,7 @@ SWGWFunction <- function(Q_in,rainfall,Aoc_year, PC, lakePerim, Woc_year, PW, DO
   InflowData$DOC_Precip <- DOC_Precip * InflowData$DailyRain #g/d
   
   # MAIN OUTPUTS: LOAD DOC & POC (g/d)
-  InflowData$Load_DOC <- InflowData$Aerial + InflowData$Wetland + InflowData$DOC_GW + InflowData$DOC_SW + InflowData$Precip # g/d DOC
+  InflowData$Load_DOC <- InflowData$DOC_Aerial + InflowData$DOC_Wetland + InflowData$DOC_GW + InflowData$DOC_SW + InflowData$DOC_Precip # g/d DOC
   InflowData$Load_POC <- InflowData$Load_DOC * 0.1 # g/d POC roughly estimated as (0.1 * DOC)
   
   return(InflowData)
