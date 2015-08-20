@@ -15,7 +15,7 @@ source("NPP_08182015.R")
 RawData <- read.csv("TestData1.csv",header=T) #Read main data file with GLM outputs (physical input) and NPP input
 RawData$datetime <- as.POSIXct(strptime(RawData$datetime,"%m/%d/%Y %H:%M")) #Convert time to POSIX
 
-#Fill time-series gaps
+#Fill time-series gaps (linear interpolation)
 ts_new <- data.frame(datetime = seq(RawData$datetime[1],RawData$datetime[nrow(RawData)],by="day")) #Interpolate gapless time-series
 InputData <- merge(RawData,ts_new,all=T)
 InputData <- as.data.frame(InputData)
@@ -24,7 +24,7 @@ for (col in 2:ncol(InputData)){
 ############################################
 
 ##### General Lake Inputs and Parameters ###
-lakePerim <- 1000 #m
+lakePerim <- 32448 #m
 Days2Seconds <- 1*24*60*60 #s/d
 DOC_conc_init <- 2.9  #g/m3
 ############################################
@@ -116,15 +116,19 @@ for (i in 1:(steps)){
   #Call Sedimentation Function
   SedOutput <- SedimentationFunction(TimeStep,lakeArea,lakeVol,DOC_avg,MAR_sed_avg,Sed_oc_avg,POC_conc[i,1])
   SedData[i,1:4] = SedOutput
-  POC_sed_out[i,1] <- SedData$POC_burial[i]*TimeStep + SedData$POC_to_DIC[i] #g
+  POC_sed_out[i,1] <- SedData$POC_burial[i]*TimeStep #g
   
   #Calc outflow subtractions (assuming outflow concentrations = mixed lake concentrations)
+  if (POC_conc[i,1]>=0){
   POC_outflow[i,1] <- POC_conc[i,1]*Q_out*60*60*24*TimeStep #g
+  } else {POC_outflow[i,1]<-0}
+  if (DOC_conc[i,1]>=0){
   DOC_outflow[i,1] <- DOC_conc[i,1]*Q_out*60*60*24*TimeStep #g
+  } else {POC_outflow[i,1]<-0}
   
   
   #Update POC and DOC concentration values for whole lake
-  POC_conc[i+1,1] <-  POC_conc[i,1] + ((NPPoutput$NPP_mass[i] + SWGW_mass_in$POC[i] - POC_outflow[i,1] - POC_sed_out[i,1])/lakeVol) #g/m3
+  POC_conc[i+1,1] <-  POC_conc[i,1] + ((NPPoutput$NPP_mass[i] + SWGW_mass_in$POC[i] - POC_outflow[i,1] - POC_sed_out[i,1] - SedData$POC_to_DIC[i])/lakeVol) #g/m3
   DOC_conc[i+1,1] <-  DOC_conc[i,1] + ((SWGW_mass_in$DOC[i] - DOC_outflow[i,1])/lakeVol) #g/m3
   
 }
