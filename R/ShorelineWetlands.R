@@ -33,7 +33,7 @@ lakebuffer = buffer(lakes, width=30, dissolve=F)
 buffer_ring = symdif(lakebuffer,lakes) # symmetrical difference vector operation
 #plot(buffer_ring)
 
-# Identify wetlands within lake buffer
+## Identify wetlands within lake buffer ##
 near_wetlands = crop(wetlands, buffer_ring)
 
 plot(lakes, col='dodgerblue', main='Wetlands adjacent to lakeshores')
@@ -56,12 +56,30 @@ for(i in 1:nrow(lakebuffer)) {
   x[i] = freq(crop(wetlands_raster, lakebuffer[i,]), value=T, useNA='no')
 }
 
-length = cell_size*x #multiply num of cells by cell length specified above
-shoreline = data.frame(lake=lakes$WATERBODY_, perim_m=lakes$SHAPE_Leng,wetland_m=length)
+## Identify forests within lake buffer ##
+#landcover = raster('landcover.tif')
+
+# Extract forests from land cover dataset
+#forests = ifelse(forestcode,1,NA) #generic forests = 4 in WISCLAND
+
+# Count number of wetland cells along shoreline of each lake (Thank you Zutao here!)
+#y = vector(mode='numeric', length=nrow(lakebuffer))
+#for(i in 1:nrow(lakebuffer)) { 
+#  y[i] = freq(crop(forests, lakebuffer[i,]), value=T, useNA='no')
+#}
+
+wetland_length = cell_size*x #multiply num of cells by cell length specified above
+#forest_length = cell_size*y
+shoreline = data.frame()
+shoreline$lake=lakes$WATERBODY_, 
 shoreline$area_sqm = lakes$SHAPE_Area
+shoreline$perim_m=lakes$SHAPE_Leng,
+shoreline$wetland_m=wetland_length
 shoreline$non_wetland_m = shoreline$perim_m - shoreline$wetland_m
 shoreline$pct_wetland = (shoreline$wetland_m/shoreline$perim_m) *100
 shoreline$pct_non_wetland = 100-shoreline$pct_wetland
+#shoreline$forest_m = forest_length
+#shoreline$pct_forest = (shoreline$forest_m/shoreline$perim_m) *100
 
 # export data to csv
 #write.csv(shoreline, file='shoreline_cover.csv')
