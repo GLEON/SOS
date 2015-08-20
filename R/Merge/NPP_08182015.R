@@ -9,7 +9,7 @@ NPP<-function(CHL,P,WT)
  #coefficients to predict GPP from chl and WT
  #b0+b1*log10(chl)+b2*WT
  
- b0=-1.18
+  b0=-1.18
   b1=0.92
   b2=0.014
   ###########################################################################
