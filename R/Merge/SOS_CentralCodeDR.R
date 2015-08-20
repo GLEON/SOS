@@ -1,6 +1,5 @@
 
 ##### LOAD PACKAGES ########################
-library(LakeMetabolizer)
 library(signal)
 library(zoo)
 ############################################
@@ -142,19 +141,17 @@ for (i in 1:(steps)){
   DOC_conc[i+1,1] <-  DOC_conc[i,1] + ((SWGW_mass_in$DOC[i] - DOC_outflow[i,1])/lakeVol) #g/m3
   
   #POC and DOC load output
-  POC_load$mass[i] <- NPPoutput$NPP_mass[i] + SWGW_mass_in$POC[i] - POC_outflow[i,1] - POC_sed_out[i,1] - SedData$POC_to_DIC[i] #g
-  POC_load$alloch[i] <- SWGW_mass_in$POC[i]
-  POC_load$autoch[i] <- NPPoutput$NPP_mass[i]
-  DOC_load$mass[i] <- SWGW_mass_in$DOC[i] - DOC_outflow[i,1] #g
-  DOC_load$alloch[i] <- SWGW_mass_in$DOC[i]
-  DOC_load$autoch[i] <- 
+  #POC_load$mass[i] <- NPPoutput$NPP_mass[i] + SWGW_mass_in$POC[i] #- POC_outflow[i,1] - POC_sed_out[i,1] - SedData$POC_to_DIC[i] #g
+  #POC_load$alloch[i] <- SWGW_mass_in$POC[i]
+  #POC_load$autoch[i] <- NPPoutput$NPP_mass[i]
+  #DOC_load$mass[i] <- SWGW_mass_in$DOC[i] - DOC_outflow[i,1] #g
+  #DOC_load$alloch[i] <- SWGW_mass_in$DOC[i]
+  #DOC_load$autoch[i] <- 
   
   #Stop code and output error if concentrations go to negative
   if (POC_conc[i+1,1]<=0){stop("Negative POC concentration!")}
   if (DOC_conc[i+1,1]<=0){stop("Negative DOC concentration!")}
 }
-
-
 
 ConcOutputTimeSeries <- c(InputData$datetime,InputData$datetime[length(InputData$datetime)]+86400)
 OutputTimeSeries <- InputData$datetime
