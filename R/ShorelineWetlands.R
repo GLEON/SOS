@@ -28,6 +28,7 @@ labels = lakes$WATERBODY_
 polygonsLabel(lakes,labels=labels, method=c('centroid'), cex=1)
 
 # Create buffer around lakes based on specified distance
+# 30 m is cell length of rasterized wetland layer (further below)
 lakebuffer = buffer(lakes, width=30, dissolve=F)
 buffer_ring = symdif(lakebuffer,lakes) # symmetrical difference vector operation
 #plot(buffer_ring)
@@ -57,7 +58,7 @@ for(i in 1:nrow(lakebuffer)) {
 
 length = cell_size*x #multiply num of cells by cell length specified above
 shoreline = data.frame(lake=lakes$WATERBODY_, perim_m=lakes$SHAPE_Leng,wetland_m=length)
-shoreline$area = lakes$SHAPE_Area
+shoreline$area_sqm = lakes$SHAPE_Area
 shoreline$non_wetland_m = shoreline$perim_m - shoreline$wetland_m
 shoreline$pct_wetland = (shoreline$wetland_m/shoreline$perim_m) *100
 shoreline$pct_non_wetland = 100-shoreline$pct_wetland
