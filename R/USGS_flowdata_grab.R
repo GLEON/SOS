@@ -51,7 +51,13 @@ val <- approx(x=mann_q_Date, y=mann_q, xout= dates, method='linear')$y
 Swmodel_input = cbind(Swmodel_input, data.frame(val))
 
 # Sum discharge from individual streams for each day
-Swmodel_input$Sum <- rowSums(Swmodel_input[,-1])
+Swmodel_input$Sum_ft3 <- rowSums(Swmodel_input[,-1])
+
+# Convert discharge to m3/sec
+Swmodel_input$Sum_m3s = Swmodel_input$Sum_ft3 * 0.0283168466 # Convert cfs to m3s-1
+
+# Isolate date and discharge (m3/s)
+sw_inflow <- data.frame(datetime=Swmodel_input$Date, TotInflow=Swmodel_input$Sum_m3s)
 
 # Write .csv into Merge file
-write.csv(Swmodel_input, file='./R/Merge/Sw_Qin.csv')
+write.csv(sw_inflow, file='./R/Merge/sw_inflow.csv')
