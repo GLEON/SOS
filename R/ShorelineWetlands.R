@@ -70,10 +70,9 @@ for(i in 1:nrow(lakebuffer)) {
 
 wetland_length = cell_size*x #multiply num of cells by cell length specified above
 #forest_length = cell_size*y
-shoreline = data.frame()
-shoreline$lake=lakes$WATERBODY_, 
+shoreline = data.frame(lake=lakes$WATERBODY_)
 shoreline$area_sqm = lakes$SHAPE_Area
-shoreline$perim_m=lakes$SHAPE_Leng,
+shoreline$perim_m=lakes$SHAPE_Leng
 shoreline$wetland_m=wetland_length
 shoreline$non_wetland_m = shoreline$perim_m - shoreline$wetland_m
 shoreline$pct_wetland = (shoreline$wetland_m/shoreline$perim_m) *100
