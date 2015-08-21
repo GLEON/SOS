@@ -1,3 +1,5 @@
+TimeSeriesFile <- "TestData3.csv"
+ParameterFile <- "ParameterInputs.txt"
 
 ##### LOAD PACKAGES ########################
 library(signal)
@@ -11,9 +13,8 @@ source("NPP_08182015.R")
 ############################################
 
 ##### READ MAIN INPUT FILE #################
-RawData <- read.csv("TestData3.csv",header=T) #Read main data file with GLM outputs (physical input) and NPP input
+RawData <- read.csv(TimeSeriesFile,header=T) #Read main data file with GLM outputs (physical input) and NPP input
 RawData$datetime <- as.POSIXct(strptime(RawData$datetime,"%m/%d/%Y %H:%M")) #Convert time to POSIX
-
 #Fill time-series gaps (linear interpolation)
 ts_new <- data.frame(datetime = seq(RawData$datetime[1],RawData$datetime[nrow(RawData)],by="day")) #Interpolate gapless time-series
 InputData <- merge(RawData,ts_new,all=T)
@@ -22,12 +23,17 @@ for (col in 2:ncol(InputData)){
   InputData[,col] <- na.approx(InputData[,col])}
 ############################################
 
+##### READ PARAMETER FILE ##################
+parameters <- read.table(file = ParameterFile,row.names=1,header=TRUE,comment.char="#")
+############################################
+
 ##### General Lake Inputs and Parameters ###
-lakePerim <- 32448 #m
-DOC_conc_init <- 2.9  #g/m3
-lakeDepth <- InputData$LakeLevel[1] #m
-lakeArea <- InputData$SurfaceArea[1] #m^2
-lakeVol <- InputData$Volume[1] #m^3
+lakePerim <- parameters[row.names(parameters)=="LakePerimeter",1] #m
+lakeDepth <- parameters[row.names(parameters)=="LakeDepth",1] #m
+lakeArea <- parameters[row.names(parameters)=="LakeArea",1] #m^2
+lakeVol <- parameters[row.names(parameters)=="LakeVolume",1] #m^3
+DOC_conc_init <- parameters[row.names(parameters)=="DOC_init",1]  #g/m3
+POC_conc_init <- parameters[row.names(parameters)=="POC_init",1]  #Average POC concentration in water column (g/m^3)
 ############################################
 
 ###### Run Period and Time Step Setup #####
@@ -35,13 +41,8 @@ TimeStep <- as.numeric(InputData$datetime[2]-InputData$datetime[1]) #days
 steps <- nrow(InputData)
 ############################################
 
-
 ##### Sub-Topic Inputs: Sedimentation ######
-DOC_avg <- DOC_conc_init   #g/m3  Average DOC value in lake to initialize estimate of average POC
-POC_conc_avg <- 0.1*DOC_avg  #Average POC concentration in water column (g/m^3) ##HOW DO WE DETERMINE THIS PRE-MODEL-RUN?##
-MAR_sed_avg <- 72 #Mass accumulation rate of sediment (g sed/m^2/yr) ##REQUIRES DATA##
-Sed_oc_avg <-  4.5 #Percent of sediment estimated to be OC (%) ##REQUIRES DATA##
-BurialFactor <- 0.01 #(1/days) Parameter estimation of OC burial in sediments
+BurialFactor <- parameters[row.names(parameters)=="BurialFactor",1] #(1/days) Parameter estimation of OC burial in sediments
 ############################################
 
 ##### Sub-Topic Inputs: GPP/NPP ############
@@ -49,16 +50,16 @@ BurialFactor <- 0.01 #(1/days) Parameter estimation of OC burial in sediments
 ############################################
 
 ##### Sub-Topic Inputs: sw/GW ##############
-PC <- 0.76 #unitless: proportion of lake shore with canopy
-PW <- 0.0 #unitless: proportion of lake shore with wetlands
+PC <- parameters[row.names(parameters)=="PropCanopy",1] #unitless: proportion of lake shore with canopy
+PW <- parameters[row.names(parameters)=="PropWetlands",1] #unitless: proportion of lake shore with wetlands
 
-Aoc_year <- 1 #g/m/yr: aerial loading factor
-Woc_year <- 1 #g/m/yr: adjacent wetland loading factor
+Aoc_year <- parameters[row.names(parameters)=="AerialLoad",1] #g/m/yr: aerial loading factor
+Woc_year <- parameters[row.names(parameters)=="WetlandLoad",1] #g/m/yr: adjacent wetland loading factor
 
-prop_GW <- 0 # Unitless: proportion of Q_in that is from groundwater
-DOC_GW <- 10 # g/m3: DOC concentration in groundwater. 2-40 g/m3 per Hanson et al 2014
-DOC_SW <- 5.8 # g/m3: DOC concentration in surface water
-DOC_Precip <- 2 #g/m3: DOC concentration in precipitation
+prop_GW <- parameters[row.names(parameters)=="PropGW",1] # Unitless: proportion of Q_in that is from groundwater
+DOC_GW <- parameters[row.names(parameters)=="DOC_gw",1] # g/m3: DOC concentration in groundwater. 2-40 g/m3 per Hanson et al 2014
+DOC_SW <- parameters[row.names(parameters)=="DOC_sw",1] # g/m3: DOC concentration in surface water
+DOC_Precip <- parameters[row.names(parameters)=="DOC_precip",1] #g/m3: DOC concentration in precipitation
 ############################################
 
 ##### Declare Output Data Storage ##########
@@ -92,7 +93,7 @@ DOC_outflow <- data.frame(numeric(steps))
 ############################################
 
 ##### General Lake Variable Initialization ###############
-POC_conc[1,1] <- POC_conc_avg # #Initialize POC concentration as baseline average
+POC_conc[1,1] <- POC_conc_init # #Initialize POC concentration as baseline average
 DOC_conc[1,1] <- DOC_conc_init #Initialize DOC concentration g/m3
 ############################################
 
@@ -101,7 +102,8 @@ DOC_conc[1,1] <- DOC_conc_init #Initialize DOC concentration g/m3
 
 for (i in 1:(steps)){
   
-  Q_in <- InputData$TotInflow[i] #m3/s
+  Q_sw <- InputData$TotInflow[i] #m3/s
+  Q_gw <- Q_sw/(1-prop_GW) - Q_sw #m3/s; as a function of proportion of inflow that is GW
   Q_out <- InputData$TotOutflow[i] #m3/s: total outflow. Assume steady state pending dynamic output
   Rainfall <- InputData$Rain[i]/TimeStep #mm/day
   
@@ -110,7 +112,7 @@ for (i in 1:(steps)){
   NPPoutput$NPP_mass[i] <- NPPoutput$NPP[i]*lakeArea*TimeStep/1000 #g
 
   #Call SWGW Function
-  SWGWoutput <- SWGWFunction(Q_in,Rainfall,Aoc_year, PC, lakePerim, Woc_year, PW, DOC_GW, prop_GW, 
+  SWGWoutput <- SWGWFunction(Q_sw,Q_gw,Rainfall,Aoc_year, PC, lakePerim, Woc_year, PW, DOC_GW, prop_GW, 
                              DOC_SW, lakeArea) #change these inputs to iterative [i] values when inputs are dynamic
   SWGWData[i,1:8] <- SWGWoutput
   
@@ -120,7 +122,7 @@ for (i in 1:(steps)){
   
   #Call Sedimentation Function
   POC_mass <- POC_conc[i,1]*lakeVol
-  SedOutput <- SedimentationFunction(BurialFactor,TimeStep,lakeArea,lakeVol,DOC_avg,MAR_sed_avg,Sed_oc_avg,POC_mass)
+  SedOutput <- SedimentationFunction(BurialFactor,TimeStep,POC_mass)
   SedData[i,1:4] = SedOutput
   POC_sed_out[i,1] <- SedData$POC_burial[i] #g
   

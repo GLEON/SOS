@@ -1,4 +1,4 @@
-SWGWFunction <- function(Q_in,rainfall,Aoc_year, PC, lakePerim, Woc_year, PW, DOC_GW, prop_GW, 
+SWGWFunction <- function(Q_sw,Q_gw,rainfall,Aoc_year, PC, lakePerim, Woc_year, PW, DOC_GW, prop_GW, 
                          DOC_SW, lakeArea) {
   
   InflowData = data.frame(POC_Aerial=NA, DOC_Wetland=NA, 
@@ -14,10 +14,10 @@ SWGWFunction <- function(Q_in,rainfall,Aoc_year, PC, lakePerim, Woc_year, PW, DO
   InflowData$DOC_Wetland <- PW * Woc * lakePerim
   
   # Gw DOC (g/d)
-  InflowData$DOC_GW <- DOC_GW * (prop_GW * Q_in) * 86400 #g/d
+  InflowData$DOC_GW <- DOC_GW * Q_gw * 86400 #g/d
   
   # Sw DOC (g/d)
-  InflowData$DOC_SW <- DOC_SW * ((1-prop_GW)*Q_in) * 86400 #g/d
+  InflowData$DOC_SW <- DOC_SW * Q_sw * 86400 #g/d
 
   # Precipitation DOC (g/d)
   #Rainfall <- 2 #mm/d: precipitation input from meteorological timeseries(?) #commented out - met would be read in main program (DR, 7/26)
