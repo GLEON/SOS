@@ -1,5 +1,7 @@
-TimeSeriesFile <- "TestData3.csv"
-ParameterFile <- "ParameterInputs.txt"
+##### USER INPUT FILE NAMES ################
+TimeSeriesFile <- "./TroutLake/TestDataTrout.csv"
+ParameterFile <- "./TroutLake/ParameterInputsTrout.txt"
+############################################
 
 ##### LOAD PACKAGES ########################
 library(signal)
@@ -7,9 +9,9 @@ library(zoo)
 ############################################
 
 ##### LOAD FUNCTIONS #######################
-source("SedimentationFunctionDR.R")
-source("SwGwComplexFunctionDR.R")
-source("NPP.R")
+source("./R/Model/SOS_Sedimentation.R")
+source("./R/Model/SOS_SWGW.R")
+source("./R/Model/SOS_NPP.R")
 ############################################
 
 ##### READ MAIN INPUT FILE #################
@@ -92,10 +94,10 @@ POC_outflow <- data.frame(numeric(steps))
 DOC_outflow <- data.frame(numeric(steps))
 ############################################
 
-##### General Lake Variable Initialization ###############
+##### Carbon Concentration Initialization ################
 POC_conc[1,1] <- POC_conc_init # #Initialize POC concentration as baseline average
 DOC_conc[1,1] <- DOC_conc_init #Initialize DOC concentration g/m3
-############################################
+##########################################################
 
 ####################### MAIN PROGRAM #############################################
 ##################################################################################
@@ -140,11 +142,11 @@ for (i in 1:(steps)){
   DOC_flux$Flow_in[i] <- SWGW_mass_in$DOC[i]/lakeArea/(TimeStep/365)
   DOC_flux$Flow_out[i] <- DOC_outflow[i,1]/lakeArea/(TimeStep/365)                    
   
-  #Update POC and DOC concentration values for whole lake
+  #Update POC and DOC concentration values (g/m3) for whole lake
   POC_conc[i+1,1] <-  POC_conc[i,1] + ((NPPoutput$NPP_mass[i] + SWGW_mass_in$POC[i] - POC_outflow[i,1] - POC_sed_out[i,1] - SedData$POC_to_DIC[i])/lakeVol) #g/m3
   DOC_conc[i+1,1] <-  DOC_conc[i,1] + ((SWGW_mass_in$DOC[i] - DOC_outflow[i,1])/lakeVol) #g/m3
   
-  #POC and DOC load and output
+  #POC and DOC load (in) and fate (out) (g)
   POC_load$total[i] <- NPPoutput$NPP_mass[i] + SWGW_mass_in$POC[i] #g 
   POC_load$alloch[i] <- SWGW_mass_in$POC[i] #g
   POC_load$autoch[i] <- NPPoutput$NPP_mass[i] #g
@@ -177,11 +179,12 @@ DOCcheck <- (TotalDOCAllochIn + TotalDOCAutochIn - TotalDOCout) - DeltaDOC
 print(c("POC Balance:",POCcheck))
 print(c("DOC Balance:",DOCcheck))
 
+######################## END MAIN PROGRAM #############################################
+#######################################################################################
+
+#Define plotting time-series
 ConcOutputTimeSeries <- c(InputData$datetime,InputData$datetime[length(InputData$datetime)]+86400)
 OutputTimeSeries <- InputData$datetime
-
-#######################################################################################
-#######################################################################################
 
 #Plot POC and DOC fluxes in standardized units (g/m2/yr)
 xlabel <- "Date/Time"
