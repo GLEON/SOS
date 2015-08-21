@@ -60,4 +60,4 @@ Swmodel_input$Sum_m3s = Swmodel_input$Sum_ft3 * 0.0283168466 # Convert cfs to m3
 sw_inflow <- data.frame(datetime=Swmodel_input$Date, TotInflow=Swmodel_input$Sum_m3s)
 
 # Write .csv into Merge file
-write.csv(sw_inflow, file='./R/Merge/sw_inflow.csv')
+write.csv(sw_inflow, file='./TroutLake/Staging Files/sw_inflow.csv')
