@@ -25,6 +25,9 @@ for (col in 2:ncol(InputData)){
 ##### General Lake Inputs and Parameters ###
 lakePerim <- 32448 #m
 DOC_conc_init <- 2.9  #g/m3
+lakeDepth <- InputData$LakeLevel[1] #m
+lakeArea <- InputData$SurfaceArea[1] #m^2
+lakeVol <- InputData$Volume[1] #m^3
 ############################################
 
 ###### Run Period and Time Step Setup #####
@@ -59,12 +62,14 @@ DOC_Precip <- 2 #g/m3: DOC concentration in precipitation
 ############################################
 
 ##### Declare Output Data Storage ##########
-POC_conc <- data.frame(numeric(steps))
-DOC_conc <- data.frame(numeric(steps))
-POC_flux <- data.frame(NPP_in=numeric(steps),Flow_in=numeric(steps),Flow_out=numeric(steps),Sed_out=numeric(steps),MinResp_out=numeric(steps))
-DOC_flux <- data.frame(Flow_in=numeric(steps),Flow_out=numeric(steps))
-DOC_load <- data.frame(mass=numeric(steps),alloch=numeric(steps),autoch=numeric(steps))
-POC_load <- data.frame(mass=numeric(steps),alloch=numeric(steps),autoch=numeric(steps))
+POC_conc <- data.frame(numeric(steps)) #Record running g/m3 POC concentration of mixed lake
+DOC_conc <- data.frame(numeric(steps)) #Record running g/m3 DOC concentration of mixed lake
+POC_flux <- data.frame(NPP_in=numeric(steps),Flow_in=numeric(steps),Flow_out=numeric(steps),Sed_out=numeric(steps),MinResp_out=numeric(steps)) #Record POC flux (g/m2/yr) at each time step
+DOC_flux <- data.frame(Flow_in=numeric(steps),Flow_out=numeric(steps)) #Record DOC flux (g/m2/yr) at each time step
+DOC_load <- data.frame(total=numeric(steps),alloch=numeric(steps),autoch=numeric(steps)) #Record DOC load (g) at each time step
+POC_load <- data.frame(total=numeric(steps),alloch=numeric(steps),autoch=numeric(steps)) #Record POC load (g) at each time step
+DOC_out <- data.frame(total=numeric(steps)) #Record DOC removal (g) from system at each time step
+POC_out <- data.frame(total=numeric(steps)) #Record POC removal (g) from system at each time step
 ############################################
 
 ##### Declare Data Storage - Sed ###########
@@ -96,12 +101,9 @@ DOC_conc[1,1] <- DOC_conc_init #Initialize DOC concentration g/m3
 
 for (i in 1:(steps)){
   
-  lakeDepth <- InputData$LakeLevel[i] #m
-  lakeArea <- InputData$SurfaceArea[i] #m^2
-  lakeVol <- InputData$Volume[i] #m^3
   Q_in <- InputData$TotInflow[i] #m3/s
   Q_out <- InputData$TotOutflow[i] #m3/s: total outflow. Assume steady state pending dynamic output
-  Rainfall <- InputData$Rain[i]
+  Rainfall <- InputData$Rain[i]/TimeStep #mm/day
   
   #Call NPP Function
   NPPoutput$NPP[i] <- NPP(InputData$Chla[i],InputData$TP[i],InputData$SurfaceTemp[i]) #mg C/m^2/d
@@ -140,18 +142,38 @@ for (i in 1:(steps)){
   POC_conc[i+1,1] <-  POC_conc[i,1] + ((NPPoutput$NPP_mass[i] + SWGW_mass_in$POC[i] - POC_outflow[i,1] - POC_sed_out[i,1] - SedData$POC_to_DIC[i])/lakeVol) #g/m3
   DOC_conc[i+1,1] <-  DOC_conc[i,1] + ((SWGW_mass_in$DOC[i] - DOC_outflow[i,1])/lakeVol) #g/m3
   
-  #POC and DOC load output
-  #POC_load$mass[i] <- NPPoutput$NPP_mass[i] + SWGW_mass_in$POC[i] #- POC_outflow[i,1] - POC_sed_out[i,1] - SedData$POC_to_DIC[i] #g
-  #POC_load$alloch[i] <- SWGW_mass_in$POC[i]
-  #POC_load$autoch[i] <- NPPoutput$NPP_mass[i]
-  #DOC_load$mass[i] <- SWGW_mass_in$DOC[i] - DOC_outflow[i,1] #g
-  #DOC_load$alloch[i] <- SWGW_mass_in$DOC[i]
-  #DOC_load$autoch[i] <- 
+  #POC and DOC load and output
+  POC_load$total[i] <- NPPoutput$NPP_mass[i] + SWGW_mass_in$POC[i] #g 
+  POC_load$alloch[i] <- SWGW_mass_in$POC[i] #g
+  POC_load$autoch[i] <- NPPoutput$NPP_mass[i] #g
+  DOC_load$total[i] <- SWGW_mass_in$DOC[i] #g
+  DOC_load$alloch[i] <- SWGW_mass_in$DOC[i] #g
+  DOC_load$autoch[i] <- 0 #g
+  POC_out$total[i] <- POC_outflow[i,1] + POC_sed_out[i,1] + SedData$POC_to_DIC[i] #g
+  DOC_out$total[i] <- DOC_outflow[i,1] #g
   
   #Stop code and output error if concentrations go to negative
   if (POC_conc[i+1,1]<=0){stop("Negative POC concentration!")}
   if (DOC_conc[i+1,1]<=0){stop("Negative DOC concentration!")}
 }
+
+#Total carbon mass additions
+TotalPOCAllochIn <- sum(POC_load$alloch) #g
+TotalPOCAutochIn <- sum(POC_load$autoch) #g
+TotalDOCAllochIn <- sum(DOC_load$alloch) #g
+TotalDOCAutochIn <- sum(DOC_load$autoch) #g
+#Total carbon mass subtractions
+TotalPOCout <- sum(POC_out$total)
+TotalDOCout <- sum(DOC_out$total)
+#Change to total carbon stocks
+DeltaPOC <- POC_conc[steps+1,1]*lakeVol - POC_conc[1,1]*lakeVol
+DeltaDOC <- DOC_conc[steps+1,1]*lakeVol - DOC_conc[1,1]*lakeVol
+#Mass balance check (should be near zero)
+POCcheck <- (TotalPOCAllochIn + TotalPOCAutochIn - TotalPOCout) - DeltaPOC
+DOCcheck <- (TotalDOCAllochIn + TotalDOCAutochIn - TotalDOCout) - DeltaDOC
+#Return mass balance checks
+print(c("POC Balance:",POCcheck))
+print(c("DOC Balance:",DOCcheck))
 
 ConcOutputTimeSeries <- c(InputData$datetime,InputData$datetime[length(InputData$datetime)]+86400)
 OutputTimeSeries <- InputData$datetime
