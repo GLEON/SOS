@@ -7,9 +7,9 @@ NPP<-function(CHL,P,WT)
   a1=0.874
   
  #coefficients to predict GPP from chl and WT
- #b0+b1*log10(chl)+b2*WT
+ #log(NPP)=b0+b1*log10(chl)+b2*WT
  
-  b0=-1.18
+  b0=1.18
   b1=0.92
   b2=0.014
   ###########################################################################
@@ -26,7 +26,8 @@ NPP<-function(CHL,P,WT)
     
   }
   NPP<-b0+b1*log10(CHL)+b2*WT
-  return(NPP)
+  
+  return(10^NPP)
 }
 
 #P <- rnorm(10,80,2) #ug/L phosphorus concentration 
