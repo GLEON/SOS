@@ -1,7 +1,7 @@
 # Access USGS stream discharge data
 
-# Read in Trout Lake surface inflow gauge ID's (Alleq., Stevenson, North)
-trout_inflow <- c('05357225', '05357230', '05357215')
+# Read in Trout Lake surface inflow gauge ID's (Alleq., Stevenson, North... Trout River outflow)
+trout_inflow <- c('05357225', '05357230', '05357215', '05357245')
 # Read in gauge ID with less-continuous data (Mann Crk)
 mann_in <- '05357239'
 
@@ -51,13 +51,17 @@ val <- approx(x=mann_q_Date, y=mann_q, xout= dates, method='linear')$y
 Swmodel_input = cbind(Swmodel_input, data.frame(val))
 
 # Sum discharge from individual streams for each day
-Swmodel_input$Sum_ft3 <- rowSums(Swmodel_input[,-1])
+Swmodel_input$Sum_ft3 <- rowSums(Swmodel_input[,-c(1,5)])
 
 # Convert discharge to m3/sec
 Swmodel_input$Sum_m3s = Swmodel_input$Sum_ft3 * 0.0283168466 # Convert cfs to m3s-1
 
 # Isolate date and discharge (m3/s)
 sw_inflow <- data.frame(datetime=Swmodel_input$Date, TotInflow=Swmodel_input$Sum_m3s)
+sw_outflow <- data.frame(datetime=Swmodel_input$Date, TotInflow=Swmodel_input[,5])
 
-# Write .csv into Merge file
+# Write .csv for Sw Inflow
+write.csv(sw_inflow, file='./TroutLake/Staging Files/sw_inflow.csv')
+
+# Write .csv for Sw Outflow
 write.csv(sw_inflow, file='./TroutLake/Staging Files/sw_inflow.csv')
