@@ -50,15 +50,22 @@ for(i in 1:length(trout_inflow)){
 val <- approx(x=mann_q_Date, y=mann_q, xout= dates, method='linear')$y
 Swmodel_input = cbind(Swmodel_input, data.frame(val))
 
-# Sum discharge from individual streams for each day
-Swmodel_input$Sum_ft3 <- rowSums(Swmodel_input[,-c(1,5)])
+colnames(Swmodel_input) <- c('Date', 'Allequash Creek (Inflow cfs)', 'Stevenson Creek (Inflow cfs)',
+                             'North Creek (Inflow cfs)', 'Trout River (Outflow cfs)', 'Mann Creek (Inflow cfs)')
+
+# Sum discharge from individual streams for each day 
+Swmodel_input$SumInflow_ft3 <- rowSums(Swmodel_input[,-c(1,5)])
 
 # Convert discharge to m3/sec
-Swmodel_input$Sum_m3s = Swmodel_input$Sum_ft3 * 0.0283168466 # Convert cfs to m3s-1
+# Sum of inflow data
+Swmodel_input$Inflow_m3s = Swmodel_input$SumInflow_ft3 * 0.0283168466 # Convert cfs to m3s-1
+# Outflow data
+Swmodel_input$Outflow_m3s = Swmodel_input[,5] * 0.0283168466 # Convert cfs to m3s-1
 
 # Isolate date and discharge (m3/s)
-sw_inflow <- data.frame(datetime=Swmodel_input$Date, TotInflow=Swmodel_input$Sum_m3s)
-sw_outflow <- data.frame(datetime=Swmodel_input$Date, TotInflow=Swmodel_input[,5])
+# Outflow data based on Trout River surface outflow
+sw_inflow <- data.frame(datetime=Swmodel_input$Date, TotInflow=Swmodel_input$Inflow_m3s)
+sw_outflow <- data.frame(datetime=Swmodel_input$Date, TotOutflow=Swmodel_input$Outflow_m3s)
 
 # Write .csv for Sw Inflow
 write.csv(sw_inflow, file='./TroutLake/Staging Files/sw_inflow.csv')
