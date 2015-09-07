@@ -64,4 +64,4 @@ sw_outflow <- data.frame(datetime=Swmodel_input$Date, TotInflow=Swmodel_input[,5
 write.csv(sw_inflow, file='./TroutLake/Staging Files/sw_inflow.csv')
 
 # Write .csv for Sw Outflow
-write.csv(sw_inflow, file='./TroutLake/Staging Files/sw_inflow.csv')
+write.csv(sw_outflow, file='./TroutLake/Staging Files/sw_outflow.csv')
