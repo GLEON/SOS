@@ -52,6 +52,7 @@ Swmodel_input = cbind(Swmodel_input, data.frame(val))
 
 colnames(Swmodel_input) <- c('Date', 'Allequash Creek (Inflow cfs)', 'Stevenson Creek (Inflow cfs)',
                              'North Creek (Inflow cfs)', 'Trout River (Outflow cfs)', 'Mann Creek (Inflow cfs)')
+format(Swmodel_input$Date,"%m/%d/%Y")
 
 # Sum discharge from individual streams for each day 
 Swmodel_input$SumInflow_ft3 <- rowSums(Swmodel_input[,-c(1,5)])
