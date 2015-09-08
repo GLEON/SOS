@@ -1,9 +1,10 @@
 
 NPP<-function(CHL,P,WT)
 {
+  #! Document units on the input parameters
   
   #coefficients to predict chla from TP
-  a0=-0.390    
+  a0=-0.390   #! Units? Citation? 
   a1=0.874
   
  #coefficients to predict GPP from chl and WT
@@ -27,8 +28,16 @@ NPP<-function(CHL,P,WT)
   }
   NPP<-b0+b1*log10(CHL)+b2*WT
   
-  return(10^NPP)
+  #! We changed what is returned by dividing by 10
+  return(10^NPP / 10)
 }
+
+#! What is being returned by this function may be about 10x too high.
+#! for a lake with Chl = 10 ug/L and WT = 20, this results in NPP of about 240 mg/m2, or 0.24 g/m2 of NPP
+#! 0.24 g/m2 of NPP is about equal to the diel excursion, not the amount that makes it into the summer duration
+#! pool of OC, which might be closer to 0.024 (maybe less?);  For example, over the summer, the OC in Trout might increase by 
+#! 20% over baseline values.  If baseline is 2 g/m3, then increase would be 0.4 g/m3.  This would happen over about 100 days (?)
+#! Converted to the daily scale, that's about 0.004 g/m3.  If Trout were a 10 m deep lake, that would be 0.04 g/m2/d.
 
 #P <- rnorm(10,80,2) #ug/L phosphorus concentration 
 #WT <- rnorm(10,30,1) # degrees C : averaged over photic zone depth 
