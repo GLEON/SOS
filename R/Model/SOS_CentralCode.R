@@ -72,7 +72,7 @@ DOC_miner_const <- parameters[row.names(parameters)=="DOC_miner_const",1] #(1/da
 POC_conc <- data.frame(numeric(steps)) #Record running g/m3 POC concentration of mixed lake
 DOC_conc <- data.frame(numeric(steps)) #Record running g/m3 DOC concentration of mixed lake
 POC_flux <- data.frame(NPP_in=numeric(steps),Flow_in=numeric(steps),Flow_out=numeric(steps),Sed_out=numeric(steps)) #Record POC flux (g/m2/yr) at each time step
-DOC_flux <- data.frame(Flow_in=numeric(steps),Flow_out=numeric(steps)) #Record DOC flux (g/m2/yr) at each time step
+DOC_flux <- data.frame(Flow_in=numeric(steps),Flow_out=numeric(steps),Miner_out=numeric(steps)) #Record DOC flux (g/m2/yr) at each time step
 DOC_load <- data.frame(total=numeric(steps),alloch=numeric(steps),autoch=numeric(steps)) #Record DOC load (g) at each time step
 POC_load <- data.frame(total=numeric(steps),alloch=numeric(steps),autoch=numeric(steps)) #Record POC load (g) at each time step
 DOC_out <- data.frame(total=numeric(steps)) #Record DOC removal (g) from system at each time step
@@ -136,6 +136,9 @@ for (i in 1:(steps)){
   SedData[i,1:3] = SedOutput
   POC_sed_out[i,1] <- SedData$POC_burial[i] #g
   
+  #Calc DOC mineralization out #! Hilary and Paul's DOC mineralization klug
+  MinRespData$DOC_miner_mass[i] = DOC_conc[i,1]*lakeVol*DOC_miner_const # Current concentration multiplied by lakevolume and a mineralization constant in units of 1/d
+  
   #Calc outflow subtractions (assuming outflow concentrations = mixed lake concentrations)
   POC_outflow[i,1] <- POC_conc[i,1]*Q_out*60*60*24*TimeStep #g
   DOC_outflow[i,1] <- DOC_conc[i,1]*Q_out*60*60*24*TimeStep #g
@@ -145,13 +148,11 @@ for (i in 1:(steps)){
   POC_flux$Flow_in[i] <- SWGW_mass_in$POC[i]/lakeArea/(TimeStep/365)
   POC_flux$Flow_out[i] <- POC_outflow[i,1]/lakeArea/(TimeStep/365)
   POC_flux$Sed_out[i] <- POC_sed_out[i,1]/lakeArea/(TimeStep/365)
-  #POC_flux$MinResp_out[i] <- SedData$POC_to_DIC[i]/lakeArea/(TimeStep/365)
   
   DOC_flux$Flow_in[i] <- SWGW_mass_in$DOC[i]/lakeArea/(TimeStep/365)
-  DOC_flux$Flow_out[i] <- DOC_outflow[i,1]/lakeArea/(TimeStep/365)   
+  DOC_flux$Flow_out[i] <- DOC_outflow[i,1]/lakeArea/(TimeStep/365)  
+  DOC_flux$Miner_out[i] <- MinRespData$DOC_miner_mass[i]/lakeArea/(TimeStep/365)  
   
-  #! Hilary and Paul's DOC mineralization klug
-  MinRespData$DOC_miner_mass[i] = DOC_conc[i,1]*lakeVol*DOC_miner_const # Current concentration multiplied by lakevolume and a mineralization constant in units of 1/d
   
   #Update POC and DOC concentration values (g/m3) for whole lake
   #POC_conc[i+1,1] <-  POC_conc[i,1] + ((NPPdata$NPP_mass[i] + SWGW_mass_in$POC[i] - POC_outflow[i,1] - POC_sed_out[i,1] - SedData$POC_to_DIC[i])/lakeVol) #g/m3
@@ -166,7 +167,7 @@ for (i in 1:(steps)){
   DOC_load$total[i] <- SWGW_mass_in$DOC[i] #g
   DOC_load$alloch[i] <- SWGW_mass_in$DOC[i] #g
   DOC_load$autoch[i] <- 0 #g
-  #POC_out$total[i] <- POC_outflow[i,1] + POC_sed_out[i,1] + SedData$POC_to_DIC[i] #g
+
   POC_out$total[i] <- POC_outflow[i,1] + POC_sed_out[i,1] #g
   DOC_out$total[i] <- DOC_outflow[i,1] + MinRespData$DOC_miner_mass[i] #g
   
@@ -203,7 +204,7 @@ OutputTimeSeries <- InputData$datetime
 #Plot POC and DOC fluxes in standardized units (g/m2/yr)
 xlabel <- "Date/Time"
 ylabelPOC <- c("NPP POC In (g/m2/yr)","Flow POC In (g/m2/yr)","Flow POC Out (g/m2/yr)","Sed POC Out (g/m2/yr)")
-ylabelDOC <- c("Flow DOC In (g/m2/yr)","Flow  DOC Out (g/m2/yr)")
+ylabelDOC <- c("Flow DOC In (g/m2/yr)","Flow  DOC Out (g/m2/yr)","Mineralization DOC Out (g/m2/yr)")
 
 for (n in 1:ncol(POC_flux)){
   plot(OutputTimeSeries,POC_flux[,n],xlab=xlabel,ylab=ylabelPOC[n],type='l')
