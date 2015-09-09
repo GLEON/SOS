@@ -1,0 +1,5 @@
+Set parameter values in "ParameterInputs.xlsx"
+
+Once parameter values are updated in ".xlsx", save as ".txt" (tab delimited).
+
+Save ".txt" file to specific lake directory for model use. 
