@@ -1,7 +1,7 @@
 SWGWFunction <- function(Q_sw,Q_gw,rainfall,Aoc_year, PC, lakePerim, Woc_year, PW, DOC_GW, prop_GW, 
                          DOC_SW, lakeArea) {
   #! Per Table 4 of Hanson et al. 2014 (L&O), whould be ~1.15 g/m Shoreline/d (not per year)
-  InflowData = data.frame(POC_Aerial=NA, DOC_Wetland=NA, 
+  InflowData = data.frame(POC_Aerial=NA, POC_SW=NA, DOC_Wetland=NA, 
                           DOC_GW=NA, DOC_SW=NA, DailyRain=NA, 
                           DOC_Precip=NA, Load_DOC=NA, Load_POC=NA)
     
@@ -27,9 +27,14 @@ SWGWFunction <- function(Q_sw,Q_gw,rainfall,Aoc_year, PC, lakePerim, Woc_year, P
   
   #! Split out from the total POC equation the portion that is POC in the surface water inflow, and then track that separately.
   #! This will allow us to play with how POC is loaded due to, e.g., storm events (plus it's hidden as currently written).
-  # MAIN OUTPUTS: LOAD DOC & POC (g/d)
+  # LOAD DOC (g/d)
   InflowData$Load_DOC <- InflowData$DOC_Wetland + InflowData$DOC_GW + InflowData$DOC_SW + InflowData$DOC_Precip # g/d DOC
-  InflowData$Load_POC <- InflowData$POC_Aerial + InflowData$Load_DOC*0.1 # g/d POC roughly estimated as (0.1 * DOC)
+  
+  # Internal POC (g/d)
+  InflowData$POC_SW <- InflowData$Load_DOC*0.1
+  
+  # LOAD POC (g/d)
+  InflowData$Load_POC <- InflowData$POC_Aerial + InflowData$POC_SW # g/d POC roughly estimated as (0.1 * DOC)
   
   return(InflowData)
 }
