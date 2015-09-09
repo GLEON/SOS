@@ -123,7 +123,7 @@ for (i in 1:(steps)){
 
   #Call SWGW Function
   SWGW <- SWGWFunction(Q_sw,Q_gw,Rainfall,Aoc_year, PC, lakePerim, Woc_year, PW, DOC_GW, prop_GW, 
-                             DOC_SW, lakeArea) #change these inputs to iterative [i] values when inputs are dynamic
+                             DOC_SW, DOC_Precip, lakeArea) #change these inputs to iterative [i] values when inputs are dynamic
   SWGWData[i,1:9] <- SWGW
   
   #Calculate load from SWGW_in

@@ -1,5 +1,5 @@
 SWGWFunction <- function(Q_sw,Q_gw,rainfall,Aoc_year, PC, lakePerim, Woc_year, PW, DOC_GW, prop_GW, 
-                         DOC_SW, lakeArea) {
+                         DOC_SW, DOC_Precip,lakeArea) {
   #! Per Table 4 of Hanson et al. 2014 (L&O), whould be ~1.15 g/m Shoreline/d (not per year)
   InflowData = data.frame(POC_Aerial=NA, POC_SW=NA, DOC_Wetland=NA, 
                           DOC_GW=NA, DOC_SW=NA, DailyRain=NA, 
@@ -23,7 +23,6 @@ SWGWFunction <- function(Q_sw,Q_gw,rainfall,Aoc_year, PC, lakePerim, Woc_year, P
   #Rainfall <- 2 #mm/d: precipitation input from meteorological timeseries(?) #commented out - met would be read in main program (DR, 7/26)
   InflowData$DailyRain <- (Rainfall * 0.001) * lakeArea #m3/d: daily precip.
   InflowData$DOC_Precip <- DOC_Precip * InflowData$DailyRain #g/d
-  #! We do not see the value for DOC_Precip being passed into the function.  Typically, this is a bout 2 g/m3
   
   #! Split out from the total POC equation the portion that is POC in the surface water inflow, and then track that separately.
   #! This will allow us to play with how POC is loaded due to, e.g., storm events (plus it's hidden as currently written).
