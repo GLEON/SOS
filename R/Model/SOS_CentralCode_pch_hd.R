@@ -28,8 +28,16 @@ for (col in 2:ncol(InputData)){
 ############################################
 
 ##### READ PARAMETER FILE ##################
-parameters <- read.table(file = ParameterFile,row.names=1,header=TRUE,comment.char="#")
+parameters <- read.table(file = ParameterFile,header=TRUE,comment.char="#",stringsAsFactors = F)
 ############################################
+
+
+#! Instead of individual lines of code to label each parameter, you can do it this way 
+#! Although sometimes you are changing your parameter names. Maybe avoid this? 
+for (i in 1:nrow(parameters)) {
+  assign(parameters[i,1],parameters[i,2])  
+}
+
 
 ##### General Lake Inputs and Parameters ###
 lakePerim <- parameters[row.names(parameters)=="LakePerimeter",1] #m
