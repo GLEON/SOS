@@ -13,5 +13,5 @@ Resp <- function(DOC,CHL){
   #Assume O2 respired is one-to-one with grams of DOC removed
   Resp_DOC_out <- R #g C/m3/d
 
-  return(Resp_DOC_out/10)  
+  return(Resp_DOC_out/10)  #divided by ten to avoid crashing program
 }
