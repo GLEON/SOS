@@ -1,6 +1,8 @@
 
-NPP<-function(CHL,P,WT)
+GPP<-function(CHL,P,WT)
 {
+  
+  GPPdata <- data.frame(GPP_DOC_rate=NA,GPP_POC_rate=NA)
   #! Document units on the input parameters
   
   #coefficients to predict chla from TP
@@ -8,7 +10,7 @@ NPP<-function(CHL,P,WT)
   a1=0.874
   
  #coefficients to predict GPP from chl and WT
- #log(NPP)=b0+b1*log10(chl)+b2*WT
+ #log(GPP)=b0+b1*log10(chl)+b2*WT
  
   b0=1.18
   b1=0.92
@@ -26,15 +28,22 @@ NPP<-function(CHL,P,WT)
     }
     
   }
-  NPP<-b0+b1*log10(CHL)+b2*WT
+  GPP_rate <- 10^(b0+b1*log10(CHL)+b2*WT) #mg C/m2/d
+ 
+  GPP_Percent_DOC <- 71.4*CHL^(-0.22) #GPP as DOC, estimated as equal to 
+  #%POC respired because POC most be converted to DOC to eventually be respired.
+  #Citation, Mindy? This value represents fraction of GPP that becomes DOC
+ 
+  GPPdata$GPP_DOC_rate <- GPP_rate*(GPP_Percent_DOC/100)  #mg C/m2/d
+  GPPdata$GPP_POC_rate <- GPP_rate*(1-(GPP_Percent_DOC/100))  #mg C/m2/d
   
   #! We changed what is returned by dividing by 10
-  return(10^NPP / 10)
+  return(GPPdata)
 }
 
 #! What is being returned by this function may be about 10x too high.
-#! for a lake with Chl = 10 ug/L and WT = 20, this results in NPP of about 240 mg/m2, or 0.24 g/m2 of NPP
-#! 0.24 g/m2 of NPP is about equal to the diel excursion, not the amount that makes it into the summer duration
+#! for a lake with Chl = 10 ug/L and WT = 20, this results in GPP of about 240 mg/m2, or 0.24 g/m2 of GPP
+#! 0.24 g/m2 of GPP is about equal to the diel excursion, not the amount that makes it into the summer duration
 #! pool of OC, which might be closer to 0.024 (maybe less?);  For example, over the summer, the OC in Trout might increase by 
 #! 20% over baseline values.  If baseline is 2 g/m3, then increase would be 0.4 g/m3.  This would happen over about 100 days (?)
 #! Converted to the daily scale, that's about 0.004 g/m3.  If Trout were a 10 m deep lake, that would be 0.04 g/m2/d.
@@ -44,5 +53,5 @@ NPP<-function(CHL,P,WT)
 #CHL <- rnorm(10,100,0.3) #chlorophyll-a concentration (ug/L)
 
 
-#x<-NPP(CHL,P,WT) #mgC/ m-2/ day-1
+#x<-GPP(CHL,P,WT) #mgC/ m-2/ day-1
 

@@ -1,4 +1,4 @@
-SWGWFunction <- function(Q_sw,Q_gw,rainfall,Aoc_year, PC, lakePerim, Woc_year, PW, DOC_GW, prop_GW, 
+SWGWFunction <- function(Q_sw,Q_gw,rainfall,Aoc_day, PC, lakePerim, Woc_day, PW, DOC_GW, prop_GW, 
                          DOC_SW, DOC_Precip,lakeArea) {
   #! Per Table 4 of Hanson et al. 2014 (L&O), whould be ~1.15 g/m Shoreline/d (not per year)
   InflowData = data.frame(POC_Aerial=NA, POC_SW=NA, DOC_Wetland=NA, 
@@ -6,12 +6,10 @@ SWGWFunction <- function(Q_sw,Q_gw,rainfall,Aoc_year, PC, lakePerim, Woc_year, P
                           DOC_Precip=NA, Load_DOC=NA, Load_POC=NA)
     
   # Aerial POC (g/d)
-  Aoc = Aoc_year/365 #g/m/d: aerial loading factor
-  InflowData$POC_Aerial <- (PC*Aoc*lakePerim) + ((1-PC) *0.2* Aoc * lakePerim)
+  InflowData$POC_Aerial <- (PC*Aoc_day*lakePerim) + ((1-PC) *0.2* Aoc_day * lakePerim)
   
   # Wetland DOC (g/d)
-  Woc = Woc_year/365 #g/m/d: adjacent wetland loading factor
-  InflowData$DOC_Wetland <- PW * Woc * lakePerim
+  InflowData$DOC_Wetland <- PW * Woc_day * lakePerim
   
   # Gw DOC (g/d)
   InflowData$DOC_GW <- DOC_GW * Q_gw * 86400 #g/d

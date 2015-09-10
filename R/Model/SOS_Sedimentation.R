@@ -8,11 +8,6 @@ SedimentationFunction <- function(BurialFactor,TimeStep,POC_mass){
   
   ##OUTPUTS############################
   FunData$POC_burial <- FunData$MAR_oc*(TimeStep/1) #g; Timestep with conversion from years to timestep units - days)
-
-  #FunData$POC_to_DIC <- POC_mass*0.01*(TimeStep/1) #g (Consumption, respiration, etc. See Connolly and COffin 1995)
-
-  #! Not sure what the POC to DIC represents?  Is it mineralization of POC in the water column? If so, should not be in the
-  #! Sedimentation function
   
   return(FunData)
 }
