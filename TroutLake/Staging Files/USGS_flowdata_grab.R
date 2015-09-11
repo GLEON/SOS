@@ -9,7 +9,7 @@ mann_in <- '05357239'
 Sw_Qin <- list()
 
 # Set start date for data grab. Set end date if desired (not done here)
-startDate <- '2005-01-01'
+startDate <- '2014-05-01'
 
 # Indicate desired variable (here, code 00060 is for Discharge)
 pcode <- '00060' # Discharge for trout_inflow
@@ -50,8 +50,9 @@ for(i in 1:length(trout_inflow)){
 val <- approx(x=mann_q_Date, y=mann_q, xout= dates, method='linear')$y
 Swmodel_input = cbind(Swmodel_input, data.frame(val))
 
-colnames(Swmodel_input) <- c('Date', 'Allequash Creek (Inflow cfs)', 'Stevenson Creek (Inflow cfs)',
-                             'North Creek (Inflow cfs)', 'Trout River (Outflow cfs)', 'Mann Creek (Inflow cfs)')
+colnames(Swmodel_input) <- c('Date', 'Stevenson Creek (Inflow cfs)', 'North Creek (Inflow cfs)', 
+                             'Allequash Creek (Inflow cfs)', 'Trout River (Outflow cfs)', 
+                             'Mann Creek (Inflow cfs)')
 format(Swmodel_input$Date,"%m/%d/%Y")
 
 # Sum discharge from individual streams for each day 
@@ -62,6 +63,11 @@ Swmodel_input$SumInflow_ft3 <- rowSums(Swmodel_input[,-c(1,5)])
 Swmodel_input$Inflow_m3s = Swmodel_input$SumInflow_ft3 * 0.0283168466 # Convert cfs to m3s-1
 # Outflow data
 Swmodel_input$Outflow_m3s = Swmodel_input[,5] * 0.0283168466 # Convert cfs to m3s-1
+# Add column for ratio of outflow to known surface inflow
+Swmodel_input$Out.vs.In = Swmodel_input$Outflow_m3s / Swmodel_input$Inflow_m3s
+
+# Write .csv of all inflow/outflow data
+write.csv(Swmodel_input, file='./TroutLake/Staging Files/TL_Variables/flow_data.csv')
 
 # Isolate date and discharge (m3/s)
 # Outflow data based on Trout River surface outflow
@@ -69,7 +75,7 @@ sw_inflow <- data.frame(datetime=Swmodel_input$Date, TotInflow=Swmodel_input$Inf
 sw_outflow <- data.frame(datetime=Swmodel_input$Date, TotOutflow=Swmodel_input$Outflow_m3s)
 
 # Write .csv for Sw Inflow
-write.csv(sw_inflow, file='./TroutLake/Staging Files/sw_inflow.csv')
+write.csv(sw_inflow, file='./TroutLake/Staging Files/TL_Variables/sw_inflow.csv')
 
 # Write .csv for Sw Outflow
-write.csv(sw_outflow, file='./TroutLake/Staging Files/sw_outflow.csv')
+write.csv(sw_outflow, file='./TroutLake/Staging Files/TL_Variables/sw_outflow.csv')
