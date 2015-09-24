@@ -4,14 +4,27 @@ GPP<-function(CHL,P,WT)
   
   GPPdata <- data.frame(GPP_DOC_rate=NA,GPP_POC_rate=NA)
   #! Document units on the input parameters
+  #M = Mindy comments 
+  
+  #coefficients to predict chla from TP
+  #M Prairie et al. 1989
+  #M log(chl a)= -0.390 + 0.874 log(TP)
+  #M chla and TP reported in ug/L
   
   #coefficients to predict chla from TP
   a0=-0.390   #! Units? Citation? 
   a1=0.874
   
- #coefficients to predict GPP from chl and WT
- #log(GPP)=b0+b1*log10(chl)+b2*WT
- 
+  #coefficients to predict GPP from chl and WT
+  #log(GPP)=b0+b1*log10(chl)+b2*WT
+  
+  #M Morin et al. 1999
+  #M Areal chl a : mg chl a m-2
+  #M Authors converted chl a mass per volume to areal values by integrating 
+  #M over photic zone depth defined in original papers 
+  #M Temp degrees C
+  #M GPP output in g m-2 d-1
+  
   b0=1.18
   b1=0.92
   b2=0.014
@@ -33,6 +46,7 @@ GPP<-function(CHL,P,WT)
   GPP_Percent_DOC <- 71.4*CHL^(-0.22) #GPP as DOC, estimated as equal to 
   #%POC respired because POC most be converted to DOC to eventually be respired.
   #Citation, Mindy? This value represents fraction of GPP that becomes DOC
+  #M Pace and Prairie 2005, Ch. 7: Respiration in Lakes 
  
   GPPdata$GPP_DOC_rate <- GPP_rate*(GPP_Percent_DOC/100)  #mg C/m2/d
   GPPdata$GPP_POC_rate <- GPP_rate*(1-(GPP_Percent_DOC/100))  #mg C/m2/d
