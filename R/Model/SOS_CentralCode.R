@@ -145,7 +145,7 @@ for (i in 1:(steps)){
   MinRespData$DOC_resp_mass[i] <- DOC_resp_rate*lakeVol*TimeStep #g C
   
   #Calc DOC mineralization out #! Hilary and Paul's DOC mineralization klug
-  MinRespData$DOC_miner_mass[i] = DOC_conc[i,1]*lakeVol*DOC_miner_const # Current concentration multiplied by lakevolume and a mineralization constant in units of 1/d
+  MinRespData$DOC_miner_mass[i] = DOC_conc[i,1]*lakeVol*DOC_miner_const #Current concentration multiplied by lakevolume and a mineralization constant in units of 1/d
   
   #Calc outflow subtractions (assuming outflow concentrations = mixed lake concentrations)
   POC_outflow[i,1] <- POC_conc[i,1]*Q_out*60*60*24*TimeStep #g
