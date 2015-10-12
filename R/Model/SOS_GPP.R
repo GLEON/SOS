@@ -50,8 +50,7 @@ GPP<-function(CHL,P,WT)
  
   GPPdata$GPP_DOC_rate <- GPP_rate*(GPP_Percent_DOC/100)  #mg C/m2/d
   GPPdata$GPP_POC_rate <- GPP_rate*(1-(GPP_Percent_DOC/100))  #mg C/m2/d
-  
-  #! We changed what is returned by dividing by 10
+
   return(GPPdata)
 }
 
