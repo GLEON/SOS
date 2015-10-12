@@ -101,7 +101,7 @@ DOC_outflow <- data.frame(numeric(steps))
 ############################################
 
 ##### Declare Data Storage - Mineralization/Respiration ###########
-MinRespData <- data.frame(DOC_miner_mass=numeric(steps),DOC_resp_mass=numeric(steps))
+MineralRespData <- data.frame(DOC_miner_mass=numeric(steps),DOC_resp_mass=numeric(steps))
 ############################################
 
 ##### Carbon Concentration Initialization ################
@@ -114,7 +114,7 @@ DOC_conc[1,1] <- DOC_conc_init #Initialize DOC concentration g/m3
 
 for (i in 1:(steps)){
   
-  Q_sw <- InputData$TotInflow[i] #m3/s
+  Q_sw <- InputData$TotInflow[i] #m3/s surface water flowrate at i
   Q_gw <- Q_sw/(1-prop_GW) - Q_sw #m3/s; as a function of proportion of inflow that is GW
   Q_out <- InputData$TotOutflow[i] #m3/s: total outflow. Assume steady state pending dynamic output
   Rainfall <- InputData$Rain[i]/TimeStep #mm/day
@@ -142,10 +142,10 @@ for (i in 1:(steps)){
   
   #Call respiration function
   DOC_resp_rate <- Resp(DOC_conc[i,1],InputData$Chla[i]) #g C/m3/d
-  MinRespData$DOC_resp_mass[i] <- DOC_resp_rate*lakeVol*TimeStep #g C
+  MineralRespData$DOC_resp_mass[i] <- DOC_resp_rate*lakeVol*TimeStep #g C
   
   #Calc DOC mineralization out #! Hilary and Paul's DOC mineralization klug
-  MinRespData$DOC_miner_mass[i] = DOC_conc[i,1]*lakeVol*DOC_miner_const # Current concentration multiplied by lakevolume and a mineralization constant in units of 1/d
+  MineralRespData$DOC_miner_mass[i] = DOC_conc[i,1]*lakeVol*DOC_miner_const # Current concentration multiplied by lakevolume and a mineralization constant in units of 1/d
   
   #Calc outflow subtractions (assuming outflow concentrations = mixed lake concentrations)
   POC_outflow[i,1] <- POC_conc[i,1]*Q_out*60*60*24*TimeStep #g
@@ -160,14 +160,14 @@ for (i in 1:(steps)){
   DOC_flux$Flow_in[i] <- SWGW_mass_in$DOC[i]/lakeArea/(TimeStep/365)
   DOC_flux$GPP_in[i] <- GPPdata$DOC_mass[i]/lakeArea/(TimeStep/365)
   DOC_flux$Flow_out[i] <- DOC_outflow[i,1]/lakeArea/(TimeStep/365) 
-  DOC_flux$Resp_out[i] <- MinRespData$DOC_resp_mass[i]/lakeArea/(TimeStep/365) 
-  DOC_flux$Miner_out[i] <- MinRespData$DOC_miner_mass[i]/lakeArea/(TimeStep/365)  
+  DOC_flux$Resp_out[i] <- MineralRespData$DOC_resp_mass[i]/lakeArea/(TimeStep/365) 
+  DOC_flux$Miner_out[i] <- MineralRespData$DOC_miner_mass[i]/lakeArea/(TimeStep/365)  
   
   
   #Update POC and DOC concentration values (g/m3) for whole lake
   #POC_conc[i+1,1] <-  POC_conc[i,1] + ((GPPdata$GPP_mass[i] + SWGW_mass_in$POC[i] - POC_outflow[i,1] - POC_sed_out[i,1] - SedData$POC_to_DIC[i])/lakeVol) #g/m3
   POC_conc[i+1,1] <-  POC_conc[i,1] + ((GPPdata$POC_mass[i] + SWGW_mass_in$POC[i] - POC_outflow[i,1] - POC_sed_out[i,1])/lakeVol) #g/m3
-  DOC_conc[i+1,1] <-  DOC_conc[i,1] + ((GPPdata$DOC_mass[i] + SWGW_mass_in$DOC[i] - DOC_outflow[i,1] - MinRespData$DOC_resp_mass[i] - MinRespData$DOC_miner_mass[i])/lakeVol) #g/m3
+  DOC_conc[i+1,1] <-  DOC_conc[i,1] + ((GPPdata$DOC_mass[i] + SWGW_mass_in$DOC[i] - DOC_outflow[i,1] - MineralRespData$DOC_resp_mass[i] - MineralRespData$DOC_miner_mass[i])/lakeVol) #g/m3
   
   #POC and DOC load (in) and fate (out) (g)
   POC_load$total[i] <- GPPdata$POC_mass[i] + SWGW_mass_in$POC[i] #g 
@@ -178,7 +178,7 @@ for (i in 1:(steps)){
   DOC_load$autoch[i] <- GPPdata$DOC_mass[i] #g
 
   POC_out$total[i] <- POC_outflow[i,1] + POC_sed_out[i,1] #g
-  DOC_out$total[i] <- DOC_outflow[i,1] + MinRespData$DOC_resp_mass[i] + MinRespData$DOC_miner_mass[i]  #g
+  DOC_out$total[i] <- DOC_outflow[i,1] + MineralRespData$DOC_resp_mass[i] + MineralRespData$DOC_miner_mass[i]  #g
   
   #Stop code and output error if concentrations go to negative
   if (POC_conc[i+1,1]<=0){stop("Negative POC concentration!")}
