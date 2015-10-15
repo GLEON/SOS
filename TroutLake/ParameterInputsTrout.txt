@@ -19,3 +19,4 @@ DOC_sw	5.8	g/m3
 DOC_precip	2	g/m3
 #Min/Resp Parameters		
 DOC_miner_const	0.003	1/days
+RespParam	0.001	unitless
