@@ -13,9 +13,10 @@ PropCanopy	0.76	unitless
 PropWetlands	0	unitless
 AerialLoad	1	gPOC/m/d
 WetlandLoad	1	gDOC/m/d
-PropGW	0	unitless
+PropGW	0.19	unitless
 DOC_gw	10	g/m3
 DOC_sw	5.8	g/m3
 DOC_precip	2	g/m3
 #Min/Resp Parameters		
-DOC_miner_const	0.005	1/days
+DOC_miner_const	0.003	1/days
+RespParam	0.001	unitless
