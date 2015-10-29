@@ -128,7 +128,7 @@ for (i in 1:(steps)){
 
   #Call SWGW Function
   SWGW <- SWGWFunction(Q_sw,Q_gw,Rainfall,Aoc_day, PC, lakePerim, Woc_day, PW, DOC_GW, prop_GW, 
-                             DOC_SW, DOC_Precip, lakeArea) #change these inputs to iterative [i] values when inputs are dynamic
+                             InputData$SwDOC[i], DOC_Precip, lakeArea) #change these inputs to iterative [i] values when inputs are dynamic
   SWGWData[i,1:9] <- SWGW
   
   #Calculate load from SWGW_in
@@ -229,7 +229,11 @@ plot(ConcOutputTimeSeries,POC_conc[,1],xlab=xlabel,ylab="POC Conc (g/m3)",type="
 plot(ConcOutputTimeSeries,DOC_conc[,1],xlab=xlabel,ylab="DOC Conc (g/m3)",type="l")
 
 
-
-
-
+par(mfrow=c(5,1))
+par(mar=c(2,4))
+plot(InputData$datetime,InputData$SwDOC*InputData$TotInflow,xlab=xlabel,ylab="Inflow DOC (g/s)",type="l")
+plot(InputData$datetime,InputData$Chla,xlab=xlabel,ylab="Chl-a (g/m3)",type="l")
+plot(InputData$datetime,InputData$TP,xlab=xlabel,ylab="TP (g/m3)",type="l")
+plot(ConcOutputTimeSeries,POC_conc[,1],xlab=xlabel,ylab="POC Conc (g/m3)",type="l")
+plot(ConcOutputTimeSeries,DOC_conc[,1],xlab=xlabel,ylab="DOC Conc (g/m3)",type="l")
 
