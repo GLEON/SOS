@@ -62,7 +62,7 @@ Woc_day <- parameters[row.names(parameters)=="WetlandLoad",1] #g/m/yr: adjacent 
 
 prop_GW <- parameters[row.names(parameters)=="PropGW",1] # Unitless: proportion of Q_in that is from groundwater
 DOC_GW <- parameters[row.names(parameters)=="DOC_gw",1] # g/m3: DOC concentration in groundwater. 2-40 g/m3 per Hanson et al 2014
-DOC_SW <- parameters[row.names(parameters)=="DOC_sw",1] # g/m3: DOC concentration in surface water
+#Changed to dynamic values in time-series file DOC_SW <- parameters[row.names(parameters)=="DOC_sw",1] # g/m3: DOC concentration in surface water
 DOC_Precip <- parameters[row.names(parameters)=="DOC_precip",1] #g/m3: DOC concentration in precipitation
 ############################################
 
@@ -115,20 +115,20 @@ DOC_conc[1,1] <- DOC_conc_init #Initialize DOC concentration g/m3
 
 for (i in 1:(steps)){
   
-  Q_sw <- InputData$TotInflow[i] #m3/s surface water flowrate at i
+  Q_sw <- InputData$FlowIn[i] #m3/s surface water flowrate at i
   Q_gw <- Q_sw/(1-prop_GW) - Q_sw #m3/s; as a function of proportion of inflow that is GW
-  Q_out <- InputData$TotOutflow[i] #m3/s: total outflow. Assume steady state pending dynamic output
+  Q_out <- InputData$FlowOut[i] #m3/s: total outflow. Assume steady state pending dynamic output
   Rainfall <- InputData$Rain[i]/TimeStep #mm/day
   
   #Call NPP Function
-  RawProduction <- NPP(InputData$Chla[i],InputData$TP[i],InputData$SurfaceTemp[i]) #mg C/m^2/d
+  RawProduction <- NPP(InputData$Chla[i],InputData$TP[i],InputData$EpiTemp[i]) #mg C/m^2/d
   NPPdata[i,1:2] <- RawProduction
   NPPdata$DOC_mass[i] <- NPPdata$DOC_rate[i]*lakeArea*TimeStep/1000 #g
   NPPdata$POC_mass[i] <- NPPdata$POC_rate[i]*lakeArea*TimeStep/1000 #g
 
   #Call SWGW Function
   SWGW <- SWGWFunction(Q_sw,Q_gw,Rainfall,Aoc_day, PC, lakePerim, Woc_day, PW, DOC_GW, prop_GW, 
-                             DOC_SW, DOC_Precip, lakeArea) #change these inputs to iterative [i] values when inputs are dynamic
+                             InputData$SW_DOC[i], DOC_Precip, lakeArea) #change these inputs to iterative [i] values when inputs are dynamic
   SWGWData[i,1:9] <- SWGW
   
   #Calculate load from SWGW_in
@@ -142,7 +142,7 @@ for (i in 1:(steps)){
   POC_sed_out[i,1] <- SedData$POC_burial[i] #g
   
   #Call respiration function
-  DOC_resp_rate <- Resp(DOC_conc[i,1],InputData$SurfaceTemp[i],RespParam) #g C/m3/d ##CHANGE TO AVERAGE OR LAYER TEMP WHEN AVAILABLE IN TIME SERIES
+  DOC_resp_rate <- Resp(DOC_conc[i,1],InputData$EpiTemp[i],RespParam) #g C/m3/d ##CHANGE TO AVERAGE OR LAYER TEMP WHEN AVAILABLE IN TIME SERIES
   MineralRespData$DOC_resp_mass[i] <- DOC_resp_rate*lakeVol*TimeStep #g C
   
   #Calc DOC mineralization out #! Hilary and Paul's DOC mineralization klug
@@ -229,7 +229,11 @@ plot(ConcOutputTimeSeries,POC_conc[,1],xlab=xlabel,ylab="POC Conc (g/m3)",type="
 plot(ConcOutputTimeSeries,DOC_conc[,1],xlab=xlabel,ylab="DOC Conc (g/m3)",type="l")
 
 
-
-
-
+par(mfrow=c(5,1))
+par(mar=c(2,4))
+plot(InputData$datetime,InputData$SW_DOC*InputData$FlowIn,xlab=xlabel,ylab="Inflow DOC (g/s)",type="l")
+plot(InputData$datetime,InputData$Chla,xlab=xlabel,ylab="Chl-a (g/m3)",type="l")
+plot(InputData$datetime,InputData$TP,xlab=xlabel,ylab="TP (g/m3)",type="l")
+plot(ConcOutputTimeSeries,POC_conc[,1],xlab=xlabel,ylab="POC Conc (g/m3)",type="l")
+plot(ConcOutputTimeSeries,DOC_conc[,1],xlab=xlabel,ylab="DOC Conc (g/m3)",type="l")
 
