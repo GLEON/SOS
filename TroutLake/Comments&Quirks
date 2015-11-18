@@ -1,0 +1,23 @@
+This file is to describe intricacies of data collection and/or massaging that went into the Trout Lake input data.
+
+TestDataTrout.csv: Description of how each data column was obtained
+- datetime: Daily time (00:00 hours) from 6/16/2014 to 6/25/2015
+
+- Volume: Constant volume based on XXXXXXXXXXXX
+
+- FlowIn is comprised of four known surface water flows (Stevenson, Allequash, North Creek, Mann Creek). 
+Stevenson, Allequash, and North Creek have USGS gauges (05357225, 05357215, 05357230 respectively)
+
+- FlowOut
+
+- Rain
+
+- HypoTemp 
+
+- EpiTemp
+
+- TP
+
+- Chla
+
+- SW_DOC
