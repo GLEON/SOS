@@ -19,8 +19,15 @@ USGS and daily estimates of discharge using the file USGS_flowdata_grab.R
 
 - EpiTemp
 
-- TP
+- TP: Total phosphorus was obtained via the North Temperatate Lakes LTER data portal 
+(https://lter.limnology.wisc.edu/datacatalog/search, file == North Temperate Lakes LTER: Chemical Limnology of Primary Study Lakes: Nutrients, pH and Carbon 1981 - current).
+We downloaded data from 2005-2013 (last year data available) and calculated mean unfiltered total phosphorus ('totpuf', microgramPerLiter) 
+across sampled depths for each sampling day. Data were then interpolated to daily values. These functions were performed using the file gather_chla_TP.R
 
-- Chla
+- Chla: Chlorophyll-a data was obtained via the North Temperate Lakes LTER data portal 
+(https://lter.limnology.wisc.edu/datacatalog/search, file == North Temperate Lakes LTER: Chlorophyll - Trout Lake Area 1981 - current)
+Chl-a from multiple depths (range: 0-32 meters) was sampled approximately monthly (fortnightly during ice-free season - every 6 weeks during 
+ice-covered season). We downloaded chl-a data from 2005-2013 (last year data available) and calculated mean chl-a concentration across sampled depths
+for each sampling day. Data were then interpolated to daily values. These functions were performed using the file gather_chla_TP.R
 
 - SW_DOC
