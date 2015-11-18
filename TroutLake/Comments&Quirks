@@ -5,12 +5,15 @@ TestDataTrout.csv: Description of how each data column was obtained
 
 - Volume: Constant volume based on XXXXXXXXXXXX
 
-- FlowIn is comprised of four known surface water flows (Stevenson, Allequash, North Creek, Mann Creek). 
-Stevenson, Allequash, and North Creek have USGS gauges (05357225, 05357215, 05357230 respectively)
+- FlowIn: Comprised of four known surface water flows (Stevenson, Allequash, North Creek, Mann Creek). 
+Stevenson, Allequash, and North Creek have USGS gauges (05357225, 05357215, 05357230 respectively). Mann Creek includes 
+less frequent point estimates of water discharge. Based on gauged flows, surface flows + estimated groundwater flows 
+were less than the outflow (FlowOut, below). FlowIn was thus set equal to gauged FlowOut.
 
-- FlowOut
+- FlowOut: Outflow volume from the one surface water outlet (Trout River: USGS gauge 05357245). Flow data compiled from
+USGS and daily estimates of discharge using the file USGS_flowdata_grab.R
 
-- Rain
+- Rain: Currently no precipitation data is included for the test period (all values == 0).
 
 - HypoTemp 
 
