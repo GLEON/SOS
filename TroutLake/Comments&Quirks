@@ -1,0 +1,33 @@
+This file is to describe intricacies of data collection and/or massaging that went into the Trout Lake input data.
+
+TestDataTrout.csv: Description of how each data column was obtained
+- datetime: Daily time (00:00 hours) from 6/16/2014 to 6/25/2015
+
+- Volume: Constant volume based on XXXXXXXXXXXX
+
+- FlowIn: Comprised of four known surface water flows (Stevenson, Allequash, North Creek, Mann Creek). 
+Stevenson, Allequash, and North Creek have USGS gauges (05357225, 05357215, 05357230 respectively). Mann Creek includes 
+less frequent point estimates of water discharge. Based on gauged flows, surface flows + estimated groundwater flows 
+were less than the outflow (FlowOut, below). FlowIn was thus set equal to gauged FlowOut.
+
+- FlowOut: Outflow volume from the one surface water outlet (Trout River: USGS gauge 05357245). Flow data compiled from
+USGS and daily estimates of discharge using the file USGS_flowdata_grab.R
+
+- Rain: Currently no precipitation data is included for the test period (all values == 0).
+
+- HypoTemp 
+
+- EpiTemp
+
+- TP: Total phosphorus was obtained via the North Temperatate Lakes LTER data portal 
+(https://lter.limnology.wisc.edu/datacatalog/search, file == North Temperate Lakes LTER: Chemical Limnology of Primary Study Lakes: Nutrients, pH and Carbon 1981 - current).
+We downloaded data from 2005-2013 (last year data available) and calculated mean unfiltered total phosphorus ('totpuf', microgramPerLiter) 
+across sampled depths for each sampling day. Data were then interpolated to daily values. These functions were performed using the file gather_chla_TP.R
+
+- Chla: Chlorophyll-a data was obtained via the North Temperate Lakes LTER data portal 
+(https://lter.limnology.wisc.edu/datacatalog/search, file == North Temperate Lakes LTER: Chlorophyll - Trout Lake Area 1981 - current)
+Chl-a from multiple depths (range: 0-32 meters) was sampled approximately monthly (fortnightly during ice-free season - every 6 weeks during 
+ice-covered season). We downloaded chl-a data from 2005-2013 (last year data available) and calculated mean chl-a concentration across sampled depths
+for each sampling day. Data were then interpolated to daily values. These functions were performed using the file gather_chla_TP.R
+
+- SW_DOC
