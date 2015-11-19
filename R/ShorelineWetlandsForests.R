@@ -33,7 +33,28 @@ lakebuffer = buffer(lakes, width=30, dissolve=F) #meters (mapping unit of input 
 buffer_ring = symdif(lakebuffer,lakes) # symmetrical difference vector operation
 #plot(buffer_ring)
 
+##################### Added by HD ###
+# Area of lakes and buffer zone
+lakeAreas = sapply(slot(lakes, "polygons"), slot, "area")
+bufAreas = sapply(slot(lakebuffer, "polygons"), slot, "area")
+bufArea = data.frame(lake = buffer_ring@data$WATERBODY_, 
+                     bufferArea = bufAreas - lakeAreas)
 # Identify wetlands within lake buffer
+lake_intersect = intersect(wetlands,buffer_ring) # used intersect instead of crop
+#because it retains attributes like lake name
+areas = sapply(slot(lake_intersect, "polygons"), slot, "area")
+wetlandAreas = data.frame(lake = lake_intersect@data$WATERBODY_,area = areas)
+
+# Summarise by lake
+library(plyr)
+wetlandArea = ddply(wetlandAreas, .variables = 'lake',summarise,wetlandArea = sum(area))
+
+# Merge 
+output = merge(wetlandArea,bufArea,by='lake',all.y=T)
+output$percentWetland = 100*output$wetlandArea/output$bufferArea
+
+##################### End of HD edits ###
+
 near_wetlands = crop(wetlands, buffer_ring)
 
 plot(lakes, col='dodgerblue', main='Wetlands adjacent to lakeshores')
