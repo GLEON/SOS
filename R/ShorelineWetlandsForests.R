@@ -1,7 +1,7 @@
 ### Calculate percent wetland, forest shoreline cover for lakes ###
 
 # Essentially perform standard GIS procedures in uncomfortable R environment
-# Date: 8-20-15
+# Date: 11-19-15 
 # Author: Ian McCullough, immccull@gmail.com
 
 #install.packages(c('raster','rgdal','rgeos'))
@@ -11,13 +11,13 @@ library(rgdal)
 library(rgeos)
 
 # Set working directory
-setwd("H:/Ian_GIS/gleon")
+setwd("H:/Ian_GIS/gleon/SOS/GIS/TroutLake")
 
 # Load basic GIS layers
-Wisconsin = shapefile('WI_state_outline/WI_state_outline.shp')
-wetlands = shapefile('surfaceflow/WI_shapefile_wetlands/WI_Wetlands_NTL_HARN_Clip.shp') 
-lakes = shapefile('surfaceflow/WI_lakes/NTL_lakes.shp')
-landcover = raster('surfaceflow/WI_LC/WI_LC')
+#Wisconsin = shapefile('WI_state_outline.shp')
+wetlands = shapefile('WI_Wetlands_NTL_HARN_Clip.shp')
+lakes = shapefile('NTL_lakes.shp')
+landcover = raster('wi_lc_NTL')
 
 # Create map of study area lakes (comment out if too large/slow)
 plot(lakes, col='dodgerblue', main='Lakes and Wetlands')
@@ -29,7 +29,7 @@ labels = lakes$WATERBODY_
 polygonsLabel(lakes,labels=labels, method=c('centroid'), cex=1)
 
 # Create buffer around lakes based on specified distance
-lakebuffer = buffer(lakes, width=30, dissolve=F) #meters
+lakebuffer = buffer(lakes, width=30, dissolve=F) #meters (mapping unit of input lake layer)
 buffer_ring = symdif(lakebuffer,lakes) # symmetrical difference vector operation
 #plot(buffer_ring)
 
@@ -65,7 +65,7 @@ shoreline$pct_non_wetland = 100-shoreline$pct_wetland
 
 ##### calculate perecnt of lake shoreline covered by forest #####
 
-# for the wetlands, I made a ring (width=cell length=30m) around the lakes and counted the 
+# for the wetlands, I made a ring (width=cell-length=30m) around the lakes and counted the 
 # wetland cells within that ring to quantify shoreline wetlands
 
 # for forests, this approach didn't work because of the way in which the lake shapefile 
@@ -80,10 +80,12 @@ shoreline$pct_non_wetland = 100-shoreline$pct_wetland
 
 # Identify land cover cells within lake buffer
 landcover_clip = crop(landcover, lakebuffer) # full state file is too big/unwieldy
-plot(landcover_clip)
+#plot(landcover)
 near_landcover = mask(landcover_clip, lakebuffer, inverse = F)
-plot(near_landcover)
-plot(lakes, add=T, col='dodgerblue')
+plot(near_landcover, main='Shoreline Land cover')
+plot(lakes, col='dodgerblue', add=T)
+labels = lakes$WATERBODY_
+polygonsLabel(lakes,labels=labels, method=c('centroid'), cex=1)
 
 ### Reclassify forested pixels as 1, all else as no data (file is too big to run on whole state)
 # values_of_forest = c(161,162,163,166,173,175,176,177,179,180,183,185,187,190,223,229,234)
@@ -92,12 +94,14 @@ plot(lakes, add=T, col='dodgerblue')
 # first value = to
 # second value = from
 # third value = new value
-# ex) 0,150,1: in English: make values 1-150 as NA
+# ex) 0,150,1: in English: make values 0-150 as NA
 forest_values = c(0,150,NA, 161,190,1, 200,220,NA, 223,234,1, 240,255,NA)
 classy = matrix(forest_values, ncol=3, byrow=T)
 near_landcover2 = reclassify(near_landcover, classy)
-plot(near_landcover2)
+plot(near_landcover2, main='Shoreline Land cover')
 plot(lakes, add=T, col='dodgerblue')
+labels = lakes$WATERBODY_
+polygonsLabel(lakes,labels=labels, method=c('centroid'), cex=1)
 
 # Count number of forest cells along shoreline of each lake (Thank you Zutao for helping with loop!)
 x = vector(mode='numeric', length=nrow(lakebuffer))
