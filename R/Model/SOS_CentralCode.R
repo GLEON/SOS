@@ -1,6 +1,6 @@
 ##### USER INPUT FILE NAMES ################
-TimeSeriesFile <- "./TroutLake/TestDataTrout.csv"
-ParameterFile <- "./TroutLake/ParameterInputsTrout.txt"
+TimeSeriesFile <- "./ToolikLake/ToolikTest.csv"
+ParameterFile <- "./ToolikLake/ParameterInputsToolik.txt"
 ############################################
 
 ##### LOAD PACKAGES ########################
