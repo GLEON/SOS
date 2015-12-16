@@ -28,6 +28,11 @@ for (col in 2:ncol(InputData)){
   InputData[,col] <- na.approx(InputData[,col])}
 ############################################
 
+##### READ RAIN FILE #######################
+RainData <- read.csv(RainFile,header=T) #Read daily rain file (units=mm) Read separately and added back to main file to avoid issues of linear interpolation with rain data in length units
+InputData$Rain <- RainData$Rain #Plug daily rain data into InputData file to integrate with original code.
+############################################
+
 ##### READ PARAMETER FILE ##################
 parameters <- read.table(file = ParameterFile,row.names=1,header=TRUE,comment.char="#")
 ############################################
