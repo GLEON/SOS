@@ -3,22 +3,29 @@
 # Author: Ian McCullough, immccull@gmail.com
 
 #install.packages('dplyr')
-library(dplyr)
 
 # Set YOUR working directory
 setwd('C:/Users/Ian/Desktop/GLEON/SOS/ToolikLake')
 
-# Read in validation data
-valid = read.csv('Toolik_validation_test.csv')
+# Read in validation data and SOS model output data
+# Example based on csvs with made up numbers
+validation = read.csv('Toolik_validation_test.csv')
+mod_output = read.csv('Toolik_output_test.csv')
 
-# Read in SOS model output
-output = read.csv('Toolik_output_test.csv')
+dateFunction = function(validation,mod_output,by){
+  #validation = validation csv
+  #mod_output = model output csv
+  #by = common header name for joining tables (in quotes)
+  library(dplyr)
+  inner_join(validation,mod_output,by)
+}
 
-# Intersect validation data and output
-validation = inner_join(output,valid,by='datetime')
+# Run function with named object output
+# Ignore error about coercing factor (datetime) to character; doesn't matter
+test = dateFunction(validation=validation,mod_output=mod_output, by='datetime')
 
 # Export to csv to current working directory
-write.csv(validation,'validation.csv')
+write.csv(test,'test_validation.csv')
 
 
 
