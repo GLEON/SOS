@@ -1,0 +1,8 @@
+Time-series file (.csv) - format per examples in TroutLake and ToolikLake files.
+-Time-series file should be daily, but can have gaps; code will interpolate linearly to fill gaps
+
+Rain date file (.csv) - format per examples in TroutLake and ToolikLake files.
+-File should include every daily time-step or be linearly interpolated (pre-submission) so that every time step is included.
+	-Program does not linearly interpolate rain date. It should be prepared to match time-series file post time-series daily interpolation.
+
+Parameter file (.txt) - formate per examples in TroutLake and ToolikLake files.

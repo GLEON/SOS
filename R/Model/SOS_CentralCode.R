@@ -1,7 +1,7 @@
 ##### USER INPUT FILE NAMES ################
-TimeSeriesFile <- "./ToolikLake/ToolikTest.csv"
-RainFile <- "./ToolikLake/ToolikRainTest.csv"
-ParameterFile <- "./ToolikLake/ParameterInputsToolik.txt"
+TimeSeriesFile <- "./TroutLake/TestDataTrout.csv"
+RainFile <- "./TroutLake/TroutRain.csv"
+ParameterFile <- "./TroutLake/ParameterInputsTrout.txt"
 ############################################
 
 ##### LOAD PACKAGES ########################
@@ -19,13 +19,18 @@ source("./R/Model/SOS_Resp.R")
 
 ##### READ MAIN INPUT FILE #################
 RawData <- read.csv(TimeSeriesFile,header=T) #Read main data file with GLM outputs (physical input) and NPP input
-RawData$datetime <- as.POSIXct(strptime(RawData$datetime,"%m/%d/%Y %H:%M")) #Convert time to POSIX
+RawData$datetime <- as.POSIXct(strptime(RawData$datetime,"%m/%d/%Y %H:%M"),tz="GMT") #Convert time to POSIX
 #Fill time-series gaps (linear interpolation)
 ts_new <- data.frame(datetime = seq(RawData$datetime[1],RawData$datetime[nrow(RawData)],by="day")) #Interpolate gapless time-series
 InputData <- merge(RawData,ts_new,all=T)
 InputData <- as.data.frame(InputData)
 for (col in 2:ncol(InputData)){
   InputData[,col] <- na.approx(InputData[,col])}
+############################################
+
+##### READ RAIN FILE #######################
+RainData <- read.csv(RainFile,header=T) #Read daily rain file (units=mm) Read separately and added back to main file to avoid issues of linear interpolation with rain data in length units
+InputData$Rain <- RainData$Rain #Plug daily rain data into InputData file to integrate with original code.
 ############################################
 
 ##### READ PARAMETER FILE ##################
@@ -77,6 +82,8 @@ POC_conc <- data.frame(numeric(steps)) #Record running g/m3 POC concentration of
 DOC_conc <- data.frame(numeric(steps)) #Record running g/m3 DOC concentration of mixed lake
 POC_flux <- data.frame(NPP_in=numeric(steps),Flow_in=numeric(steps),Flow_out=numeric(steps),Sed_out=numeric(steps)) #Record POC flux (g/m2/yr) at each time step
 DOC_flux <- data.frame(Flow_in=numeric(steps),NPP_in=numeric(steps),Flow_out=numeric(steps),Resp_out=numeric(steps),Miner_out=numeric(steps)) #Record DOC flux (g/m2/yr) at each time step
+POC_fate <- data.frame(Flow_out=numeric(steps),Sed_out=numeric(steps)) #Record POC flux (g/m2/yr) at each time step
+DOC_fate <- data.frame(Flow_out=numeric(steps),Resp_out=numeric(steps),Miner_out=numeric(steps)) #Record DOC flux (g/m2/yr) at each time step
 DOC_load <- data.frame(total=numeric(steps),alloch=numeric(steps),autoch=numeric(steps)) #Record DOC load (g) at each time step
 POC_load <- data.frame(total=numeric(steps),alloch=numeric(steps),autoch=numeric(steps)) #Record POC load (g) at each time step
 DOC_out <- data.frame(total=numeric(steps)) #Record DOC removal (g) from system at each time step
@@ -106,6 +113,9 @@ DOC_outflow <- data.frame(numeric(steps))
 MineralRespData <- data.frame(DOC_miner_mass=numeric(steps),DOC_resp_mass=numeric(steps))
 ############################################
 
+##### Declare Data Storage - Source of Sink? #
+SOS <- data.frame(Source=numeric(steps),Sink=numeric(steps),Pipe=numeric(steps),Net=numeric(steps))
+
 ##### Carbon Concentration Initialization ################
 POC_conc[1,1] <- POC_conc_init # #Initialize POC concentration as baseline average
 DOC_conc[1,1] <- DOC_conc_init #Initialize DOC concentration g/m3
@@ -123,9 +133,11 @@ for (i in 1:(steps)){
   
   #Call NPP Function
   RawProduction <- NPP(InputData$Chla[i],InputData$TP[i],InputData$EpiTemp[i]) #mg C/m^2/d
+  PhoticDepth <- log(100)/(1.7/InputData$Secchi[i]) #Calc photic depth as function of Secchi depth
+  if(PhoticDepth>lakeDepth){PhoticDepth<-lakeDepth} #QC - If photic depth calc'ed as greater than lake depth, photic depth = lake depth
   NPPdata[i,1:2] <- RawProduction
-  NPPdata$DOC_mass[i] <- NPPdata$DOC_rate[i]*lakeArea*TimeStep/1000 #g
-  NPPdata$POC_mass[i] <- NPPdata$POC_rate[i]*lakeArea*TimeStep/1000 #g
+  NPPdata$DOC_mass[i] <- NPPdata$DOC_rate[i]*PhoticDepth*lakeArea*TimeStep/1000 #g
+  NPPdata$POC_mass[i] <- NPPdata$POC_rate[i]*PhoticDepth*lakeArea*TimeStep/1000 #g
 
   #Call SWGW Function
   SWGW <- SWGWFunction(Q_sw,Q_gw,Rainfall,Aoc_day, PC, lakePerim, Woc_day, PW, DOC_GW, prop_GW, 
@@ -163,18 +175,22 @@ for (i in 1:(steps)){
   DOC_flux$NPP_in[i] <- NPPdata$DOC_mass[i]/lakeArea/(TimeStep/365)
   DOC_flux$Flow_out[i] <- DOC_outflow[i,1]/lakeArea/(TimeStep/365) 
   DOC_flux$Resp_out[i] <- MineralRespData$DOC_resp_mass[i]/lakeArea/(TimeStep/365) 
-  DOC_flux$Miner_out[i] <- MineralRespData$DOC_miner_mass[i]/lakeArea/(TimeStep/365)  
+  DOC_flux$Miner_out[i] <- MineralRespData$DOC_miner_mass[i]/lakeArea/(TimeStep/365) 
+
   
+  #Cumulative DOC and POC fate (grams)
+  POC_fate$Flow_out[i] <- sum(POC_outflow)
+  POC_fate$Sed_out[i] <- sum(POC_sed_out)
   
-  #Update POC and DOC concentration values (g/m3) for whole lake
-  #POC_conc[i+1,1] <-  POC_conc[i,1] + ((NPPdata$NPP_mass[i] + SWGW_mass_in$POC[i] - POC_outflow[i,1] - POC_sed_out[i,1] - SedData$POC_to_DIC[i])/lakeVol) #g/m3
-  POC_conc[i+1,1] <-  POC_conc[i,1] + ((NPPdata$POC_mass[i] + SWGW_mass_in$POC[i] - POC_outflow[i,1] - POC_sed_out[i,1])/lakeVol) #g/m3
-  DOC_conc[i+1,1] <-  DOC_conc[i,1] + ((NPPdata$DOC_mass[i] + SWGW_mass_in$DOC[i] - DOC_outflow[i,1] - MineralRespData$DOC_resp_mass[i] - MineralRespData$DOC_miner_mass[i])/lakeVol) #g/m3
+  DOC_fate$Flow_out[i] <- sum(DOC_outflow)
+  DOC_fate$Resp_out[i] <- sum(MineralRespData$DOC_resp_mass)
+  DOC_fate$Miner_out[i] <- sum(MineralRespData$DOC_miner_mass)
   
   #POC and DOC load (in) and fate (out) (g)
   POC_load$total[i] <- NPPdata$POC_mass[i] + SWGW_mass_in$POC[i] #g 
   POC_load$alloch[i] <- SWGW_mass_in$POC[i] #g
   POC_load$autoch[i] <- NPPdata$POC_mass[i] #g
+  
   DOC_load$total[i] <- NPPdata$DOC_mass[i] + SWGW_mass_in$DOC[i] #g
   DOC_load$alloch[i] <- SWGW_mass_in$DOC[i] #g
   DOC_load$autoch[i] <- NPPdata$DOC_mass[i] #g
@@ -182,10 +198,21 @@ for (i in 1:(steps)){
   POC_out$total[i] <- POC_outflow[i,1] + POC_sed_out[i,1] #g
   DOC_out$total[i] <- DOC_outflow[i,1] + MineralRespData$DOC_resp_mass[i] + MineralRespData$DOC_miner_mass[i]  #g
   
+  #Update POC and DOC concentration values (g/m3) for whole lake
+  #POC_conc[i+1,1] <-  POC_conc[i,1] + ((NPPdata$NPP_mass[i] + SWGW_mass_in$POC[i] - POC_outflow[i,1] - POC_sed_out[i,1] - SedData$POC_to_DIC[i])/lakeVol) #g/m3
+  POC_conc[i+1,1] <-  POC_conc[i,1] + ((NPPdata$POC_mass[i] + SWGW_mass_in$POC[i] - POC_outflow[i,1] - POC_sed_out[i,1])/lakeVol) #g/m3
+  DOC_conc[i+1,1] <-  DOC_conc[i,1] + ((NPPdata$DOC_mass[i] + SWGW_mass_in$DOC[i] - DOC_outflow[i,1] - MineralRespData$DOC_resp_mass[i] - MineralRespData$DOC_miner_mass[i])/lakeVol) #g/m3
+  
   #Stop code and output error if concentrations go to negative
   if (POC_conc[i+1,1]<=0){stop("Negative POC concentration!")}
   if (DOC_conc[i+1,1]<=0){stop("Negative DOC concentration!")}
-}
+  
+  #OC mass sourced/sank at each time step
+  SOS$Sink[i] <- POC_sed_out[i,1]
+  SOS$Source[i] <- POC_outflow[i,1] + DOC_outflow[i,1] + MineralRespData$DOC_resp_mass[i] + MineralRespData$DOC_miner_mass[i] - SWGW_mass_in$POC[i] - SWGW_mass_in$DOC[i]
+  SOS$Pipe[i] <- POC_outflow[i,1] + DOC_outflow[i,1] + MineralRespData$DOC_resp_mass[i] - NPPdata$DOC_mass[i] - SWGW_mass_in$POC[i]
+  SOS$Net[i] <- SOS$Sink[i] - SOS$Source[i]
+  }
 
 #Total carbon mass additions
 TotalPOCAllochIn <- sum(POC_load$alloch) #g
@@ -229,12 +256,19 @@ for (n in 1:ncol(DOC_flux)){
 plot(ConcOutputTimeSeries,POC_conc[,1],xlab=xlabel,ylab="POC Conc (g/m3)",type="l")
 plot(ConcOutputTimeSeries,DOC_conc[,1],xlab=xlabel,ylab="DOC Conc (g/m3)",type="l")
 
+#Plot cumulative fates
 
-par(mfrow=c(5,1))
-par(mar=c(2,4))
-plot(InputData$datetime,InputData$SW_DOC*InputData$FlowIn,xlab=xlabel,ylab="Inflow DOC (g/s)",type="l")
-plot(InputData$datetime,InputData$Chla,xlab=xlabel,ylab="Chl-a (g/m3)",type="l")
-plot(InputData$datetime,InputData$TP,xlab=xlabel,ylab="TP (g/m3)",type="l")
-plot(ConcOutputTimeSeries,POC_conc[,1],xlab=xlabel,ylab="POC Conc (g/m3)",type="l")
-plot(ConcOutputTimeSeries,DOC_conc[,1],xlab=xlabel,ylab="DOC Conc (g/m3)",type="l")
+xlabel <- "Date/Time"
+ylabelPOC <- c("Cumulative POC Outflow (g)","Cumulative Sed Burial (g)")
+ylabelDOC <- c("Cumulative DOC Outflow (g)","Cumulative DOC Respired (g)","Cumulative DOC Mineralized(g)")
 
+for (n in 1:ncol(POC_fate)){
+  plot(OutputTimeSeries,POC_fate[,n],xlab=xlabel,ylab=ylabelPOC[n],type='l')
+}
+
+for (n in 1:ncol(DOC_fate)){
+  plot(OutputTimeSeries,DOC_fate[,n],xlab=xlabel,ylab=ylabelDOC[n],type='l')
+}
+
+#Plot net SOS
+plot(OutputTimeSeries,SOS$Net/1000,xlab='date/time',ylab='OC mass (kg)',main='Net OC Mass Sunk',type='l')
