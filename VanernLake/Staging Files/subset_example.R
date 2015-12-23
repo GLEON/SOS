@@ -2,7 +2,7 @@
 # Vanern Lake
 
 # Set WD
-setwd ('/Users/FarrellKJ/Desktop/R/SOS')
+#setwd ('/Users/FarrellKJ/Desktop/R/SOS')
 
 # Read in data file of flow (m3/s). Original file spans 1938-2014
 flowrate <- read.csv('./VanernLake/Staging Files/Vanern_Variables/outflow.csv')

@@ -271,4 +271,4 @@ for (n in 1:ncol(DOC_fate)){
 }
 
 #Plot net SOS
-plot(OutputTimeSeries,SOS$Net/1000,xlab='date/time',ylab='OC mass (kg)',main='Net OC Mass Sunk',type='l')
+plot(OutputTimeSeries,SOS$Net/1000,xlab='date/time',ylab='OC mass (kg/d)',main='Net OC Mass Sunk per Day',type='l')
