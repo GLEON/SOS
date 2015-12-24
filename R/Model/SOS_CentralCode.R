@@ -29,12 +29,12 @@ for (col in 2:ncol(InputData)){
 ############################################
 
 ##### READ RAIN FILE #######################
-RainData <- read.csv(RainFile,header=T) #Read daily rain file (units=mm) Read separately and added back to main file to avoid issues of linear interpolation with rain data in length units
+RainData <- read.csv(RainFile,header=T,stringsAsFactors = F) #Read daily rain file (units=mm) Read separately and added back to main file to avoid issues of linear interpolation with rain data in length units
 InputData$Rain <- RainData$Rain #Plug daily rain data into InputData file to integrate with original code.
 ############################################
 
 ##### READ PARAMETER FILE ##################
-parameters <- read.table(file = ParameterFile,row.names=1,header=TRUE,comment.char="#")
+parameters <- read.table(file = ParameterFile,row.names=1,header=TRUE,comment.char="#",stringsAsFactors = F)
 ############################################
 
 ##### General Lake Inputs and Parameters ###
@@ -134,7 +134,7 @@ for (i in 1:(steps)){
   #Call NPP Function
   RawProduction <- NPP(InputData$Chla[i],InputData$TP[i],InputData$EpiTemp[i]) #mg C/m^2/d
   PhoticDepth <- log(100)/(1.7/InputData$Secchi[i]) #Calc photic depth as function of Secchi depth
-  if(PhoticDepth>lakeDepth){PhoticDepth<-lakeDepth} #QC - If photic depth calc'ed as greater than lake depth, photic depth = lake depth
+  if (PhoticDepth>lakeDepth){PhoticDepth<-lakeDepth} #QC - If photic depth calc'ed as greater than lake depth, photic depth = lake depth
   NPPdata[i,1:2] <- RawProduction
   NPPdata$DOC_mass[i] <- NPPdata$DOC_rate[i]*PhoticDepth*lakeArea*TimeStep/1000 #g
   NPPdata$POC_mass[i] <- NPPdata$POC_rate[i]*PhoticDepth*lakeArea*TimeStep/1000 #g
@@ -244,31 +244,45 @@ xlabel <- "Date/Time"
 ylabelPOC <- c("NPP POC In (g/m2/yr)","Flow POC In (g/m2/yr)","Flow POC Out (g/m2/yr)","Sed POC Out (g/m2/yr)")
 ylabelDOC <- c("Flow DOC In (g/m2/yr)","NPP DOC In (g/m2/yr)","Flow  DOC Out (g/m2/yr)","Respiration DOC Out (g/m2/yr)","Mineralization DOC Out (g/m2/yr)")
 
+par(mfrow=c(2,2),mar=c(2.5,3,1,1),mgp=c(1.5,0.3,0),tck=-0.02)
 for (n in 1:ncol(POC_flux)){
   plot(OutputTimeSeries,POC_flux[,n],xlab=xlabel,ylab=ylabelPOC[n],type='l')
 }
 
+par(mfrow=c(3,2),mar=c(2.5,3,1,1),mgp=c(1.5,0.3,0),tck=-0.02)
 for (n in 1:ncol(DOC_flux)){
   plot(OutputTimeSeries,DOC_flux[,n],xlab=xlabel,ylab=ylabelDOC[n],type='l')
 }
 
 #POC and DOC concentration in time (g/m3)
-plot(ConcOutputTimeSeries,POC_conc[,1],xlab=xlabel,ylab="POC Conc (g/m3)",type="l")
-plot(ConcOutputTimeSeries,DOC_conc[,1],xlab=xlabel,ylab="DOC Conc (g/m3)",type="l")
+par(mfrow=c(2,1),mar=c(2.5,3,1,1),mgp=c(1.5,0.3,0),tck=-0.02)
+plot(ConcOutputTimeSeries,POC_conc[,1],xlab=xlabel,ylab="POC Conc (g/m3)",type="l",xaxt='n')
+  # Better axes tick marks 
+  plotDates = seq(ConcOutputTimeSeries[1],tail(ConcOutputTimeSeries,1), by="month")
+  axis.POSIXct(1,at=plotDates,labels=format(plotDates,"%m/%y"),las=1,cex.axis = 0.8)
+plot(ConcOutputTimeSeries,DOC_conc[,1],xlab=xlabel,ylab="DOC Conc (g/m3)",type="l",xaxt='n')
+  plotDates = seq(ConcOutputTimeSeries[1],tail(ConcOutputTimeSeries,1), by="month")
+  axis.POSIXct(1,at=plotDates,labels=format(plotDates,"%m/%y"),las=1,cex.axis = 0.8)
 
 #Plot cumulative fates
-
 xlabel <- "Date/Time"
 ylabelPOC <- c("Cumulative POC Outflow (g)","Cumulative Sed Burial (g)")
 ylabelDOC <- c("Cumulative DOC Outflow (g)","Cumulative DOC Respired (g)","Cumulative DOC Mineralized(g)")
 
+par(mfrow=c(2,1),mar=c(2.5,3,1,1),mgp=c(1.5,0.3,0),tck=-0.02,cex=0.8)
 for (n in 1:ncol(POC_fate)){
   plot(OutputTimeSeries,POC_fate[,n],xlab=xlabel,ylab=ylabelPOC[n],type='l')
 }
-
+par(mfrow=c(2,2),mar=c(2.5,3,1,1),mgp=c(1.5,0.3,0),tck=-0.02,cex=0.8)
 for (n in 1:ncol(DOC_fate)){
   plot(OutputTimeSeries,DOC_fate[,n],xlab=xlabel,ylab=ylabelDOC[n],type='l')
 }
 
 #Plot net SOS
-plot(OutputTimeSeries,SOS$Net/1000,xlab='date/time',ylab='OC mass (kg/d)',main='Net OC Mass Sunk per Day',type='l')
+par(mfrow=c(1,1),mar=c(3,3,2,1),mgp=c(1.5,0.3,0),tck=-0.02,cex=0.8)
+plot(OutputTimeSeries,SOS$Net/1000,xlab='date/time',ylab='OC mass (kg/d)',
+     main='Net OC Mass Sunk per Day',type='l',xaxt='n')
+  plotDates = seq(ConcOutputTimeSeries[1],tail(ConcOutputTimeSeries,1), by="month")
+  axis.POSIXct(1,at=plotDates,labels=format(plotDates,"%m/%y"),las=1,cex.axis = 0.8)
+  
+  
