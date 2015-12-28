@@ -1,4 +1,4 @@
-# Gather in-lake chlorophyll and total phosphorus data
+# Gather in-lake chlorophyll, total phosphorus, secchi, temperature data
 # Trout Lake
 
 # Chlorophyll-a in ug/L ####
@@ -24,16 +24,16 @@ daily_tp <- period.apply(tp.xts,ep,mean) # ug/L
 
 # Merge data with continuous date series and interpolate between missing values ####
 # create continuous set of dates between mod_start mod_end
-mod_start <- '2005-01-22'
-mod_end <- '2013-11-14'
+mod_start <- '2010-01-01'
+mod_end <- '2015-12-31'
 dates <- (seq(as.Date(mod_start), as.Date(mod_end), by='days'))
 dates_xts <- as.xts(dates)
 
 # Merge xts dates, chla, tp and convert to dataframe
-daily_data <- merge.xts(dates_xts, daily_chla, daily_tp, all=TRUE, fill=NA)
+daily_data <- merge.xts(dates_xts, daily_chla, daily_tp, daily_secchi, all=TRUE, fill=NA)
 daily_data <- data.frame(date=index(daily_data), coredata(daily_data))
 
-daily_data$date <- as.Date(daily_data$dates, format = "%m/%d/%y")
+daily_data$date <- as.Date(daily_data$date, format = "%m/%d/%y")
 format(daily_data$date,"%m/%d/%Y")
 
 daily_data2a <- as.data.frame(na.approx(daily_data$daily_chla))

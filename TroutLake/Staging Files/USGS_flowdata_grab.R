@@ -9,7 +9,7 @@ mann_in <- '05357239'
 Sw_Qin <- list()
 
 # Set start date for data grab. Set end date if desired (not done here)
-startDate <- '2014-05-01'
+startDate <- '2004-01-01'
 
 # Indicate desired variable (here, code 00060 is for Discharge)
 pcode <- '00060' # Discharge for trout_inflow
