@@ -1,4 +1,4 @@
-datetime,Volume,FlowIn,FlowOut,Rain,HypoTemp,EpiTemp,TP,Chla,SwDOC,Secchi
+datetime,Volume,FlowIn,FlowOut,Rain,HypoTemp,EpiTemp,TP,Chla,SW_DOC,Secchi
 4/25/2001 0:00,1.53E+11,1020,1020,0.4,1.9,2.1,6.25,3.7,9.89,4.3
 4/26/2001 0:00,1.53E+11,1020,1020,3.4,2,2.2,6.32,3.7,9.87,4.3
 4/27/2001 0:00,1.53E+11,1020,1020,0.8,2.1,2.2,6.39,3.7,9.85,4.3

@@ -1,7 +1,7 @@
 ##### USER INPUT FILE NAMES ################
-TimeSeriesFile <- "./TroutLake/TestDataTrout.csv"
-RainFile <- "./TroutLake/TroutRain.csv"
-ParameterFile <- "./TroutLake/ParameterInputsTrout.txt"
+TimeSeriesFile <- "./VanernLake/TestDataVanern.csv"
+RainFile <- "./VanernLake/VanernRain.csv"
+ParameterFile <- "./VanernLake/ParameterInputsVanern.txt"
 ############################################
 
 ##### LOAD PACKAGES ########################
