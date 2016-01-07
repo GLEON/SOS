@@ -11,13 +11,13 @@ library(rgdal)
 library(rgeos)
 
 # Set working directory
-setwd("H:/Ian_GIS/gleon/SOS/GIS/TroutLake")
+setwd("H:/Ian_GIS/gleon/SOS/GIS/Mendota")
 
 # Load basic GIS layers
 #Wisconsin = shapefile('WI_state_outline.shp')
-wetlands = shapefile('WI_Wetlands_NTL_HARN_Clip.shp')
-lakes = shapefile('NTL_lakes.shp')
-landcover = raster('wi_lc_NTL')
+wetlands = shapefile('WI_Wetlands_Southern_HARN_Clip.shp')
+lakes = shapefile('Madison_lakes.shp')
+landcover = raster('wi_lc_msn')
 
 # Create map of study area lakes (comment out if too large/slow)
 plot(lakes, col='dodgerblue', main='Lakes and Wetlands')
