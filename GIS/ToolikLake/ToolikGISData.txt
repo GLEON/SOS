@@ -1,0 +1,3 @@
+The landcover and wetland spatial layers were so large that I clipped them and ran all the GIS processing locally. Until someone protests, I have made the executive decision not to put those layers in the git repository.
+
+The clip area shapefile is an arbitrarily drawn box I used to reduce the size of the landcover and wetland layers. Seeing as all we needed are what occurs on the lake shoreline, we aren't losing anything by cutting down the files as such.
