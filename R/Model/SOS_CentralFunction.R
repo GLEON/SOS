@@ -1,4 +1,5 @@
-CarbonFluxModel <- function(LakeName){
+CarbonFluxModel <- function(LakeName,PlotFlag){
+
 
 ##### INPUT FILE NAMES ################
 TimeSeriesFile <- paste('./',LakeName,'Lake/',LakeName,'TS.csv',sep='')
@@ -257,6 +258,7 @@ CalibrationOutput$Modelled <- DOC_conc[ValidationIndeces,1]
 
 ################## PLOTTING ###########################################################
 
+if (PlotFlag==1){
 #Plot POC and DOC fluxes in standardized units (g/m2/yr)
 xlabel <- "Date/Time"
 ylabelPOC <- c("NPP POC In (g/m2/yr)","Flow POC In (g/m2/yr)","Flow POC Out (g/m2/yr)","Sed POC Out (g/m2/yr)")
@@ -302,6 +304,7 @@ plot(OutputTimeSeries,SOS$Net/1000,xlab='date/time',ylab='OC mass (kg/d)',
      main='Net OC Mass Sunk per Day',type='l',xaxt='n')
   plotDates = seq(ConcOutputTimeSeries[1],tail(ConcOutputTimeSeries,1), by="month")
   axis.POSIXct(1,at=plotDates,labels=format(plotDates,"%m/%y"),las=1,cex.axis = 0.8)
+}
   
 return(CalibrationOutput)
 }  
