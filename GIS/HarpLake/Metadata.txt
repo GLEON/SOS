@@ -1,0 +1,5 @@
+Land Cover data for Harp Lake: https://www.javacoeapp.lrc.gov.on.ca/geonetwork/srv/en/metadata.show (Land Information Ontario; LIO)
+
+I lumped Sparse Treed, Coniferous, Mixed and Deciduous together. All of this was obvious, except perhaps we could have left out Sparse Treed (trees > 2 m, 10-25% forest cover).
+
+Although the LIO dataset included wetlands of various types, none were adjacent to Harp Lake. The spatial data viewer on the website for the Ontario Ministry of Natural Resources and Forestry included a wetland layer, but also showed none on the Harp Lake shoreline. As such, at least for now, I decided to assume there was 100% forest and 0% wetland along the Harp Lake shoreline.

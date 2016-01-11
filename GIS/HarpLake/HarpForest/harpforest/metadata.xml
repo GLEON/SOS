@@ -1,0 +1,2 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<metadata xml:lang="en"><Esri><CreaDate>20160111</CreaDate><CreaTime>14023500</CreaTime><ArcGISFormat>1.0</ArcGISFormat><ArcGISstyle>FGDC CSDGM Metadata</ArcGISstyle><SyncOnce>TRUE</SyncOnce><DataProperties><lineage><Process ToolSource="c:\program files (x86)\arcgis\desktop10.1\ArcToolbox\Toolboxes\Spatial Analyst Tools.tbx\Reclassify" Date="20160111" Time="140235">Reclassify HarpLC VALUE "1 NODATA;11 1;13 1;14 1;15 1" H:\Ian_GIS\gleon\Ontario\HarpForest\HarpForest NODATA</Process></lineage></DataProperties></Esri></metadata>
