@@ -1,0 +1,11 @@
+Forest and wetland spatial data from Copernicus: 
+https://cws-download.eea.europa.eu/pan-european/hrl/HRL_Summary_for_publication_v11.pdf
+http://land.copernicus.eu/pan-european/high-resolution-layers/wetlands/view
+http://land.copernicus.eu/pan-european/high-resolution-layers/forests/forest-type/view
+
+Both at 20 m resolution, from satellite imagery
+
+Forest: coniferous and deciduous reclassified as 1, everything else as no data
+Wetland: used all types classified as wetland in original layer and reclassified as 1, everything else as no data
+
+Projected coordinate system: grs80_Lambert_Azimuthal_Equal_Area

@@ -1,10 +1,11 @@
-#ENTER LAKE NAME
-LakeName <- 'Vanern'
+CarbonFluxModel <- function(LakeName,PlotFlag){
 
-##### USER INPUT FILE NAMES ################
+
+##### INPUT FILE NAMES ################
 TimeSeriesFile <- paste('./',LakeName,'Lake/',LakeName,'TS.csv',sep='')
 RainFile <- paste('./',LakeName,'Lake/',LakeName,'Rain.csv',sep='')
 ParameterFile <- paste('./',LakeName,'Lake/','ParameterInputs',LakeName,'.txt',sep='')
+ValidationFile <- paste('./',LakeName,'Lake/',LakeName,'Validation.csv',sep='')
 ############################################
 
 ##### LOAD PACKAGES ########################
@@ -238,10 +239,26 @@ print(c("DOC Balance:",DOCcheck))
 ######################## END MAIN PROGRAM #############################################
 #######################################################################################
 
-#Define plotting time-series
+#Define plotting and validation time series
 ConcOutputTimeSeries <- c(InputData$datetime,InputData$datetime[length(InputData$datetime)]+86400)
 OutputTimeSeries <- InputData$datetime
 
+####################### Validation Output Setup ######################################
+ValidationData <- read.csv(ValidationFile,header=T)
+ValidationData$datetime <- as.POSIXct(strptime(ValidationData$datetime,"%m/%d/%Y %H:%M"),tz="GMT") #Convert time to POSIX
+
+ValidationIndeces <- match(ValidationData$datetime,ConcOutputTimeSeries)
+
+CalibrationOutput <- data.frame(datetime=numeric(length(ValidationIndeces)),Measured=numeric(length(ValidationIndeces)),Modelled=numeric(length(ValidationIndeces)))
+
+CalibrationOutput$datetime <- ValidationData$datetime
+CalibrationOutput$Measured <- ValidationData$DOC
+CalibrationOutput$Modelled <- DOC_conc[ValidationIndeces,1]
+
+
+################## PLOTTING ###########################################################
+
+if (PlotFlag==1){
 #Plot POC and DOC fluxes in standardized units (g/m2/yr)
 xlabel <- "Date/Time"
 ylabelPOC <- c("NPP POC In (g/m2/yr)","Flow POC In (g/m2/yr)","Flow POC Out (g/m2/yr)","Sed POC Out (g/m2/yr)")
@@ -287,5 +304,7 @@ plot(OutputTimeSeries,SOS$Net/1000,xlab='date/time',ylab='OC mass (kg/d)',
      main='Net OC Mass Sunk per Day',type='l',xaxt='n')
   plotDates = seq(ConcOutputTimeSeries[1],tail(ConcOutputTimeSeries,1), by="month")
   axis.POSIXct(1,at=plotDates,labels=format(plotDates,"%m/%y"),las=1,cex.axis = 0.8)
+}
   
-  
+return(CalibrationOutput)
+}  

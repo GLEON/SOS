@@ -1,0 +1,2 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<metadata xml:lang="en"><Esri><CreaDate>20160111</CreaDate><CreaTime>12400900</CreaTime><ArcGISFormat>1.0</ArcGISFormat><ArcGISstyle>FGDC CSDGM Metadata</ArcGISstyle><SyncOnce>TRUE</SyncOnce><DataProperties><lineage><Process ToolSource="c:\program files (x86)\arcgis\desktop10.1\ArcToolbox\Toolboxes\Spatial Analyst Tools.tbx\Reclassify" Date="20160111" Time="124009">Reclassify vanern_for VALUE "0 NODATA;1 1;2 1;254 NODATA" H:\Ian_GIS\gleon\Sverige\Forest\vanernforest NODATA</Process></lineage></DataProperties></Esri></metadata>
