@@ -14,7 +14,7 @@ PropWetlands,0.043,unitless
 AerialLoad,1,gPOC/m/d
 WetlandLoad,1,gDOC/m/d
 DOC_gw,10,g/m3
-PropGW,0.19,unitless
+PropGW,0,unitless
 DOC_precip,2,g/m3
 ,,
 #Min/Resp Parameters,,
