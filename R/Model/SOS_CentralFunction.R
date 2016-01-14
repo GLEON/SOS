@@ -1,4 +1,5 @@
-CarbonFluxModel <- function(LakeName,PlotFlag){
+CarbonFluxModel <- function(LakeName,PlotFlag,ValidationFlag){
+  #Flags 1 for yes, else no.
 
 ##### INPUT FILE NAMES ################
 TimeSeriesFile <- paste('./',LakeName,'Lake/',LakeName,'TS.csv',sep='')
@@ -243,6 +244,7 @@ ConcOutputTimeSeries <- c(InputData$datetime,InputData$datetime[length(InputData
 OutputTimeSeries <- InputData$datetime
 
 ####################### Validation Output Setup ######################################
+if (ValidationFlag==1){
 ValidationData <- read.csv(ValidationFile,header=T)
 ValidationData$datetime <- as.POSIXct(strptime(ValidationData$datetime,"%m/%d/%Y %H:%M"),tz="GMT") #Convert time to POSIX
 
@@ -253,7 +255,7 @@ CalibrationOutput <- data.frame(datetime=numeric(length(ValidationIndeces)),Meas
 CalibrationOutput$datetime <- ValidationData$datetime
 CalibrationOutput$Measured <- ValidationData$DOC
 CalibrationOutput$Modelled <- DOC_conc[ValidationIndeces,1]
-
+}
 
 ################## PLOTTING ###########################################################
 
