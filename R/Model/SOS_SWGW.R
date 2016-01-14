@@ -1,4 +1,4 @@
-SWGWFunction <- function(Q_sw,Q_gw,rainfall,Aoc_day, PC, lakePerim, Woc_day, PW, DOC_GW, prop_GW, 
+SWGWFunction <- function(Q_sw,Q_gw,Rainfall,Aoc_day, PC, lakePerim, Woc_day, PW, DOC_GW, prop_GW, 
                          DOC_SW, DOC_Precip,lakeArea) {
   #! Per Table 4 of Hanson et al. 2014 (L&O), whould be ~1.15 g/m Shoreline/d (not per year)
   InflowData = data.frame(POC_Aerial=NA, POC_SW=NA, DOC_Wetland=NA, 
