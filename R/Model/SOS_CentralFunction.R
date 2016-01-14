@@ -1,6 +1,5 @@
 CarbonFluxModel <- function(LakeName,PlotFlag){
 
-
 ##### INPUT FILE NAMES ################
 TimeSeriesFile <- paste('./',LakeName,'Lake/',LakeName,'TS.csv',sep='')
 RainFile <- paste('./',LakeName,'Lake/',LakeName,'Rain.csv',sep='')
