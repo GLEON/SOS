@@ -193,7 +193,7 @@ for (i in 1:(steps)){
   
   #Call Sedimentation Function
   POC_mass <- POC_conc[i,1]*lakeVol
-  SedOutput <- SedimentationFunction(BurialFactor,TimeStep,POC_mass)
+  SedOutput <- SedimentationFunction(BurialFactor,TimeStep,POC_mass,lakeArea)
   SedData[i,1:3] = SedOutput
   POC_sed_out[i,1] <- SedData$POC_burial[i] #g
   
