@@ -5,7 +5,7 @@ CarbonFluxModel <- function(LakeName,PlotFlag){
 TimeSeriesFile <- paste('./',LakeName,'Lake/',LakeName,'TS.csv',sep='')
 RainFile <- paste('./',LakeName,'Lake/',LakeName,'Rain.csv',sep='')
 ParameterFile <- paste('./',LakeName,'Lake/','ParameterInputs',LakeName,'.txt',sep='')
-ValidationFile <- paste('./',LakeName,'Lake/',LakeName,'Validation.csv',sep='')
+ValidationFile <- paste('./',LakeName,'Lake/',LakeName,'ValidationDOC.csv',sep='')
 ############################################
 
 ##### LOAD PACKAGES ########################
@@ -77,7 +77,8 @@ DOC_Precip <- parameters[row.names(parameters)=="DOC_precip",1] #g/m3: DOC conce
 ############################################
 
 ##### Sub-Topic Parameters: Min/Resp #######
-RespParam <- DOC_miner_const <- parameters[row.names(parameters)=="RespParam",1] #
+RespParam <- parameters[row.names(parameters)=="RespParam",1] #unitless respiration parameter
+POC_lc <- parameters[row.names(parameters)=="POC_lc",1] #1/d POC to DOC leaching.
 ############################################
 
 ##### Declare Output Data Storage ##########

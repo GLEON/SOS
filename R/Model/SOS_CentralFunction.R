@@ -5,7 +5,7 @@ CarbonFluxModel <- function(LakeName,PlotFlag,ValidationFlag){
 TimeSeriesFile <- paste('./',LakeName,'Lake/',LakeName,'TS.csv',sep='')
 RainFile <- paste('./',LakeName,'Lake/',LakeName,'Rain.csv',sep='')
 ParameterFile <- paste('./',LakeName,'Lake/','ParameterInputs',LakeName,'.txt',sep='')
-ValidationFile <- paste('./',LakeName,'Lake/',LakeName,'Validation.csv',sep='')
+ValidationFile <- paste('./',LakeName,'Lake/',LakeName,'ValidationDOC.csv',sep='')
 ############################################
 
 ##### LOAD PACKAGES ########################
@@ -60,7 +60,8 @@ BurialFactor <- parameters[row.names(parameters)=="BurialFactor",1] #(1/days) Pa
 ############################################
 
 ##### Sub-Topic Parameters: NPP ############
-#Currently built into NPP sub code.
+R_auto <- parameters[row.names(parameters)=="R_auto",1]
+#Some empirical coefficients built into NPP sub code.
 ############################################
 
 ##### Sub-Topic Parameters: sw/GW ##############
@@ -77,14 +78,15 @@ DOC_Precip <- parameters[row.names(parameters)=="DOC_precip",1] #g/m3: DOC conce
 ############################################
 
 ##### Sub-Topic Parameters: Min/Resp #######
-RespParam <- DOC_miner_const <- parameters[row.names(parameters)=="RespParam",1] #
+RespParam <- parameters[row.names(parameters)=="RespParam",1] #
+POC_lc <- parameters[row.names(parameters)=="POC_lc",1] #
 ############################################
 
 ##### Declare Output Data Storage ##########
 POC_conc <- data.frame(numeric(steps)) #Record running g/m3 POC concentration of mixed lake
 DOC_conc <- data.frame(numeric(steps)) #Record running g/m3 DOC concentration of mixed lake
-POC_flux <- data.frame(NPP_in=numeric(steps),Flow_in=numeric(steps),Flow_out=numeric(steps),Sed_out=numeric(steps)) #Record POC flux (g/m2/yr) at each time step
-DOC_flux <- data.frame(Flow_in=numeric(steps),NPP_in=numeric(steps),Flow_out=numeric(steps),Resp_out=numeric(steps)) #Record DOC flux (g/m2/yr) at each time step
+POC_flux <- data.frame(NPP_in=numeric(steps),Flow_in=numeric(steps),Flow_out=numeric(steps),Sed_out=numeric(steps),Leach_out=numeric(steps)) #Record POC flux (g/m2/yr) at each time step
+DOC_flux <- data.frame(Flow_in=numeric(steps),NPP_in=numeric(steps),Flow_out=numeric(steps),Resp_out=numeric(steps),Leach_in=numeric(steps)) #Record DOC flux (g/m2/yr) at each time step
 POC_fate <- data.frame(Flow_out=numeric(steps),Sed_out=numeric(steps)) #Record POC flux (g/m2/yr) at each time step
 DOC_fate <- data.frame(Flow_out=numeric(steps),Resp_out=numeric(steps)) #Record DOC flux (g/m2/yr) at each time step
 DOC_load <- data.frame(total=numeric(steps),alloch=numeric(steps),autoch=numeric(steps)) #Record DOC load (g) at each time step
@@ -104,7 +106,7 @@ NPPdata <- data.frame(DOC_rate=numeric(steps),POC_rate=numeric(steps),DOC_mass=n
 ############################################
 
 ##### Declare Data Storage - SW/GW #########
-SWGWData = data.frame(POC_Aerial=numeric(steps), POC_SW=numeric(steps), DOC_Wetland=numeric(steps), 
+SWGWData <- data.frame(POC_Aerial=numeric(steps), POC_SW=numeric(steps), DOC_Wetland=numeric(steps), 
                         DOC_GW=numeric(steps), DOC_SW=numeric(steps), DailyRain=numeric(steps), 
                         DOC_Precip=numeric(steps), Load_DOC=numeric(steps), Load_POC=numeric(steps))
 SWGW_mass_in <- data.frame(POC=numeric(steps),DOC=numeric(steps))
@@ -116,8 +118,13 @@ DOC_outflow <- data.frame(numeric(steps))
 MineralRespData <- data.frame(DOC_resp_mass=numeric(steps))
 ############################################
 
+#### Declare Data Storage - POC to DOC Leaching ####
+LeachData <- data.frame(POC_out = numeric(steps),DOC_in = numeric(steps))
+############################################
+
 ##### Declare Data Storage - Source of Sink? #
 SOS <- data.frame(Source=numeric(steps),Sink=numeric(steps),Pipe=numeric(steps),Net=numeric(steps))
+############################################
 
 ##### Carbon Concentration Initialization ################
 POC_conc[1,1] <- POC_conc_init # #Initialize POC concentration as baseline average
@@ -135,12 +142,12 @@ for (i in 1:(steps)){
   Rainfall <- InputData$Rain[i]/TimeStep #mm/day
   
   #Call NPP Function
-  RawProduction <- NPP(InputData$Chla[i],InputData$TP[i],InputData$EpiTemp[i]) #mg C/m^2/d
   PhoticDepth <- log(100)/(1.7/InputData$Secchi[i]) #Calc photic depth as function of Secchi depth
   if (PhoticDepth>lakeDepth){PhoticDepth<-lakeDepth} #QC - If photic depth calc'ed as greater than lake depth, photic depth = lake depth
+  RawProduction <- NPP(InputData$Chla[i],InputData$TP[i],PhoticDepth,InputData$EpiTemp[i]) #mg C/m^2/d
   NPPdata[i,1:2] <- RawProduction
-  NPPdata$DOC_mass[i] <- NPPdata$DOC_rate[i]*PhoticDepth*lakeArea*TimeStep/1000 #g
-  NPPdata$POC_mass[i] <- NPPdata$POC_rate[i]*PhoticDepth*lakeArea*TimeStep/1000 #g
+  NPPdata$DOC_mass[i] <- NPPdata$DOC_rate[i]*R_auto*lakeArea*TimeStep/1000 #g
+  NPPdata$POC_mass[i] <- NPPdata$POC_rate[i]*R_auto*lakeArea*TimeStep/1000 #g
 
   #Call SWGW Function
   SWGW <- SWGWFunction(Q_sw,Q_gw,Rainfall,Aoc_day, PC, lakePerim, Woc_day, PW, DOC_GW, prop_GW, 
@@ -161,6 +168,9 @@ for (i in 1:(steps)){
   DOC_resp_rate <- Resp(DOC_conc[i,1],InputData$EpiTemp[i],RespParam) #g C/m3/d ##CHANGE TO AVERAGE OR LAYER TEMP WHEN AVAILABLE IN TIME SERIES
   MineralRespData$DOC_resp_mass[i] <- DOC_resp_rate*lakeVol*TimeStep #g C
   
+  #Calc POC-to-DOC leaching
+  LeachData$POC_out[i] <- LeachData$DOC_in[i] <- POC_conc[i]*POC_lc*lakeVol*TimeStep #g - POC concentration times leaching parameter
+  
   #Calc outflow subtractions (assuming outflow concentrations = mixed lake concentrations)
   POC_outflow[i,1] <- POC_conc[i,1]*Q_out*60*60*24*TimeStep #g
   DOC_outflow[i,1] <- DOC_conc[i,1]*Q_out*60*60*24*TimeStep #g
@@ -170,9 +180,11 @@ for (i in 1:(steps)){
   POC_flux$Flow_in[i] <- SWGW_mass_in$POC[i]/lakeArea/(TimeStep/365)
   POC_flux$Flow_out[i] <- POC_outflow[i,1]/lakeArea/(TimeStep/365)
   POC_flux$Sed_out[i] <- POC_sed_out[i,1]/lakeArea/(TimeStep/365)
+  POC_flux$leach_out[i] <- LeachData$POC_out[i]/lakeArea/(TimeStep/365)
   
   DOC_flux$Flow_in[i] <- SWGW_mass_in$DOC[i]/lakeArea/(TimeStep/365)
   DOC_flux$NPP_in[i] <- NPPdata$DOC_mass[i]/lakeArea/(TimeStep/365)
+  DOC_flux$leach_in[i] <- LeachData$DOC_in[i]/lakeArea/(TimeStep/365)
   DOC_flux$Flow_out[i] <- DOC_outflow[i,1]/lakeArea/(TimeStep/365) 
   DOC_flux$Resp_out[i] <- MineralRespData$DOC_resp_mass[i]/lakeArea/(TimeStep/365) 
 
@@ -193,13 +205,13 @@ for (i in 1:(steps)){
   DOC_load$alloch[i] <- SWGW_mass_in$DOC[i] #g
   DOC_load$autoch[i] <- NPPdata$DOC_mass[i] #g
 
-  POC_out$total[i] <- POC_outflow[i,1] + POC_sed_out[i,1] #g
+  POC_out$total[i] <- POC_outflow[i,1] + POC_sed_out[i,1] + LeachData$POC_out #g
   DOC_out$total[i] <- DOC_outflow[i,1] + MineralRespData$DOC_resp_mass[i]  #g
   
   #Update POC and DOC concentration values (g/m3) for whole lake
   #POC_conc[i+1,1] <-  POC_conc[i,1] + ((NPPdata$NPP_mass[i] + SWGW_mass_in$POC[i] - POC_outflow[i,1] - POC_sed_out[i,1] - SedData$POC_to_DIC[i])/lakeVol) #g/m3
-  POC_conc[i+1,1] <-  POC_conc[i,1] + ((NPPdata$POC_mass[i] + SWGW_mass_in$POC[i] - POC_outflow[i,1] - POC_sed_out[i,1])/lakeVol) #g/m3
-  DOC_conc[i+1,1] <-  DOC_conc[i,1] + ((NPPdata$DOC_mass[i] + SWGW_mass_in$DOC[i] - DOC_outflow[i,1] - MineralRespData$DOC_resp_mass[i])/lakeVol) #g/m3
+  POC_conc[i+1,1] <-  POC_conc[i,1] + ((NPPdata$POC_mass[i] + SWGW_mass_in$POC[i] - POC_outflow[i,1] - POC_sed_out[i,1] - LeachData$POC_out[i])/lakeVol) #g/m3
+  DOC_conc[i+1,1] <-  DOC_conc[i,1] + ((NPPdata$DOC_mass[i] + SWGW_mass_in$DOC[i] + LeachData$DOC_in[i] - DOC_outflow[i,1] - MineralRespData$DOC_resp_mass[i])/lakeVol) #g/m3
   
   #Stop code and output error if concentrations go to negative
   if (POC_conc[i+1,1]<=0){stop("Negative POC concentration!")}
@@ -220,12 +232,14 @@ TotalDOCAutochIn <- sum(DOC_load$autoch) #g
 #Total carbon mass subtractions
 TotalPOCout <- sum(POC_out$total)
 TotalDOCout <- sum(DOC_out$total)
+#Internal POC to DOC Mass Transfer
+POCtoDOC <- sum(LeachData$DOC_in)
 #Change to total carbon stocks
 DeltaPOC <- POC_conc[steps+1,1]*lakeVol - POC_conc[1,1]*lakeVol #g
 DeltaDOC <- DOC_conc[steps+1,1]*lakeVol - DOC_conc[1,1]*lakeVol #g
 #Mass balance check (should be near zero)
 POCcheck <- (TotalPOCAllochIn + TotalPOCAutochIn - TotalPOCout) - DeltaPOC
-DOCcheck <- (TotalDOCAllochIn + TotalDOCAutochIn - TotalDOCout) - DeltaDOC
+DOCcheck <- (TotalDOCAllochIn + TotalDOCAutochIn + POCtoDOC - TotalDOCout) - DeltaDOC
 #Return mass balance checks
 print(c("POC Balance:",POCcheck))
 print(c("DOC Balance:",DOCcheck))

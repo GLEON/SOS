@@ -1,5 +1,5 @@
 
-NPP<-function(CHL,P,WT)
+NPP<-function(CHL,P,PhoticDepth,WT)
 {
   
   NPPdata <- data.frame(NPP_DOC_rate=NA,NPP_POC_rate=NA)
@@ -28,6 +28,9 @@ NPP<-function(CHL,P,WT)
   b0=1.18
   b1=0.92
   b2=0.014
+  
+
+  
   ###########################################################################
   if(missing(CHL)||is.na(CHL))
   {
@@ -41,6 +44,10 @@ NPP<-function(CHL,P,WT)
     }
     
   }
+  
+  CHL <- CHL*PhoticDepth
+  TP <- TP*PhoticDepth
+  
   NPP_rate <- 10^(b0+b1*log10(CHL)+b2*WT) #mg C/m2/d
  
   NPP_Percent_DOC <- 71.4*CHL^(-0.22) #NPP as DOC, estimated as equal to 
