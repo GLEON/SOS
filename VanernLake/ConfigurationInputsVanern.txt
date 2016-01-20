@@ -23,4 +23,4 @@ RespParam	0.0014819	unitless
 R_auto	0.8	unitless
 		
 #Sedimentation		
-ObservedMAR_oc	528	g/m2/yr
+ObservedMAR_oc	186	g/m2/yr
