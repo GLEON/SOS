@@ -4,7 +4,7 @@ CarbonFluxModel <- function(LakeName,PlotFlag,ValidationFlag){
 ##### INPUT FILE NAMES ################
 TimeSeriesFile <- paste('./',LakeName,'Lake/',LakeName,'TS.csv',sep='')
 RainFile <- paste('./',LakeName,'Lake/',LakeName,'Rain.csv',sep='')
-ParameterFile <- paste('./',LakeName,'Lake/','ParameterInputs',LakeName,'.txt',sep='')
+ParameterFile <- paste('./',LakeName,'Lake/','ConfigurationInputs',LakeName,'.txt',sep='')
 ValidationFileDOC <- paste('./',LakeName,'Lake/',LakeName,'ValidationDOC.csv',sep='')
 ValidationFileDO <- paste('./',LakeName,'Lake/',LakeName,'ValidationDO.csv',sep='')
 ############################################
@@ -59,6 +59,7 @@ steps <- nrow(InputData)
 
 ##### Sub-Topic Parameters: Sedimentation ######
 BurialFactor <- parameters[row.names(parameters)=="BurialFactor",1] #(1/days) Parameter estimation of OC burial in sediments
+ObservedMAR_oc <- parameters[row.names(parameters)=="ObservedMAR_oc",1]
 ############################################
 
 ##### Sub-Topic Parameters: NPP ############
@@ -288,7 +289,7 @@ CalibrationOutputDO$datetime <- ValidationDataDO$datetime
 
 CalibrationOutputDO$Measured <- k*(ValidationDataDO$DO_con-DO_sat$do.sat)/PhoticDepth
 
-CalibrationOutputDO$Modelled <- Metabolism$Oxygen[ValidationDOIndeces] #DO SOMETHING TO THIS!
+CalibrationOutputDO$Modelled <- Metabolism$Oxygen[ValidationDOIndeces] 
 }
 
 ################## PLOTTING ###########################################################
