@@ -18,5 +18,5 @@ PropGW	0	unitless
 DOC_precip	2	g/m3
 		
 #Min/Resp Parameters		
-DOC_miner_const	0.003	1/days
+POC_lc		0.01	1/days
 RespParam	0.001	unitless
