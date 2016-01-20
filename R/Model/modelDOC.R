@@ -24,16 +24,13 @@ modelDOC <- function (BurialFactor_init,RespParam_init,DOC_miner_const_init,step
     #Call respiration function
     DOC_resp_rate <- Resp(DOC_conc[i,1],InputData$EpiTemp[i],RespParam_init) #g C/m3/d ##CHANGE TO AVERAGE OR LAYER TEMP WHEN AVAILABLE IN TIME SERIES
     MineralRespData$DOC_resp_mass[i] <- DOC_resp_rate*lakeVol*TimeStep #g C
-    
-    #Calc DOC mineralization out #! Hilary and Paul's DOC mineralization klug
-    MineralRespData$DOC_miner_mass[i] = DOC_conc[i,1]*lakeVol*DOC_miner_const_init #g Current concentration multiplied by lakevolume and a mineralization constant in units of 1/d
+   
     
     #Calc outflow subtractions (assuming outflow concentrations = mixed lake concentrations)
     DOC_outflow[i,1] <- DOC_conc[i,1]*Q_out*60*60*24*TimeStep #g
     
     #Update POC and DOC concentration values (g/m3) for whole lake
-    DOC_conc[i+1,1] <-  DOC_conc[i,1] + ((NPPdata$DOC_mass[i] + SWGW_mass_in$DOC[i] - DOC_outflow[i,1] - MineralRespData$DOC_resp_mass[i] 
-                                          - MineralRespData$DOC_miner_mass[i])/lakeVol) #g/m3
+    DOC_conc[i+1,1] <-  DOC_conc[i,1] + ((NPPdata$DOC_mass[i] + SWGW_mass_in$DOC[i] - DOC_outflow[i,1] - MineralRespData$DOC_resp_mass[i])/lakeVol) #g/m3
     
     #Stop code and output error if concentrations go to negative
     if (DOC_conc[i+1,1]<=0){stop("Negative DOC concentration!")}
