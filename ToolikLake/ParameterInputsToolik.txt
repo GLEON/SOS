@@ -20,3 +20,4 @@ DOC_precip	2	g/m3
 #Leech/Resp Parameters		
 POC_lc	0.01	1/days
 RespParam	0.001	unitless
+R_auto	0.8	unitless
