@@ -1,0 +1,74 @@
+Advanced search site=Arctic LTER, subject keywords = organic carbon
+
+Seem to be available nutrient and chemical data for various lakes near Toolik Research Station for at least 2001-2009
+(but doesn't seem to have all necessary variables)
+
+Lake Nutrient data: http://ecosystems.mbl.edu/ARC/lakes/nutrients/index.shtml
+Toolik Inlet discharge: http://ecosystems.mbl.edu/ARC/landwater/discharge/index.shtml
+
+1988-2010_Kling_Akchem: daily data, but not all variables monitored continuously for time period
+* includes inlets and outlets
+
+Weather Data: http://ecosystems.mbl.edu/ARC/meta_template.php?FileName=./weather/tl/2007dltld.html
+(daily weather summary files)
+
+Secchi data: ARC_LAKES_Physchem_2000-2009.xls
+
+2005 Toolik Lake Data
+
+for Toolik Inlet discharge (inflow), used average daily inflow for data days (do we want total daily?)
+
+Secchi data for 7-29 were from 7-30
+
+for SW_DOC: if multiple data entries on same day, used mean (measurement depths are all surface)
+
+2006 Toolik Lake Data
+used surface (warmest) temp for epi temp
+used deepest available temp for hypo temp
+	7-7-06: hypo at only 9.5 m deep, where lake goes to 23 m deep
+
+for Toolik Inlet discharge (inflow), used average daily inflow for data days (do we want total daily?)
+
+No Secchi data for 7-21, 7-28 (and no substitutable dates)
+
+
+2007 Toolik Lake Data
+
+for 7-13-07, no SW_DOC available, so used value from 7-15-07
+for 8-10-07, no SW_DOC available, so used value from 8-8-07 (Secchi from 8-9)
+for 9-19-07, no SW_DOC available, so used value from 9-20-07
+for 9-28-07, no SW_DOC available, so used value from 9-29-07
+
+8-9-07 data were used for 8-10-07 to even out time step by week
+No Secchi data after 8-9
+
+chla data from ARC_LAKES_Physchem_2000-2009.xls (different from Chl-a values in 2007_ArcticLTER_Lakes_nuts.xls...not clear if these are "corrected" or not)
+
+2008 Toolik Lake Data
+for 6-20-08, deepest depth measured was 5 m (used as hypo temp)
+chla data from ARC_LAKES_Physchem_2000-2009.xls (different from "uncorrected" values in 2008_ArcticLTER_Lakes_nuts.xls)
+
+for 6-27-08, no SW_DOC available, so used value from 6-26-08
+for 7-11-08, two values for SW_DOC at 2 different times of day but at same depth, so took mean
+for 7-25-08, two values for SW_DOC at 2 different times of day but at same depth, so took mean
+for 8-1-08, two values for SW_DOC at 3 different times of day but at same depth, so took mean
+for 8-8-08, no SW_DOC available, so used value from 8-7-08
+
+Secchi data 7-18-08: average of two values (5.6, 4.5) avg=5.05 m
+ 
+### VALIDATON DATA
+12-17-18: can't seem to find in-lake DOC...found particulate carbon for 2005 (only yr of 2005-2008 with data)
+
+# ToolikLakeValidationDO (contains DO and temp) (From ARC_Lakes_PhysChem_2000_2009)
+Columns: datetime, Temp (C), DO_con (mg/L)
+Depth: 0 m, except
+6-17-05 (0.5 m)
+9-19-07 (1 m)
+DO_sat available 2007 and later
+
+7-1-05: averaged two samples from same day
+7-29-05: used data from 7-30-05
+7-14-06: used data from 7-12-06
+7-21-06: averaged two samples from same day
+8-18-06: averaged three samples from same day
+8-10-07: used data from 8-9-07
