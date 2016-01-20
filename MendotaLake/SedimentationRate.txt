@@ -10,4 +10,4 @@ Thomas D. Brock,A Eutrophic Lake, Lake Mendota, Wisconsin,1985
 249 gc/m2/yr  #based on traps Nov.1976-Nov.1977
 
 #longtern rate
-132-206 gc/m2/yr  #ediment cores
+132-206 gc/m2/yr  #sediment cores
