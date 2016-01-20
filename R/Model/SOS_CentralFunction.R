@@ -169,7 +169,8 @@ for (i in 1:(steps)){
   MineralRespData$DOC_resp_mass[i] <- DOC_resp_rate*lakeVol*TimeStep #g C
   
   #Calc POC-to-DOC leaching
-  LeachData$POC_out[i] <- LeachData$DOC_in[i] <- POC_conc[i]*POC_lc*lakeVol*TimeStep #g - POC concentration times leaching parameter
+  LeachData$POC_out[i] <- POC_conc[i,1]*POC_lc*lakeVol*TimeStep #g - POC concentration times leaching parameter
+  LeachData$DOC_in[i] <- LeachData$POC_out[i]
   
   #Calc outflow subtractions (assuming outflow concentrations = mixed lake concentrations)
   POC_outflow[i,1] <- POC_conc[i,1]*Q_out*60*60*24*TimeStep #g
@@ -188,7 +189,6 @@ for (i in 1:(steps)){
   DOC_flux$Flow_out[i] <- DOC_outflow[i,1]/lakeArea/(TimeStep/365) 
   DOC_flux$Resp_out[i] <- MineralRespData$DOC_resp_mass[i]/lakeArea/(TimeStep/365) 
 
-  
   #Cumulative DOC and POC fate (grams)
   POC_fate$Flow_out[i] <- sum(POC_outflow)
   POC_fate$Sed_out[i] <- sum(POC_sed_out)
@@ -205,7 +205,7 @@ for (i in 1:(steps)){
   DOC_load$alloch[i] <- SWGW_mass_in$DOC[i] #g
   DOC_load$autoch[i] <- NPPdata$DOC_mass[i] #g
 
-  POC_out$total[i] <- POC_outflow[i,1] + POC_sed_out[i,1] + LeachData$POC_out #g
+  POC_out$total[i] <- POC_outflow[i,1] + POC_sed_out[i,1] + LeachData$POC_out[i] #g
   DOC_out$total[i] <- DOC_outflow[i,1] + MineralRespData$DOC_resp_mass[i]  #g
   
   #Update POC and DOC concentration values (g/m3) for whole lake
