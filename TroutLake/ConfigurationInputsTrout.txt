@@ -21,3 +21,6 @@ DOC_precip	2	g/m3
 POC_lc	0.01	1/days
 RespParam	0.001	unitless
 R_auto	0.8	unitless
+		
+#Sedimentation		
+ObservedMAR_oc	27	g/m2/yr
