@@ -5,13 +5,15 @@ CarbonFluxModel <- function(LakeName,PlotFlag,ValidationFlag){
 TimeSeriesFile <- paste('./',LakeName,'Lake/',LakeName,'TS.csv',sep='')
 RainFile <- paste('./',LakeName,'Lake/',LakeName,'Rain.csv',sep='')
 ParameterFile <- paste('./',LakeName,'Lake/','ParameterInputs',LakeName,'.txt',sep='')
-ValidationFile <- paste('./',LakeName,'Lake/',LakeName,'ValidationDOC.csv',sep='')
+ValidationFileDOC <- paste('./',LakeName,'Lake/',LakeName,'ValidationDOC.csv',sep='')
+ValidationFileDO <- paste('./',LakeName,'Lake/',LakeName,'ValidationDO.csv',sep='')
 ############################################
 
 ##### LOAD PACKAGES ########################
 library(signal)
 library(zoo)
 library(lubridate)
+library(LakeMetabolizer)
 ############################################
 
 ##### LOAD FUNCTIONS #######################
@@ -170,9 +172,8 @@ for (i in 1:(steps)){
   MineralRespData$DOC_resp_mass[i] <- DOC_resp_rate*lakeVol*TimeStep #g C
   
   #Calc metabolism (DO) estimates for NPP validation
-  Metabolism$NEP[i] <- (NPPdata$DOC_mass[i] + NPPdata$POC_mass[i] - MineralRespData$DOC_resp_mass[i])/lakeVol/TimeStep #g/m3/d
+  Metabolism$NEP[i] <- (NPPdata$DOC_mass[i] + NPPdata$POC_mass[i] - MineralRespData$DOC_resp_mass[i]*(PhoticDepth/lakeDepth))/(lakeVol*PhoticDepth/lakeDepth)/TimeStep #g/m3/d
   Metabolism$Oxygen[i] <- Metabolism$NEP[i]*(32/12) #g/m3/d Molar conversion of C flux to O2 flux (lake metabolism)
-  
   
   #Calc POC-to-DOC leaching
   LeachData$POC_out[i] <- POC_conc[i,1]*POC_lc*lakeVol*TimeStep #g - POC concentration times leaching parameter
@@ -259,16 +260,35 @@ OutputTimeSeries <- InputData$datetime
 
 ####################### Validation Output Setup ######################################
 if (ValidationFlag==1){
-ValidationDataDOC <- read.csv(ValidationFile,header=T)
+  
+#DOC Validation Output Setup
+ValidationDataDOC <- read.csv(ValidationFileDOC,header=T)
 ValidationDataDOC$datetime <- as.POSIXct(strptime(ValidationDataDOC$datetime,"%m/%d/%Y %H:%M"),tz="GMT") #Convert time to POSIX
 
 ValidationDOCIndeces <- match(ValidationDataDOC$datetime,ConcOutputTimeSeries)
 
 CalibrationOutputDOC <- data.frame(datetime=numeric(length(ValidationDOCIndeces)),Measured=numeric(length(ValidationDOCIndeces)),Modelled=numeric(length(ValidationDOCIndeces)))
 
-CalibrationDOCOutput$datetime <- ValidationDataDOC$datetime
-CalibrationDOCOutput$Measured <- ValidationDataDOC$DOC
-CalibrationDOCOutput$Modelled <- DOC_conc[ValidationDOCIndeces,1]
+CalibrationOutputDOC$datetime <- ValidationDataDOC$datetime
+CalibrationOutputDOC$Measured <- ValidationDataDOC$DOC
+CalibrationOutputDOC$Modelled <- DOC_conc[ValidationDOCIndeces,1]
+
+#DO Validation Output Setup
+ValidationDataDO <- read.csv(ValidationFileDO,header=T)
+ValidationDataDO$datetime <- as.POSIXct(strptime(ValidationDataDO$datetime,"%m/%d/%Y %H:%M"),tz="GMT") #Convert time to POSIX
+
+ValidationDOIndeces <- match(ValidationDataDO$datetime,OutputTimeSeries)
+
+CalibrationOutputDO <- data.frame(datetime=numeric(length(ValidationDOIndeces)),Measured=numeric(length(ValidationDOIndeces)),Modelled=numeric(length(ValidationDOIndeces)))
+
+DO_sat <- o2.at.sat(ValidationDataDO[,1:2])
+
+k <- 0.5 #m/d
+CalibrationOutputDO$datetime <- ValidationDataDO$datetime
+
+CalibrationOutputDO$Measured <- k*(ValidationDataDO$DO_con-DO_sat$do.sat)/PhoticDepth
+
+CalibrationOutputDO$Modelled <- Metabolism$Oxygen[ValidationDOIndeces] #DO SOMETHING TO THIS!
 }
 
 ################## PLOTTING ###########################################################
@@ -321,5 +341,4 @@ plot(OutputTimeSeries,SOS$Net/1000,xlab='date/time',ylab='OC mass (kg/d)',
   axis.POSIXct(1,at=plotDates,labels=format(plotDates,"%m/%y"),las=1,cex.axis = 0.8)
 }
   
-return(CalibrationDOCOutput)
 }  
