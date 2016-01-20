@@ -103,6 +103,7 @@ POC_sed_out <- data.frame(numeric(steps))
 
 ##### Declare Data Storage - NPP ###########
 NPPdata <- data.frame(DOC_rate=numeric(steps),POC_rate=numeric(steps),DOC_mass=numeric(steps),POC_mass=numeric(steps))
+Metabolism <- data.frame(NEP=numeric(steps),Oxygen=numeric(steps))
 ############################################
 
 ##### Declare Data Storage - SW/GW #########
@@ -167,6 +168,11 @@ for (i in 1:(steps)){
   #Call respiration function
   DOC_resp_rate <- Resp(DOC_conc[i,1],InputData$EpiTemp[i],RespParam) #g C/m3/d ##CHANGE TO AVERAGE OR LAYER TEMP WHEN AVAILABLE IN TIME SERIES
   MineralRespData$DOC_resp_mass[i] <- DOC_resp_rate*lakeVol*TimeStep #g C
+  
+  #Calc metabolism (DO) estimates for NPP validation
+  Metabolism$NEP[i] <- (NPPdata$DOC_mass[i] + NPPdata$POC_mass[i] - MineralRespData$DOC_resp_mass[i])/lakeVol/TimeStep #g/m3/d
+  Metabolism$Oxygen[i] <- Metabolism$NEP[i]*(32/12) #g/m3/d Molar conversion of C flux to O2 flux (lake metabolism)
+  
   
   #Calc POC-to-DOC leaching
   LeachData$POC_out[i] <- POC_conc[i,1]*POC_lc*lakeVol*TimeStep #g - POC concentration times leaching parameter
@@ -253,16 +259,16 @@ OutputTimeSeries <- InputData$datetime
 
 ####################### Validation Output Setup ######################################
 if (ValidationFlag==1){
-ValidationData <- read.csv(ValidationFile,header=T)
-ValidationData$datetime <- as.POSIXct(strptime(ValidationData$datetime,"%m/%d/%Y %H:%M"),tz="GMT") #Convert time to POSIX
+ValidationDataDOC <- read.csv(ValidationFile,header=T)
+ValidationDataDOC$datetime <- as.POSIXct(strptime(ValidationDataDOC$datetime,"%m/%d/%Y %H:%M"),tz="GMT") #Convert time to POSIX
 
-ValidationIndeces <- match(ValidationData$datetime,ConcOutputTimeSeries)
+ValidationDOCIndeces <- match(ValidationDataDOC$datetime,ConcOutputTimeSeries)
 
-CalibrationOutput <- data.frame(datetime=numeric(length(ValidationIndeces)),Measured=numeric(length(ValidationIndeces)),Modelled=numeric(length(ValidationIndeces)))
+CalibrationOutputDOC <- data.frame(datetime=numeric(length(ValidationDOCIndeces)),Measured=numeric(length(ValidationDOCIndeces)),Modelled=numeric(length(ValidationDOCIndeces)))
 
-CalibrationOutput$datetime <- ValidationData$datetime
-CalibrationOutput$Measured <- ValidationData$DOC
-CalibrationOutput$Modelled <- DOC_conc[ValidationIndeces,1]
+CalibrationDOCOutput$datetime <- ValidationDataDOC$datetime
+CalibrationDOCOutput$Measured <- ValidationDataDOC$DOC
+CalibrationDOCOutput$Modelled <- DOC_conc[ValidationDOCIndeces,1]
 }
 
 ################## PLOTTING ###########################################################
@@ -315,5 +321,5 @@ plot(OutputTimeSeries,SOS$Net/1000,xlab='date/time',ylab='OC mass (kg/d)',
   axis.POSIXct(1,at=plotDates,labels=format(plotDates,"%m/%y"),las=1,cex.axis = 0.8)
 }
   
-return(CalibrationOutput)
+return(CalibrationDOCOutput)
 }  
