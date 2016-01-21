@@ -1,6 +1,8 @@
-CarbonFluxModel <- function(LakeName,PlotFlag,ValidationFlag){
+#CarbonFluxModel <- function(LakeName,PlotFlag,ValidationFlag){
   #Flags 1 for yes, else no.
-  
+  LakeName = 'Vanern'
+  PlotFlag = 0
+  ValidationFlag = 0
   ##### INPUT FILE NAMES ################
   TimeSeriesFile <- paste('./',LakeName,'Lake/',LakeName,'TS.csv',sep='')
   RainFile <- paste('./',LakeName,'Lake/',LakeName,'Rain.csv',sep='')
@@ -29,9 +31,7 @@ CarbonFluxModel <- function(LakeName,PlotFlag,ValidationFlag){
   RawData$datetime <- as.POSIXct(strptime(RawData$datetime,"%m/%d/%Y %H:%M"),tz="GMT") #Convert time to POSIX
   #Fill time-series gaps (linear interpolation)
   ts_new <- data.frame(datetime = seq(RawData$datetime[1],RawData$datetime[nrow(RawData)],by="day")) #Interpolate gapless time-series
-  print('Breakpoint 1')
   InputData <- merge(RawData,ts_new,all=T)
-  print('Breakpoint 2')
   InputData <- as.data.frame(InputData)
   for (col in 2:ncol(InputData)){
     InputData[,col] <- na.approx(InputData[,col])}
@@ -146,40 +146,62 @@ CarbonFluxModel <- function(LakeName,PlotFlag,ValidationFlag){
   #DO Validation Output Setup
   ValidationDataDO <- read.csv(ValidationFileDO,header=T)
   ValidationDataDO$datetime <- as.POSIXct(strptime(ValidationDataDO$datetime,"%m/%d/%Y %H:%M"),tz="GMT") #Convert time to POSIX
-  DO_sat <- o2.at.sat(ValidationDataDO[,1:2])
   k <- 0.5 #m/d
   PhoticDepth <- data.frame(datetime = InputData$datetime,PhoticDepth = log(100)/(1.7/InputData$Secchi))
   IndxVal = ValidationDataDO$datetime %in% PhoticDepth$datetime
   IndxPhotic = PhoticDepth$datetime %in% ValidationDataDO$datetime
   
   ValidationDataDO = ValidationDataDO[IndxVal,]
-  ValidationDataDO$Flux <- k*(ValidationDataDO$DO_con-DO_sat$do.sat)[IndxVal]/PhoticDepth$PhoticDepth[IndxPhotic]
+  DO_sat <- o2.at.sat(ValidationDataDO[,1:2])
+  
+  ValidationDataDO$Flux <- k*(ValidationDataDO$DO_con-DO_sat$do.sat)/PhoticDepth$PhoticDepth[IndxPhotic]
   #SedData MAR OC 
   ValidationDataMAROC <- ObservedMAR_oc #g/m2
-  
+
   ######################## Optimization of Parameters Using NLL of DOC Conc ################################
   ## Calculate negative log likelihood 
   
   ## Calculate negative log likelihood 
   calcModelNLL <- function(BF,RP,Rauto,steps,ValidationDataDOC,ValidationDataDO,ValidationDataMAROC){
     modeled = modelDOC(BF,RP,Rauto,steps)
-   
+    
     obsIndx = ValidationDataDOC$datetime %in% modeled$datetime
     modIndx = modeled$datetime %in% ValidationDataDOC$datetime
-    CalibrationOutput <- data.frame(datetime = ValidationDataDOC[obsIndx,]$datetime,
+    CalibrationOutputDOC <- data.frame(datetime = ValidationDataDOC[obsIndx,]$datetime,
                                     Measured = ValidationDataDOC[obsIndx,]$DOC, Modelled = modeled[modIndx,]$DOC_conc)
-    resDOC = scale(CalibrationOutput$Measured - CalibrationOutput$Modelled,center = F)
-    
+    #resDOC = scale(CalibrationOutputDOC$Measured - CalibrationOutputDOC$Modelled,center = F)
+    resDOC = (CalibrationOutputDOC$Measured - CalibrationOutputDOC$Modelled)
     obsIndx = ValidationDataDO$datetime %in% modeled$datetime
     modIndx = modeled$datetime %in% ValidationDataDO$datetime
-    CalibrationOutput <- data.frame(datetime = ValidationDataDO[obsIndx,]$datetime,
+    CalibrationOutputDO <- data.frame(datetime = ValidationDataDO[obsIndx,]$datetime,
                                     Measured = ValidationDataDO[obsIndx,]$Flux, Modelled = modeled[modIndx,]$MetabOxygen)
-    resDO = scale(CalibrationOutput$Measured - CalibrationOutput$Modelled,center = F)
-    
+    #resDO = scale(CalibrationOutputDO$Measured - CalibrationOutputDO$Modelled,center = F)
+    resDO = (CalibrationOutputDO$Measured - CalibrationOutputDO$Modelled)
     resSedData = mean(modeled$SedData_MAR,na.rm = T) - ValidationDataMAROC #not scaled because it is 1 value
     #This will more heavily weight this one value 
     
-    res = c(resDOC,resDO,resSedData)
+    res = c(resDOC,resDO,resSedData/10)
+    PlotIt = 1
+    if(PlotIt){
+      #myTest = sum(modeled$DOC_conc[1:20])
+      myTest = sum(CalibrationOutputDOC$Modelled[1:20])
+      print(CalibrationOutputDOC$Modelled)
+      print(paste('myTest:',myTest))
+      #print(paste('obsindx:',obsIndx))
+      #print(paste('modindx:',modIndx))
+      if(myTest<0.1){
+        str(modeled)
+        readline('Ouch!!!!!!!!!!')
+      }
+      #par(mfrow=c(3,1))
+      layout(matrix(c(1,1,2,3), 2, 2, byrow = TRUE))
+      #print(res[1:10])
+      plot(res, main = '')
+      plot(CalibrationOutputDOC$Modelled,type = 'l',xlab = '', ylab = 'DOC',main = '')
+      lines(CalibrationOutputDOC$Measured,type = 'o')
+      plot(CalibrationOutputDO$Modelled,type = 'l',xlab = '', ylab = 'DO',main = '')
+      lines(CalibrationOutputDO$Measured,type = 'o')
+    }
     
     nRes 	= length(res)
     SSE 	= sum(res^2)
@@ -195,9 +217,10 @@ CarbonFluxModel <- function(LakeName,PlotFlag,ValidationFlag){
   }
   
   ## Optimization of GPP and R using optim
+  
   optimOut = optim(par = c(BurialFactor_init,RespParam_init,R_auto_init), fn = toOptim,
                    control=list(trace=TRUE)) #control = list(maxit = 100)
-  
+
   ## New parameters from optimization output
   BurialFactor <- optimOut$par[1] #
   RespParam <- optimOut$par[2]
@@ -415,4 +438,4 @@ CarbonFluxModel <- function(LakeName,PlotFlag,ValidationFlag){
     axis.POSIXct(1,at=plotDates,labels=format(plotDates,"%m/%y"),las=1,cex.axis = 0.8)
   }
   
-}  
+#}  
