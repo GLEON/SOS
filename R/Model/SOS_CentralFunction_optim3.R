@@ -1,8 +1,10 @@
 #CarbonFluxModel <- function(LakeName,PlotFlag,ValidationFlag){
   #Flags 1 for yes, else no.
   LakeName = 'Vanern'
-  PlotFlag = 0
+  OptimizationFlag = 0
+  PlotFlag = 1
   ValidationFlag = 0
+  
   ##### INPUT FILE NAMES ################
   TimeSeriesFile <- paste('./',LakeName,'Lake/',LakeName,'TS.csv',sep='')
   RainFile <- paste('./',LakeName,'Lake/',LakeName,'Rain.csv',sep='')
@@ -138,7 +140,8 @@
   DOC_conc[1,1] <- DOC_conc_init #Initialize DOC concentration g/m3
   ##########################################################
   
-  ##########################################################
+  #################### OPTIMIZATION ROUTINE ############################################
+  if (OptimizationFlag==1){
   ####################### Validation Output Setup ######################################
   #DOC Validation Output Setup
   ValidationDataDOC <- read.csv(ValidationFileDOC,header=T)
@@ -222,13 +225,19 @@
                    control=list(trace=TRUE)) #control = list(maxit = 100)
 
   ## New parameters from optimization output
-  BurialFactor <- optimOut$par[1] #
-  RespParam <- optimOut$par[2]
-  R_auto <- optimOut$par[3] #
+
   conv <- optimOut$convergence  #did model converge or not (0=yes, 1=no)
   NLL <- optimOut$value #value of nll 
+  }
+  ####################### END OPTIMIZATION ROUTINE #################################
   
-  
+  if (OptimizationFlag==1){
+  BurialFactor <- optimOut$par[1] #
+  RespParam <- optimOut$par[2]
+  R_auto <- optimOut$par[3]}else {
+    BurialFactor <- BurialFactor_init #
+    RespParam <- RespParam_init
+    R_auto <- R_auto_init} 
   
   
   ####################### MAIN PROGRAM #############################################
