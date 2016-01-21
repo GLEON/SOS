@@ -261,35 +261,22 @@ OutputTimeSeries <- InputData$datetime
 
 ####################### Validation Output Setup ######################################
 if (ValidationFlag==1){
+  #DOC Validation Output Setup
+  ValidationDataDOC <- read.csv(ValidationFileDOC,header=T)
+  ValidationDataDOC$datetime <- as.POSIXct(strptime(ValidationDataDOC$datetime,"%m/%d/%Y %H:%M"),tz="GMT") #Convert time to POSIX
+  #DO Validation Output Setup
+  ValidationDataDO <- read.csv(ValidationFileDO,header=T)
+  ValidationDataDO$datetime <- as.POSIXct(strptime(ValidationDataDO$datetime,"%m/%d/%Y %H:%M"),tz="GMT") #Convert time to POSIX
+  DO_sat <- o2.at.sat(ValidationDataDO[,1:2])
+  k <- 0.5 #m/d
+  PhoticDepth <- data.frame(datetime = InputData$datetime,PhoticDepth = log(100)/(1.7/InputData$Secchi))
+  IndxVal = ValidationDataDO$datetime %in% PhoticDepth$datetime
+  IndxPhotic = PhoticDepth$datetime %in% ValidationDataDO$datetime
   
-#DOC Validation Output Setup
-ValidationDataDOC <- read.csv(ValidationFileDOC,header=T)
-ValidationDataDOC$datetime <- as.POSIXct(strptime(ValidationDataDOC$datetime,"%m/%d/%Y %H:%M"),tz="GMT") #Convert time to POSIX
-
-ValidationDOCIndeces <- match(ValidationDataDOC$datetime,ConcOutputTimeSeries)
-
-CalibrationOutputDOC <- data.frame(datetime=numeric(length(ValidationDOCIndeces)),Measured=numeric(length(ValidationDOCIndeces)),Modelled=numeric(length(ValidationDOCIndeces)))
-
-CalibrationOutputDOC$datetime <- ValidationDataDOC$datetime
-CalibrationOutputDOC$Measured <- ValidationDataDOC$DOC
-CalibrationOutputDOC$Modelled <- DOC_conc[ValidationDOCIndeces,1]
-
-#DO Validation Output Setup
-ValidationDataDO <- read.csv(ValidationFileDO,header=T)
-ValidationDataDO$datetime <- as.POSIXct(strptime(ValidationDataDO$datetime,"%m/%d/%Y %H:%M"),tz="GMT") #Convert time to POSIX
-
-ValidationDOIndeces <- match(ValidationDataDO$datetime,OutputTimeSeries)
-
-CalibrationOutputDO <- data.frame(datetime=numeric(length(ValidationDOIndeces)),Measured=numeric(length(ValidationDOIndeces)),Modelled=numeric(length(ValidationDOIndeces)))
-
-DO_sat <- o2.at.sat(ValidationDataDO[,1:2])
-
-k <- 0.5 #m/d
-CalibrationOutputDO$datetime <- ValidationDataDO$datetime
-
-CalibrationOutputDO$Measured <- k*(ValidationDataDO$DO_con-DO_sat$do.sat)/PhoticDepth
-
-CalibrationOutputDO$Modelled <- Metabolism$Oxygen[ValidationDOIndeces] 
+  ValidationDataDO = ValidationDataDO[IndxVal,]
+  ValidationDataDO$Flux <- k*(ValidationDataDO$DO_con-DO_sat$do.sat)[IndxVal]/PhoticDepth$PhoticDepth[IndxPhotic]
+  #SedData MAR OC 
+  ValidationDataMAROC <- ObservedMAR_oc #g/m2
 }
 
 ################## PLOTTING ###########################################################
