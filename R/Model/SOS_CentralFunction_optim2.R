@@ -21,6 +21,7 @@ CarbonFluxModel <- function(LakeName,PlotFlag,ValidationFlag){
   source("./R/Model/SOS_SWGW.R")
   source("./R/Model/SOS_NPP.R")
   source("./R/Model/SOS_Resp.R")
+  source("./R/Model/modelDOC.R")
   ############################################
   
   ##### READ MAIN INPUT FILE #################
