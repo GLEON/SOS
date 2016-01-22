@@ -176,31 +176,36 @@
     CalibrationOutputDO <- data.frame(datetime = ValidationDataDO[obsIndx,]$datetime,
                                     Measured = ValidationDataDO[obsIndx,]$Flux, Modelled = modeled[modIndx,]$MetabOxygen)
     #resDO = scale(CalibrationOutputDO$Measured - CalibrationOutputDO$Modelled,center = F)
-    resDO = (CalibrationOutputDO$Measured - CalibrationOutputDO$Modelled)
-    resSedData = mean(modeled$SedData_MAR,na.rm = T) - ValidationDataMAROC #not scaled because it is 1 value
+    DOScale = 10
+    resDO = (CalibrationOutputDO$Measured - CalibrationOutputDO$Modelled) * DOScale
+    
+    sedScale = 0.1
+    resSedData = (mean(modeled$SedData_MAR,na.rm = T) - ValidationDataMAROC) * sedScale #not scaled because it is 1 value
+  
+    print(paste('Sed resids scaled: ',resSedData))
     #This will more heavily weight this one value 
     
-    res = c(resDOC,resDO,resSedData/10)
+    res = c(resDOC,resDO,rep(resSedData,length(resDO)))
     PlotIt = 1
     if(PlotIt){
       #myTest = sum(modeled$DOC_conc[1:20])
-      myTest = sum(CalibrationOutputDOC$Modelled[1:20])
-      print(CalibrationOutputDOC$Modelled)
-      print(paste('myTest:',myTest))
+      #myTest = sum(CalibrationOutputDOC$Modelled[1:20])
+      #print(CalibrationOutputDOC$Modelled)
+      #print(paste('myTest:',myTest))
       #print(paste('obsindx:',obsIndx))
       #print(paste('modindx:',modIndx))
-      if(myTest<0.1){
-        str(modeled)
-        readline('Ouch!!!!!!!!!!')
-      }
+#       if(myTest<0.1){
+#         str(modeled)
+#         readline('Ouch!!!!!!!!!!')
+#       }
       #par(mfrow=c(3,1))
       layout(matrix(c(1,1,2,3), 2, 2, byrow = TRUE))
       #print(res[1:10])
       plot(res, main = '')
       plot(CalibrationOutputDOC$Modelled,type = 'l',xlab = '', ylab = 'DOC',main = '')
-      lines(CalibrationOutputDOC$Measured,type = 'o')
+      lines(CalibrationOutputDOC$Measured,type = 'p')
       plot(CalibrationOutputDO$Modelled,type = 'l',xlab = '', ylab = 'DO',main = '')
-      lines(CalibrationOutputDO$Measured,type = 'o')
+      lines(CalibrationOutputDO$Measured,type = 'p')
     }
     
     nRes 	= length(res)
@@ -221,6 +226,8 @@
   optimOut = optim(par = c(BurialFactor_init,RespParam_init,R_auto_init), fn = toOptim,
                    control=list(trace=TRUE)) #control = list(maxit = 100)
 
+  print('Parameter estimates (burial, Rhet, Raut...')
+  print(optimOut$par)
   ## New parameters from optimization output
   BurialFactor <- optimOut$par[1] #
   RespParam <- optimOut$par[2]
