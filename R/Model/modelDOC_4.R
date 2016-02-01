@@ -1,0 +1,60 @@
+modelDOC <- function (BurialFactor_init,RespParam_init,R_auto_init,steps) {
+  
+  for (i in 1:(steps)){
+    
+    #Prevent negative parameter guesses from blowing model up
+    if (BurialFactor_init <= 0) {BurialFactor_init <- 10^-5}
+    if (RespParam_init <= 0) {RespParam_init <- 10^-5}
+    if (R_auto_init <= 0) {R_auto_init <- 10^-5}
+    
+    Q_sw <- InputData$FlowIn[i] #m3/s surface water flowrate at i
+    Q_gw <- Q_sw/(1-PropGW) - Q_sw #m3/s; as a function of proportion of inflow that is GW
+    Q_out <- InputData$FlowOut[i] #m3/s: total outflow. Assume steady state pending dynamic output
+    Rainfall <- InputData$Rain[i]/TimeStep #mm/day
+    
+    #Call NPP Function
+    PhoticDepth <- log(100)/(1.7/InputData$Secchi[i]) #Calc photic depth as function of Secchi depth
+    if (PhoticDepth>LakeDepth){PhoticDepth<-LakeDepth} #QC - If photic depth calc'ed as greater than lake depth, photic depth = lake depth
+    RawProduction <- NPP(InputData$Chla[i],InputData$TP[i],PhoticDepth,InputData$EpiTemp[i]) #mg C/m^2/d
+    NPPdata[i,2:3] <- RawProduction
+    
+    #Call SWGW Function
+    SWGW <- SWGWFunction(Q_sw,Q_gw,Rainfall,AerialLoad, PropCanopy, LakePerimeter, WetlandLoad, PropWetlands, DOC_gw, PropGW, 
+                         InputData$SW_DOC[i], DOC_precip, LakeArea) #change these inputs to iterative [i] values when inputs are dynamic
+    SWGWData[i,2:10] <- SWGW
+    
+    #Calculate load from SWGW_in
+    SWGWData$DOC_massIn_g[i] <- SWGWData$Load_DOC[i]*TimeStep #g
+    SWGWData$POC_massIn_g[i] <- SWGWData$Load_POC[i]*TimeStep #g
+    
+    #Call Sedimentation Function
+    POC_mass <- POC_df$POC_conc_gm3[i]*LakeVolume
+    SedOutput <- SedimentationFunction(BurialFactor_init,TimeStep,POC_mass,LakeArea)
+    SedData[i,2:4] = SedOutput
+    SedData$POC_sedOut[i] <- SedData$POC_burial[i] #g #WHY IS THIS REPEATED?
+    
+    #Call respiration function
+    #Call respiration function
+    DOC_resp_rate <- Resp(DOC_df$DOC_conc_gm3[i],InputData$EpiTemp[i],RespParam_init) #g C/m3/d ##CHANGE TO AVERAGE OR LAYER TEMP WHEN AVAILABLE IN TIME SERIES
+    NPPdata$DOC_resp_mass[i] = DOC_resp_rate*LakeVolume*TimeStep #g C
+    NPPdata$DOC_mass[i] <- NPPdata$DOC_rate[i]*(1-R_auto_init)*LakeArea*TimeStep/1000 #g
+    NPPdata$POC_mass[i] <- NPPdata$POC_rate[i]*(1-R_auto_init)*LakeArea*TimeStep/1000 #g
+    
+    #Calc metabolism (DO) estimates for NPP validation
+    Metabolism$NEP[i] <- (NPPdata$DOC_mass[i] + NPPdata$POC_mass[i] - NPPdata$DOC_resp_mass[i]*(PhoticDepth/LakeDepth))/(LakeVolume*PhoticDepth/LakeDepth)/TimeStep #g/m3/d
+    Metabolism$Oxygen[i] <- Metabolism$NEP[i]*(32/12)
+    #Calc POC-to-DOC leaching
+    LeachData$DOC_leachIn[i] <- LeachData$POC_leachOut[i]
+  
+    #Calc outflow subtractions (assuming outflow concentrations = mixed lake concentrations)
+    SWGWData$DOC_outflow[i] <- DOC_df$DOC_conc_gm3[i]*Q_out*60*60*24*TimeStep #g
+    
+    #Update POC and DOC concentration values (g/m3) for whole lake
+    if (i<steps){
+      DOC_df$DOC_conc_gm3[i+1] <-  DOC_df$DOC_conc_gm3[i] + ((NPPdata$DOC_mass[i] + SWGWData$DOC_massIn_g[i] + LeachData$DOC_leachIn[i] - SWGWData$DOC_outflow[i] - NPPdata$DOC_resp_mass[i])/LakeVolume) #g/m3
+    }
+  }
+  # Final output
+  return(data.frame('datetime' = InputData$datetime, 'DOC_conc' = SWGWData$DOC_outflow[i],
+                    'MetabOxygen' = Metabolism$Oxygen,'SedData_MAR' = SedData$MAR_oc))
+}
