@@ -1,7 +1,7 @@
 #CarbonFluxModel <- function(LakeName,PlotFlag,ValidationFlag){
 #Flags 1 for yes, else no.
 LakeName = 'Vanern'
-OptimizationFlag = 0
+OptimizationFlag = 1
 PlotFlag = 1
 ValidationFlag = 1
 
@@ -23,7 +23,7 @@ source("./R/Model/SOS_Sedimentation.R")
 source("./R/Model/SOS_SWGW.R")
 source("./R/Model/SOS_NPP.R")
 source("./R/Model/SOS_Resp.R")
-source("./R/Model/modelDOC.R")
+source("./R/Model/modelDOC_4.R")
 
 ##### READ MAIN INPUT FILE #################
 RawData <- read.csv(TimeSeriesFile,header=T) #Read main data file with GLM outputs (physical input) and NPP input
