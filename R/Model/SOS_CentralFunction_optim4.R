@@ -106,64 +106,7 @@ if (ValidationFlag==1){
 
 #################### OPTIMIZATION ROUTINE ############################################
 if (OptimizationFlag==1){
-  ######################## Optimization of Parameters Using NLL of DOC Conc ################################
-  ## Calculate negative log likelihood 
-  calcModelNLL <- function(BF,RP,Rauto,steps,ValidationDataDOC,ValidationDataDO,ValidationDataMAROC){
-    modeled = modelDOC(BF,RP,Rauto,steps)
-    
-    obsIndx = ValidationDataDOC$datetime %in% modeled$datetime
-    modIndx = modeled$datetime %in% ValidationDataDOC$datetime
-    CalibrationOutputDOC <- data.frame(datetime = ValidationDataDOC[obsIndx,]$datetime,
-                                       Measured = ValidationDataDOC[obsIndx,]$DOC, Modelled = modeled[modIndx,]$DOC_conc)
-    #resDOC = scale(CalibrationOutputDOC$Measured - CalibrationOutputDOC$Modelled,center = F)
-    resDOC = (CalibrationOutputDOC$Measured - CalibrationOutputDOC$Modelled)
-    obsIndx = ValidationDataDO$datetime %in% modeled$datetime
-    modIndx = modeled$datetime %in% ValidationDataDO$datetime
-    CalibrationOutputDO <- data.frame(datetime = ValidationDataDO[obsIndx,]$datetime,
-                                      Measured = ValidationDataDO[obsIndx,]$Flux, Modelled = modeled[modIndx,]$MetabOxygen)
-    #resDO = scale(CalibrationOutputDO$Measured - CalibrationOutputDO$Modelled,center = F)
-    DOScale = 10
-    resDO = (CalibrationOutputDO$Measured - CalibrationOutputDO$Modelled) * DOScale
-    
-    sedScale = 0.1
-    resSedData = (mean(modeled$SedData_MAR,na.rm = T) - ValidationDataMAROC) * sedScale #not scaled because it is 1 value
-    
-    print(paste('Sed resids scaled: ',resSedData))
-    #This will more heavily weight this one value 
-    
-    res = c(resDOC,resDO,rep(resSedData,length(resDO)))
-    PlotIt = 0
-    if(PlotIt){
-      par(mar=c(3,3,1,1),mgp = c(1.5,0.5,0))
-      layout(matrix(c(1,1,2,3), 2, 2, byrow = TRUE))
-      plot(res, main = '')
-      plot(CalibrationOutputDOC$Modelled,type = 'l',xlab = '', ylab = 'DOC',main = '',ylim = c(0,15))
-      lines(CalibrationOutputDOC$Measured,type = 'p',pch=19,cex=0.6)
-      plot(CalibrationOutputDO$Modelled,type = 'l',xlab = '', ylab = 'DO',main = '')
-      lines(CalibrationOutputDO$Measured,type = 'p',pch=19,cex=0.6)
-    }
-    
-    nRes 	= length(res)
-    SSE 	= sum(res^2)
-    sigma2 	= SSE/nRes
-    NLL 	= 0.5*((SSE/sigma2) + nRes*log(2*pi*sigma2))
-    NLL
-    return(NLL)
-  }
-  ## Setup the function to be optimized because it can only take in one parameter
-  ## that contains values being optimized (here: param1, param2, param3)
-  toOptim <- function(params){
-    calcModelNLL(params[1], params[2], params[3], steps, ValidationDataDOC,ValidationDataDO,ValidationDataMAROC)
-  }
-  
-  ## Optimization of Burial Factor, Respiration Paramater and R_auto
-  optimOut = optim(par = c(BurialFactor,RespParam,R_auto), fn = toOptim,
-                   control=list(trace=TRUE,maxit=25)) #control = list(maxit = 100)
-  
-  
-  #############################################
-  min.calcModelNLL <- function(pars,ValidationDataDOC,ValidationDataDO){
-    
+  min.calcModelNLL <- function(pars,ValidationDataDOC,ValidationDataDO,ValidationDataMAROC){
     modeled = modelDOC(pars[1],pars[2],pars[3])
     
     obsIndx = ValidationDataDOC$datetime %in% modeled$datetime
@@ -179,21 +122,28 @@ if (OptimizationFlag==1){
     #resDO = scale(CalibrationOutputDO$Measured - CalibrationOutputDO$Modelled,center = F)
     DOScale = 10
     resDO = (CalibrationOutputDO$Measured - CalibrationOutputDO$Modelled) * DOScale
- 
-    res = c(resDOC,resDO)
+    sedScale = 0.001
+    resSedData = (mean(modeled$SedData_MAR,na.rm = T) - ValidationDataMAROC) * sedScale #not scaled because it is 1 value
+    
+    res = c(resDOC,resDO,rep(resSedData,length(resDO)))
+    #res = c(resDOC,resDO)
     
     nRes 	= length(res)
     SSE 	= sum(res^2)
     sigma2 	= SSE/nRes
     NLL 	= 0.5*((SSE/sigma2) + nRes*log(2*pi*sigma2))
     print(paste('NLL: ',NLL,sep=''))
+    print(paste('parameters: ',pars,sep=''))
     return(NLL)
-  }
+ }
   
-  plot(ValidationDataDOC$datetime,ValidationDataDOC$DOC,cex=0.5,pch=16,ylim=c(0,15))
   optimOut = optim(par = c(BurialFactor,RespParam,R_auto), min.calcModelNLL,ValidationDataDOC = ValidationDataDOC,
-        ValidationDataDO = ValidationDataDO,control = list(maxit = 20))
+        ValidationDataDO = ValidationDataDO,ValidationDataMAROC = ValidationDataMAROC, control = list(maxit = 50)) #setting maximum number of attempts for now
   
+  optimOut = optim(par = c(BurialFactor,RespParam,R_auto), min.calcModelNLL,ValidationDataDOC = ValidationDataDOC,
+                   ValidationDataDO = ValidationDataDO,ValidationDataMAROC = ValidationDataMAROC, control = list(maxit = 50),
+                   lower=c(0, 0, 0), upper=c(0.1,0.1,1),
+                   method="L-BFGS-B") #setting maximum number of attempts for now
   
   
   print('Parameter estimates (burial, Rhet, Raut...')
@@ -208,12 +158,10 @@ if (OptimizationFlag==1){
   R_auto <- optimOut$par[3]
 }
 
-
 ####################### END OPTIMIZATION ROUTINE #################################
 ####################### MAIN PROGRAM #############################################
 
 for (i in 1:(steps)){
-  
   Q_sw <- InputData$FlowIn[i] #m3/s surface water flowrate at i
   Q_gw <- Q_sw/(1-PropGW) - Q_sw #m3/s; as a function of proportion of inflow that is GW
   Q_out <- InputData$FlowOut[i] #m3/s: total outflow. Assume steady state pending dynamic output
@@ -303,7 +251,7 @@ SOS$Source <- SWGWData$POC_outflow + SWGWData$DOC_outflow + NPPdata$DOC_resp_mas
 SOS$Pipe <- SWGWData$POC_outflow + SWGWData$DOC_outflow + NPPdata$DOC_resp_mass - NPPdata$DOC_mass - SWGWData$POC_massIn_g
 SOS$Net <- SOS$Sink - SOS$Source
 
-############### MASS BALANCE CHECK 
+############### MASS BALANCE CHECK ###############
 #Change to total carbon stocks
 FinalPOC <-  POC_df$POC_conc_gm3[steps] + ((NPPdata$POC_mass[steps] + SWGWData$POC_massIn_g[steps] - SWGWData$POC_outflow[steps] - SedData$POC_sedOut[steps] - LeachData$POC_leachOut[steps])/LakeVolume) #g/m3
 FinalDOC <-  DOC_df$DOC_conc_gm3[steps] + ((NPPdata$DOC_mass[steps] + SWGWData$DOC_massIn_g[steps] + LeachData$DOC_leachIn[steps] - SWGWData$DOC_outflow[steps] - NPPdata$DOC_resp_mass[steps])/LakeVolume) #g/m3
@@ -316,8 +264,6 @@ DOCcheck <- (sum(DOC_df$DOCalloch_g) + sum(DOC_df$DOCautoch_g) + sum(LeachData$D
 print(paste('POC Balance: ',POCcheck,' and DOC Balance: ',DOCcheck,sep=''))
 
 ######################## END MAIN PROGRAM #############################################
-#######################################################################################
-
 #Define plotting and validation time series
 ConcOutputTimeSeries <- as.Date(c(InputData$datetime,InputData$datetime[length(InputData$datetime)]+86400))
 OutputTimeSeries <- as.Date(InputData$datetime)
@@ -336,6 +282,13 @@ if (ValidationFlag==1){
   CalibrationOutputDO <- data.frame(datetime=ValidationDataDO$datetime,Measured=NA,Modelled=NA)
   CalibrationOutputDO$Measured <- k*(ValidationDataDO$DO_con-DO_sat$do.sat)/PhoticDepth$PhoticDepth[IndxPhotic]
   CalibrationOutputDO$Modelled <- Metabolism$Oxygen[IndxPhotic] #DO SOMETHING TO THIS!
+  
+  #Plot Calibration
+  par(mfrow=c(2,1),mar=c(2.5,3,1,1),mgp=c(1.5,0.3,0),tck=-0.02)
+  plot(CalibrationOutputDOC$datetime,CalibrationOutputDOC$Measured,type='o',pch=19,cex=0.5,ylab = 'DOC',xlab='')
+  lines(CalibrationOutputDOC$datetime,CalibrationOutputDOC$Modelled,col='red',lwd=2)
+  plot(CalibrationOutputDO$datetime,CalibrationOutputDO$Measured,type='o',pch=19,cex=0.5,ylab = 'DO',xlab='')
+  lines(CalibrationOutputDO$datetime,CalibrationOutputDO$Modelled,col='darkgreen',lwd=2)
 }
 
 ################## PLOTTING ###########################################################

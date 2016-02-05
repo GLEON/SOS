@@ -59,7 +59,7 @@ modelDOC <- function (BurialFactor_init,RespParam_init,R_auto_init) {
       if (DOC_df$DOC_conc_gm3[i+1]<=0){stop("Negative DOC concentration!")}
     }
   }
-  lines(as.Date(InputData$datetime),DOC_df$DOC_conc_gm3,col='red')
+
   # Final output
   return(data.frame('datetime' = as.Date(InputData$datetime), 'DOC_conc' = DOC_df$DOC_conc_gm3,
                     'MetabOxygen' = Metabolism$Oxygen,'SedData_MAR' = SedData$MAR_oc))
