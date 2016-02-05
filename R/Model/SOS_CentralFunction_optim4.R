@@ -134,24 +134,13 @@ if (OptimizationFlag==1){
     res = c(resDOC,resDO,rep(resSedData,length(resDO)))
     PlotIt = 0
     if(PlotIt){
-      #myTest = sum(modeled$DOC_conc[1:20])
-      #myTest = sum(CalibrationOutputDOC$Modelled[1:20])
-      #print(CalibrationOutputDOC$Modelled)
-      #print(paste('myTest:',myTest))
-      #print(paste('obsindx:',obsIndx))
-      #print(paste('modindx:',modIndx))
-      #       if(myTest<0.1){
-      #         str(modeled)
-      #         readline('Ouch!!!!!!!!!!')
-      #       }
-      #par(mfrow=c(3,1))
+      par(mar=c(3,3,1,1),mgp = c(1.5,0.5,0))
       layout(matrix(c(1,1,2,3), 2, 2, byrow = TRUE))
-      #print(res[1:10])
       plot(res, main = '')
-      plot(CalibrationOutputDOC$Modelled,type = 'l',xlab = '', ylab = 'DOC',main = '')
-      lines(CalibrationOutputDOC$Measured,type = 'p')
+      plot(CalibrationOutputDOC$Modelled,type = 'l',xlab = '', ylab = 'DOC',main = '',ylim = c(0,15))
+      lines(CalibrationOutputDOC$Measured,type = 'p',pch=19,cex=0.6)
       plot(CalibrationOutputDO$Modelled,type = 'l',xlab = '', ylab = 'DO',main = '')
-      lines(CalibrationOutputDO$Measured,type = 'p')
+      lines(CalibrationOutputDO$Measured,type = 'p',pch=19,cex=0.6)
     }
     
     nRes 	= length(res)
@@ -169,18 +158,56 @@ if (OptimizationFlag==1){
   
   ## Optimization of Burial Factor, Respiration Paramater and R_auto
   optimOut = optim(par = c(BurialFactor,RespParam,R_auto), fn = toOptim,
-                   control=list(trace=TRUE)) #control = list(maxit = 100)
+                   control=list(trace=TRUE,maxit=25)) #control = list(maxit = 100)
+  
+  
+  #############################################
+  min.calcModelNLL <- function(pars,ValidationDataDOC,ValidationDataDO){
+    
+    modeled = modelDOC(pars[1],pars[2],pars[3])
+    
+    obsIndx = ValidationDataDOC$datetime %in% modeled$datetime
+    modIndx = modeled$datetime %in% ValidationDataDOC$datetime
+    CalibrationOutputDOC <- data.frame(datetime = ValidationDataDOC[obsIndx,]$datetime,
+                                       Measured = ValidationDataDOC[obsIndx,]$DOC, Modelled = modeled[modIndx,]$DOC_conc)
+    #resDOC = scale(CalibrationOutputDOC$Measured - CalibrationOutputDOC$Modelled,center = F)
+    resDOC = (CalibrationOutputDOC$Measured - CalibrationOutputDOC$Modelled)
+    obsIndx = ValidationDataDO$datetime %in% modeled$datetime
+    modIndx = modeled$datetime %in% ValidationDataDO$datetime
+    CalibrationOutputDO <- data.frame(datetime = ValidationDataDO[obsIndx,]$datetime,
+                                      Measured = ValidationDataDO[obsIndx,]$Flux, Modelled = modeled[modIndx,]$MetabOxygen)
+    #resDO = scale(CalibrationOutputDO$Measured - CalibrationOutputDO$Modelled,center = F)
+    DOScale = 10
+    resDO = (CalibrationOutputDO$Measured - CalibrationOutputDO$Modelled) * DOScale
+ 
+    res = c(resDOC,resDO)
+    
+    nRes 	= length(res)
+    SSE 	= sum(res^2)
+    sigma2 	= SSE/nRes
+    NLL 	= 0.5*((SSE/sigma2) + nRes*log(2*pi*sigma2))
+    print(paste('NLL: ',NLL,sep=''))
+    return(NLL)
+  }
+  
+  plot(ValidationDataDOC$datetime,ValidationDataDOC$DOC,cex=0.5,pch=16,ylim=c(0,15))
+  optimOut = optim(par = c(BurialFactor,RespParam,R_auto), min.calcModelNLL,ValidationDataDOC = ValidationDataDOC,
+        ValidationDataDO = ValidationDataDO,control = list(maxit = 20))
+  
+  
   
   print('Parameter estimates (burial, Rhet, Raut...')
   print(optimOut$par)
   ## New parameters from optimization output
   
   conv <- optimOut$convergence  #did model converge or not (0=yes, 1=no)
-  NLL <- optimOut$value #value of nll 
+  NLL <- optimOut$value #value of nll
+  
+  BurialFactor <- optimOut$par[1] #
+  RespParam <- optimOut$par[2]
+  R_auto <- optimOut$par[3]
 }
-BurialFactor <- optimOut$par[1] #
-RespParam <- optimOut$par[2]
-R_auto <- optimOut$par[3]
+
 
 ####################### END OPTIMIZATION ROUTINE #################################
 ####################### MAIN PROGRAM #############################################
@@ -203,7 +230,7 @@ for (i in 1:(steps)){
   SWGW <- SWGWFunction(Q_sw,Q_gw,Rainfall,AerialLoad, PropCanopy, LakePerimeter, WetlandLoad, PropWetlands, DOC_gw, PropGW, 
                        InputData$SW_DOC[i], DOC_precip, LakeArea) #change these inputs to iterative [i] values when inputs are dynamic
   SWGWData[i,2:10] <- SWGW
-  
+
   #Call Sedimentation Function
   POC_mass <- POC_df$POC_conc_gm3[i]*LakeVolume
   SedOutput <- SedimentationFunction(BurialFactor,TimeStep,POC_mass,LakeArea)
@@ -214,12 +241,13 @@ for (i in 1:(steps)){
   DOC_resp_rate <- Resp(DOC_df$DOC_conc_gm3[i],InputData$EpiTemp[i],RespParam) #g C/m3/d ##CHANGE TO AVERAGE OR LAYER TEMP WHEN AVAILABLE IN TIME SERIES
   NPPdata$DOC_resp_mass[i] = DOC_resp_rate*LakeVolume*TimeStep #g C
   # Calculations that do not have to be in the loop
-  NPPdata$DOC_mass[i] <- NPPdata$DOC_rate[i]*R_auto*LakeArea*TimeStep/1000 #g
-  NPPdata$POC_mass[i] <- NPPdata$POC_rate[i]*R_auto*LakeArea*TimeStep/1000 #g
+  NPPdata$DOC_mass[i] <- NPPdata$DOC_rate[i]*(1-R_auto)*LakeArea*TimeStep/1000 #g
+  NPPdata$POC_mass[i] <- NPPdata$POC_rate[i]*(1-R_auto)*LakeArea*TimeStep/1000 #g
 
   #Calc metabolism (DO) estimates for NPP validation
   Metabolism$NEP[i] <- (NPPdata$DOC_mass[i] + NPPdata$POC_mass[i] - NPPdata$DOC_resp_mass[i]*(PhoticDepth/LakeDepth))/(LakeVolume*PhoticDepth/LakeDepth)/TimeStep #g/m3/d
-
+  Metabolism$Oxygen <- Metabolism$NEP*(32/12) #g/m3/d Molar conversion of C flux to O2 flux (lake metabolism)
+  
   #Calc outflow subtractions (assuming outflow concentrations = mixed lake concentrations)
   SWGWData$POC_outflow[i] <- POC_df$POC_conc_gm3[i]*Q_out*60*60*24*TimeStep #g
   SWGWData$DOC_outflow[i] <- DOC_df$DOC_conc_gm3[i]*Q_out*60*60*24*TimeStep #g
@@ -240,7 +268,6 @@ for (i in 1:(steps)){
   }
 }
 
-Metabolism$Oxygen <- Metabolism$NEP*(32/12) #g/m3/d Molar conversion of C flux to O2 flux (lake metabolism)
 #Store POC and DOC fluxes as mass/area/time (g/m2/yr)
 POC_df$NPPin_gm2y <-  NPPdata$POC_mass/LakeArea/(TimeStep/365)
 POC_df$FlowIn_gm2y <- SWGWData$POC_massIn_g/LakeArea/(TimeStep/365)
