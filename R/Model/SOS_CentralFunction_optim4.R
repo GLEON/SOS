@@ -85,7 +85,7 @@ POC_df$POC_conc_gm3[1] <- POC_init # #Initialize POC concentration as baseline a
 DOC_df$DOC_conc_gm3[1] <- DOC_init #Initialize DOC concentration g/m3
 
 ####################### Validation Output Setup ######################################
-if (ValidationFlag==1){
+if (OptimizationFlag==1){
   #DOC Validation Output Setup
   ValidationDataDOC <- read.csv(ValidationFileDOC,header=T)
   ValidationDataDOC$datetime <- as.Date(as.POSIXct(strptime(ValidationDataDOC$datetime,"%m/%d/%Y %H:%M"),tz="GMT")) #Convert time to POSIX
