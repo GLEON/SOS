@@ -1,0 +1,39 @@
+Notes
+
+
+Secchi depth: no, we don't have systematic measurements of secchi depth, 
+but a guess from one of our limnologist-colleagues is 1.4 m. 
+The lake is dystrophic to oligotrophic, and humic,
+
+The lake catchment is small (4.8 km2) and mean annual discharge is 
+something like 600 mm/yr. Small headwater catchment, and the inlet is the 
+type of brook you can jump across, while the outlet is just a little to 
+wide for that, for ordinary mortals.
+
+1) The soils in the Langtjern catchment are very shallow, and we do not 
+consider groundwater to be a significant inflow. You can safely consider 
+all inflowing water to be surface water. And - as you can see the amount 
+of Chl a data is limited. I am searching for some more, but currently this 
+is what I have access to.
+
+2) We have provided data for 2012-2014
+
+
+3) The inlet data represent a subcatchment of 0.8 km2, while the total 
+catchment is 4.8 km2. However, the catchment is very homogenous. I.e. the 
+inlet discharge can be upscaled to the entire catchment using 4.6 (entire 
+catchment - minus lake area)/ 0.8 (subcatchment area).
+
+4) I have provided both concentration and flux data for TOC. We calculate 
+the fluxes by linear interpolation of weekly or monthly concentrations to 
+daily TOC, and multiplying with daily discharge
+
+5)SW_DOC = TOC inlet_conc *0.9
+
+6) EpiTemp = temperature at 1 m depth
+   HypoTemp= temperature at 8 m depth
+
+7) Volumen = surface * mean depth
+
+8)DOC_init= 90% TOC outlet
+ POC_init = 10% TOC outlet 
