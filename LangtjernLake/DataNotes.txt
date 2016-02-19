@@ -37,3 +37,5 @@ daily TOC, and multiplying with daily discharge
 
 8)DOC_init= 90% TOC outlet
  POC_init = 10% TOC outlet 
+
+9)DOC_conc : Use Benson-Garcia formula to convert DOC% to DOC[]
