@@ -26,7 +26,7 @@ LakeMendotaTS.csv
 
 - SwDOC: Surface water discharge are assumed to zero, therefore zero were filled for SwDOC 
 
-- Secchi: 
+- Secchi:Cecchi depth without viewer, https://lter.limnology.wisc.edu/data/filter/5724
 
 
 MendotaParameterInputsTrout.txt
