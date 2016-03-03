@@ -1,6 +1,6 @@
 #CarbonFluxModel <- function(LakeName,PlotFlag,ValidationFlag){
 #Flags 1 for yes, else no.
-LakeName = 'Harp'
+LakeName = 'Langtjern'
 OptimizationFlag = 1
 PlotFlag = 1
 ValidationFlag = 1
