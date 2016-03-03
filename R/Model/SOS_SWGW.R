@@ -6,7 +6,7 @@ SWGWFunction <- function(Q_sw,Q_gw,Rainfall,Aoc_day, PC, lakePerim, Woc_day, PW,
                           DOC_Precip=NA, Load_DOC=NA, Load_POC=NA)
     
   # Aerial POC (g/d)
-  InflowData$POC_Aerial <- (PC*Aoc_day*lakePerim) + ((1-PC) *0.2* Aoc_day * lakePerim)
+  InflowData$POC_Aerial <- (PC*Aoc_day*lakePerim) #commented out - indefensible: + ((1-PC) *0.2* Aoc_day * lakePerim)
   
   # Wetland DOC (g/d)
   InflowData$DOC_Wetland <- PW * Woc_day * lakePerim
