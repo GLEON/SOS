@@ -1,9 +1,9 @@
 #CarbonFluxModel <- function(LakeName,PlotFlag,ValidationFlag){
 #Flags 1 for yes, else no.
-LakeName = 'Trout'
-OptimizationFlag = 0
+LakeName = 'Langtjern'
+OptimizationFlag = 1
 PlotFlag = 1
-ValidationFlag = 0
+ValidationFlag = 1
 
 ##### INPUT FILE NAMES ################
 TimeSeriesFile <- paste('./',LakeName,'Lake/',LakeName,'TS.csv',sep='')
