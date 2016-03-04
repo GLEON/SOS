@@ -1,6 +1,10 @@
 #CarbonFluxModel <- function(LakeName,PlotFlag,ValidationFlag){
 #Flags 1 for yes, else no.
-LakeName = 'Langtjern'
+<<<<<<< HEAD
+LakeName = 'Harp'
+=======
+  LakeName = 'Langtjern'
+>>>>>>> 3cffa13b13c266c6cfcce2437fe4f52a2c37c4f2
 OptimizationFlag = 1
 PlotFlag = 1
 ValidationFlag = 1
@@ -28,15 +32,19 @@ source("./R/Model/modelDOC_4.R")
 ##### READ MAIN INPUT FILE #################
 RawData <- read.csv(TimeSeriesFile,header=T) #Read main data file with GLM outputs (physical input) and NPP input
 RawData$datetime <- as.POSIXct(strptime(RawData$datetime,"%m/%d/%Y %H:%M"),tz="GMT") #Convert time to POSIX
-#Fill time-series gaps (linear interpolation)
+cc = which(complete.cases(RawData))
+RawData = RawData[cc[1]:tail(cc,1),]
+
+# Fill time-series gaps (linear interpolation)
 ts_new <- data.frame(datetime = seq(RawData$datetime[1],RawData$datetime[nrow(RawData)],by="day")) #Interpolate gapless time-series
 InputData <- merge(RawData,ts_new,all=T)
 for (col in 2:ncol(InputData)){
-  InputData[,col] <- na.approx(InputData[,col])}
+  InputData[,col] <- na.approx(InputData[,col],na.rm = T)}
 
 ##### READ RAIN FILE #######################
 RainData <- read.csv(RainFile,header=T,stringsAsFactors = F) #Read daily rain file (units=mm) Read separately and added back to main file to avoid issues of linear interpolation with rain data in length units
-InputData$Rain <- RainData$Rain #Plug daily rain data into InputData file to integrate with original code.
+RainData$datetime <- as.POSIXct(strptime(RainData$datetime,'%Y-%m-%d',tz='GMT'))
+InputData$Rain <- RainData$Rain[RainData$datetime %in% InputData$datetime] #Plug daily rain data into InputData file to integrate with original code.
 
 ##### READ PARAMETER FILE ##################
 parameters <- read.table(file = ParameterFile,header=TRUE,comment.char="#",stringsAsFactors = F)
@@ -135,16 +143,10 @@ if (OptimizationFlag==1){
     print(paste('NLL: ',NLL,sep=''))
     print(paste('parameters: ',pars,sep=''))
     return(NLL)
- }
+  }
   
   optimOut = optim(par = c(BurialFactor,RespParam,R_auto), min.calcModelNLL,ValidationDataDOC = ValidationDataDOC,
-        ValidationDataDO = ValidationDataDO,ValidationDataMAROC = ValidationDataMAROC, control = list(maxit = 50)) #setting maximum number of attempts for now
-  
-  optimOut = optim(par = c(BurialFactor,RespParam,R_auto), min.calcModelNLL,ValidationDataDOC = ValidationDataDOC,
-                   ValidationDataDO = ValidationDataDO,ValidationDataMAROC = ValidationDataMAROC, control = list(maxit = 50),
-                   lower=c(0, 0, 0), upper=c(0.1,0.1,1),
-                   method="L-BFGS-B") #setting maximum number of attempts for now
-  
+                   ValidationDataDO = ValidationDataDO,ValidationDataMAROC = ValidationDataMAROC, control = list(maxit = 50)) #setting maximum number of attempts for now
   
   print('Parameter estimates (burial, Rhet, Raut...')
   print(optimOut$par)
@@ -173,12 +175,12 @@ for (i in 1:(steps)){
   RawProduction <- NPP(InputData$Chla[i],InputData$TP[i],PhoticDepth,InputData$EpiTemp[i]) #mg C/m^2/d
   NPPdata$DOC_rate[i] = RawProduction$NPP_DOC_rate
   NPPdata$POC_rate[i] = RawProduction$NPP_POC_rate
-
+  
   #Call SWGW Function
   SWGW <- SWGWFunction(Q_sw,Q_gw,Rainfall,AerialLoad, PropCanopy, LakePerimeter, WetlandLoad, PropWetlands, DOC_gw, PropGW, 
                        InputData$SW_DOC[i], DOC_precip, LakeArea) #change these inputs to iterative [i] values when inputs are dynamic
   SWGWData[i,2:10] <- SWGW
-
+  
   #Call Sedimentation Function
   POC_mass <- POC_df$POC_conc_gm3[i]*LakeVolume
   SedOutput <- SedimentationFunction(BurialFactor,TimeStep,POC_mass,LakeArea)
@@ -191,7 +193,7 @@ for (i in 1:(steps)){
   # Calculations that do not have to be in the loop
   NPPdata$DOC_mass[i] <- NPPdata$DOC_rate[i]*(1-R_auto)*LakeArea*TimeStep/1000 #g
   NPPdata$POC_mass[i] <- NPPdata$POC_rate[i]*(1-R_auto)*LakeArea*TimeStep/1000 #g
-
+  
   #Calc metabolism (DO) estimates for NPP validation
   Metabolism$NEP[i] <- (NPPdata$DOC_mass[i] + NPPdata$POC_mass[i] - NPPdata$DOC_resp_mass[i]*(PhoticDepth/LakeDepth))/(LakeVolume*PhoticDepth/LakeDepth)/TimeStep #g/m3/d
   Metabolism$Oxygen <- Metabolism$NEP*(32/12) #g/m3/d Molar conversion of C flux to O2 flux (lake metabolism)
@@ -280,6 +282,7 @@ if (ValidationFlag==1){
   
   #DO Validation Output Setup
   CalibrationOutputDO <- data.frame(datetime=ValidationDataDO$datetime,Measured=NA,Modelled=NA)
+  PhoticDepth <- data.frame(datetime = InputData$datetime,PhoticDepth = log(100)/(1.7/InputData$Secchi))
   CalibrationOutputDO$Measured <- k*(ValidationDataDO$DO_con-DO_sat$do.sat)/PhoticDepth$PhoticDepth[IndxPhotic]
   CalibrationOutputDO$Modelled <- Metabolism$Oxygen[IndxPhotic] #DO SOMETHING TO THIS!
   
@@ -312,23 +315,23 @@ if (PlotFlag==1){
   par(mfrow=c(2,1),mar=c(2.5,3,1,1),mgp=c(1.5,0.3,0),tck=-0.02,cex=0.8)
   plot(OutputTimeSeries,POC_df$POC_conc_gm3,xlab='Date',ylab="POC Conc (g/m3)",type="l")
   # Better axes tick marks 
-#   plotDates = seq(OutputTimeSeries[1],tail(OutputTimeSeries,1), by="year")
-#   axis.Date(1,at=plotDates,labels=format(plotDates,"%m/%y"),las=1,cex.axis = 0.8)
+  #   plotDates = seq(OutputTimeSeries[1],tail(OutputTimeSeries,1), by="year")
+  #   axis.Date(1,at=plotDates,labels=format(plotDates,"%m/%y"),las=1,cex.axis = 0.8)
   plot(OutputTimeSeries,DOC_df$DOC_conc_gm3,xlab='Date',ylab="DOC Conc (g/m3)",type="l")
   
   #Plot cumulative fates
   par(mfrow=c(2,2),mar=c(2.5,3,1,1),mgp=c(1.5,0.3,0),tck=-0.02,cex=0.8)
-    plot(OutputTimeSeries,POC_df$POC_flowOut_gm2y,xlab='Date',ylab="Cumulative POC Outflow (g)",type='l')
-    plot(OutputTimeSeries,POC_df$POC_sedOut_gm2y,xlab='Date',ylab="Cumulative POC Sed Burial (g)",type='l')
-    plot(OutputTimeSeries,DOC_df$DOC_flowOut_gm2y,xlab='Date',ylab="Cumulative DOC Outflow (g)",type='l')
-    plot(OutputTimeSeries,DOC_df$DOC_respOut_gm2y,xlab='Date',ylab="Cumulative DOC Respired (g)",type='l')
+  plot(OutputTimeSeries,POC_df$POC_flowOut_gm2y,xlab='Date',ylab="Cumulative POC Outflow (g)",type='l')
+  plot(OutputTimeSeries,POC_df$POC_sedOut_gm2y,xlab='Date',ylab="Cumulative POC Sed Burial (g)",type='l')
+  plot(OutputTimeSeries,DOC_df$DOC_flowOut_gm2y,xlab='Date',ylab="Cumulative DOC Outflow (g)",type='l')
+  plot(OutputTimeSeries,DOC_df$DOC_respOut_gm2y,xlab='Date',ylab="Cumulative DOC Respired (g)",type='l')
   
   #Plot net SOS
   par(mfrow=c(1,1),mar=c(3,3,2,1),mgp=c(1.5,0.3,0),tck=-0.01,cex=0.8)
   plot(OutputTimeSeries,SOS$Net/1000,xlab='date/time',ylab='OC mass (kg/d)',
        main='Net OC Mass Sunk per Day',type='l')
-#   plotDates = seq(OutputTimeSeries[1],tail(OutputTimeSeries,1), by="year")
-#   axis.Date(1,at=plotDates,labels=format(plotDates,"%m/%y"),las=1,cex.axis = 0.8)
+  #   plotDates = seq(OutputTimeSeries[1],tail(OutputTimeSeries,1), by="year")
+  #   axis.Date(1,at=plotDates,labels=format(plotDates,"%m/%y"),las=1,cex.axis = 0.8)
 }
 
 #}  
