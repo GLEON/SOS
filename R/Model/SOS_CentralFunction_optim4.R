@@ -36,7 +36,7 @@ ts_new <- data.frame(datetime = seq(RawData$datetime[1],RawData$datetime[nrow(Ra
 InputData <- merge(RawData,ts_new,all=T)
 for (col in 2:ncol(InputData)){
   InputData[,col] <- na.approx(InputData[,col],na.rm = T)}
-
+InputData$Chla[InputData$Chla == 0] = 0.0001
 ##### READ RAIN FILE #######################
 RainData <- read.csv(RainFile,header=T,stringsAsFactors = F) #Read daily rain file (units=mm) Read separately and added back to main file to avoid issues of linear interpolation with rain data in length units
 RainData$datetime <- as.POSIXct(strptime(RainData$datetime,'%Y-%m-%d',tz='GMT'))
