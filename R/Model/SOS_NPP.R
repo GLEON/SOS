@@ -12,7 +12,7 @@ NPP<-function(CHL,P,PhoticDepth,WT)
   #M chla and TP reported in ug/L
   
   #coefficients to predict chla from TP
-  a0=-0.390   #! Units? Citation? 
+  a0=-0.390   #! 
   a1=0.874
   
   #coefficients to predict NPP from chl and WT

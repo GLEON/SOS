@@ -29,7 +29,9 @@ CarbonFluxModel <- function(LakeName,PlotFlag,ValidationFlag){
   RawData$datetime <- as.POSIXct(strptime(RawData$datetime,"%m/%d/%Y %H:%M"),tz="GMT") #Convert time to POSIX
   #Fill time-series gaps (linear interpolation)
   ts_new <- data.frame(datetime = seq(RawData$datetime[1],RawData$datetime[nrow(RawData)],by="day")) #Interpolate gapless time-series
+  print('Breakpoint 1')
   InputData <- merge(RawData,ts_new,all=T)
+  print('Breakpoint 2')
   InputData <- as.data.frame(InputData)
   for (col in 2:ncol(InputData)){
     InputData[,col] <- na.approx(InputData[,col])}
