@@ -1,0 +1,2 @@
+Wetland data (NWI): http://www.fws.gov/wetlands/Data/Mapper.html
+Land cover (Florida Cooperative Land Cover, version 3.1): http://myfwc.com/research/gis/applications/articles/Cooperative-Land-Cover
