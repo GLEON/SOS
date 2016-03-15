@@ -149,7 +149,7 @@ if (OptimizationFlag==1){
   }
   
   optimOut = optim(par = c(BurialFactor,RespParam,R_auto), min.calcModelNLL,ValidationDataDOC = ValidationDataDOC,
-                   ValidationDataDO = ValidationDataDO,ValidationDataMAROC = ValidationDataMAROC, control = list(maxit = 50)) #setting maximum number of attempts for now
+                   ValidationDataDO = ValidationDataDO,ValidationDataMAROC = ValidationDataMAROC, control = list(maxit = 150)) #setting maximum number of attempts for now
   
   print('Parameter estimates (burial, Rhet, Raut...')
   print(optimOut$par)
