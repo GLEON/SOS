@@ -17,6 +17,7 @@ library(signal)
 library(zoo)
 library(lubridate)
 library(LakeMetabolizer)
+library(dplyr)
 
 ##### LOAD FUNCTIONS #######################
 source("./R/Model/SOS_Sedimentation.R")
@@ -95,6 +96,8 @@ if (OptimizationFlag==1){
   ValidationDataDOC <- read.csv(ValidationFileDOC,header=T)
   ValidationDataDOC$datetime <- as.Date(as.POSIXct(strptime(ValidationDataDOC$datetime,"%m/%d/%Y %H:%M"),tz="GMT")) #Convert time to POSIX
   ValidationDataDOC = ValidationDataDOC[complete.cases(ValidationDataDOC),]
+  ValidationDataDOC = ddply(ValidationDataDOC,'datetime',summarize,DOC=mean(DOC))
+  
   #DO Validation Output Setup
   ValidationDataDO <- read.csv(ValidationFileDO,header=T)
   ValidationDataDO$datetime <- as.Date(as.POSIXct(strptime(ValidationDataDO$datetime,"%m/%d/%Y %H:%M"),tz="GMT")) #Convert time to POSIX
