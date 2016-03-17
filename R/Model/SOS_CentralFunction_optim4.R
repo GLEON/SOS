@@ -1,6 +1,6 @@
 #CarbonFluxModel <- function(LakeName,PlotFlag,ValidationFlag){
 #Flags 1 for yes, else no.
-LakeName = 'Trout'
+LakeName = 'Harp'
 OptimizationFlag = 1
 PlotFlag = 1
 ValidationFlag = 1
@@ -18,6 +18,7 @@ library(zoo)
 library(lubridate)
 library(LakeMetabolizer)
 library(dplyr)
+library(plyr)
 
 ##### LOAD FUNCTIONS #######################
 source("./R/Model/SOS_Sedimentation.R")
