@@ -1,9 +1,9 @@
 #CarbonFluxModel <- function(LakeName,PlotFlag,ValidationFlag){
 #Flags 1 for yes, else no.
-LakeName = 'Harp'
-OptimizationFlag = 0
+LakeName = 'Mendota'
+OptimizationFlag = 1
 PlotFlag = 1
-ValidationFlag = 0
+ValidationFlag = 1
 
 ##### INPUT FILE NAMES ################
 TimeSeriesFile <- paste('./',LakeName,'Lake/',LakeName,'TS.csv',sep='')
@@ -137,7 +137,7 @@ if (OptimizationFlag==1){
     sedScale = 0.001
     resSedData = (mean(modeled$SedData_MAR,na.rm = T) - ValidationDataMAROC) * sedScale #not scaled because it is 1 value
     
-    res = c(resDOC,resDO,rep(resSedData,length(resDO)))
+    res = c(resDOC,resDO,rep(resSedData,length(resDOC)))
     #res = c(resDOC,resDO)
     
     nRes 	= length(res)
@@ -150,7 +150,9 @@ if (OptimizationFlag==1){
   }
   
   optimOut = optim(par = c(BurialFactor,RespParam,R_auto), min.calcModelNLL,ValidationDataDOC = ValidationDataDOC,
-                   ValidationDataDO = ValidationDataDO,ValidationDataMAROC = ValidationDataMAROC, control = list(maxit = 150)) #setting maximum number of attempts for now
+                   ValidationDataDO = ValidationDataDO,ValidationDataMAROC = ValidationDataMAROC, 
+                   control = list(maxit = 150)) #setting maximum number of attempts for now
+                   #method = 'L-BFGS-B',lower=c(0,0,0) #To constrain
   
   print('Parameter estimates (burial, Rhet, Raut...')
   print(optimOut$par)
