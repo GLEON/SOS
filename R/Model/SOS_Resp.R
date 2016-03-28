@@ -8,7 +8,11 @@ Resp <- function(DOC,temp,RespParam){
   #logR <- -0.81 + 0.56*log(CHL)
   TempCorr <- 1.08^(T-20) #Temperature correction factor for DOC-respiration relationship
   
-  R <- DOC*RespParam*TempCorr #g/m3
+  if (RespParam > 0) {
+    R <- DOC*RespParam*TempCorr #g/m3
+  } else {
+    R <- 0
+  }
   
   #R <- 10^logR #mmol/m3/hr
 
