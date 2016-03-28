@@ -57,7 +57,7 @@ modelDOC <- function (BurialFactor_init,RespParam_init,R_auto_init) {
       DOC_df$DOC_conc_gm3[i+1] <-  DOC_df$DOC_conc_gm3[i] + ((NPPdata$DOC_mass[i] + SWGWData$DOC_massIn_g[i] + LeachData$DOC_leachIn[i] - SWGWData$DOC_outflow[i] - NPPdata$DOC_resp_mass[i])/LakeVolume) #g/m3
       #Stop code and output error if concentrations go to negative
       if (POC_df$POC_conc_gm3[i+1] < 0){
-        #stop("Negative POC concentration!")
+        stop("Negative POC concentration!")
         POC_df$POC_conc_gm3[i+1] = 0
         }
       if (DOC_df$DOC_conc_gm3[i+1] < 0){
