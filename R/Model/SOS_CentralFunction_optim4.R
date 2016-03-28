@@ -1,6 +1,6 @@
 #CarbonFluxModel <- function(LakeName,PlotFlag,ValidationFlag){
 #Flags 1 for yes, else no.
-LakeName = 'Mendota'
+LakeName = 'Toolik'
 OptimizationFlag = 1
 PlotFlag = 1
 ValidationFlag = 1
@@ -151,7 +151,7 @@ if (OptimizationFlag==1){
   
   optimOut = optim(par = c(BurialFactor,RespParam,R_auto), min.calcModelNLL,ValidationDataDOC = ValidationDataDOC,
                    ValidationDataDO = ValidationDataDO,ValidationDataMAROC = ValidationDataMAROC, 
-                   control = list(maxit = 150)) #setting maximum number of attempts for now
+                   control = list(maxit = 50)) #setting maximum number of attempts for now
                    #method = 'L-BFGS-B',lower=c(0,0,0) #To constrain
   
   print('Parameter estimates (burial, Rhet, Raut...')
@@ -279,24 +279,36 @@ OutputTimeSeries <- as.Date(InputData$datetime)
 ####################### Validation Output Setup ######################################
 if (ValidationFlag==1){
   #DOC Validation Output Setup
-  ValidationDOCIndeces <- match(ValidationDataDOC$datetime,OutputTimeSeries)
-  CalibrationOutputDOC <- data.frame(datetime=numeric(length(ValidationDOCIndeces)),Measured=numeric(length(ValidationDOCIndeces)),Modelled=numeric(length(ValidationDOCIndeces)))
+  ValidationDOCIndeces = ValidationDataDOC$datetime %in% OutputTimeSeries
+  modIndx = OutputTimeSeries %in% ValidationDataDOC$datetime
   
-  CalibrationOutputDOC$datetime <- ValidationDataDOC$datetime
-  CalibrationOutputDOC$Measured <- ValidationDataDOC$DOC
-  CalibrationOutputDOC$Modelled <- DOC_df$DOC_conc_gm3[ValidationDOCIndeces]
+  CalibrationOutputDOC = data.frame(datetime = rep(NA,sum(ValidationDOCIndeces)),
+                                    Measured = NA, Modelled = NA)
+  CalibrationOutputDOC$datetime <- ValidationDataDOC$datetime[ValidationDOCIndeces]
+  CalibrationOutputDOC$Measured <- ValidationDataDOC$DOC[ValidationDOCIndeces]
+  CalibrationOutputDOC$Modelled <- DOC_df$DOC_conc_gm3[modIndx]
   
   #DO Validation Output Setup
-  CalibrationOutputDO <- data.frame(datetime=ValidationDataDO$datetime,Measured=NA,Modelled=NA)
+  ValidationDOIndeces = ValidationDataDO$datetime %in% OutputTimeSeries
+  modIndx = OutputTimeSeries %in% ValidationDataDO$datetime
+  CalibrationOutputDO = data.frame(datetime = rep(NA,sum(ValidationDOIndeces)),
+                                    Measured = NA, Modelled = NA)
+  
   PhoticDepth <- data.frame(datetime = InputData$datetime,PhoticDepth = log(100)/(1.7/InputData$Secchi))
-  CalibrationOutputDO$Measured <- k*(ValidationDataDO$DO_con-DO_sat$do.sat)/PhoticDepth$PhoticDepth[IndxPhotic]
-  CalibrationOutputDO$Modelled <- Metabolism$Oxygen[IndxPhotic] #DO SOMETHING TO THIS!
+  DO_sat <- o2.at.sat(ValidationDataDO[,1:2])  
+  IndxPhotic = as.Date(PhoticDepth$datetime) %in% ValidationDataDO$datetime
+  
+  CalibrationOutputDO$datetime <- ValidationDataDO$datetime[ValidationDOIndeces]
+  CalibrationOutputDO$Measured <- k*(ValidationDataDO$DO_con-DO_sat$do.sat)[ValidationDOIndeces]/PhoticDepth$PhoticDepth[IndxPhotic]
+  CalibrationOutputDO$Modelled <- Metabolism$Oxygen[modIndx]
   
   #Plot Calibration
   par(mfrow=c(2,1),mar=c(2.5,3,1,1),mgp=c(1.5,0.3,0),tck=-0.02)
-  plot(CalibrationOutputDOC$datetime,CalibrationOutputDOC$Measured,type='o',pch=19,cex=0.5,ylab = 'DOC',xlab='')
+  plot(CalibrationOutputDOC$datetime,CalibrationOutputDOC$Measured,type='o',pch=19,cex=0.5,ylab = 'DOC',xlab='',
+       ylim = c(min(CalibrationOutputDOC[,2:3]),max(CalibrationOutputDOC[,2:3])))
   lines(CalibrationOutputDOC$datetime,CalibrationOutputDOC$Modelled,col='red',lwd=2)
-  plot(CalibrationOutputDO$datetime,CalibrationOutputDO$Measured,type='o',pch=19,cex=0.5,ylab = 'DO',xlab='')
+  plot(CalibrationOutputDO$datetime,CalibrationOutputDO$Measured,type='o',pch=19,cex=0.5,ylab = 'DO',xlab='',
+       ylim = c(min(CalibrationOutputDO[,2:3]),max(CalibrationOutputDO[,2:3])))
   lines(CalibrationOutputDO$datetime,CalibrationOutputDO$Modelled,col='darkgreen',lwd=2)
 }
 
