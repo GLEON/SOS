@@ -9,7 +9,14 @@ SedimentationFunction <- function(BurialFactor,TimeStep,POC_mass,lakeArea){
   FunData$MAR_oc <- POC_mass*BurialFactor*365/lakeArea #g OC/(m^2 * yr)
   
   ##OUTPUTS############################
-  FunData$POC_burial <- FunData$MAR_oc*(TimeStep/365)*lakeArea #g; Timestep with conversion from years to timestep units - days)
+  if (BurialFactor > 0) {
+    #Burial
+    FunData$MAR_oc <- POC_mass*BurialFactor*365/lakeArea #g OC/(m^2 * yr)
+    FunData$POC_burial <- FunData$MAR_oc*(TimeStep/365)*lakeArea #g; Timestep with conversion from years to timestep units - days)
+  } else {
+    FunData$MAR_oc <- 0
+    FunData$POC_burial <- 0 # If no burial
+  }
   
   return(FunData)
 }
