@@ -4,8 +4,8 @@ LakePerimeter	8104	m
 LakeDepth	7	m
 LakeArea	1.49E+06	m^2
 LakeVolume	10566000	m^3
-DOC_init	2.9	g/m^3
-POC_init	0.29	g/m^3
+DOC_init	5	g/m^3
+POC_init	0.5	g/m^3
 #Sedimentation Parameters		
 BurialFactor	0.01	1/days
 #SWGW Parameters		
