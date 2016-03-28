@@ -3,10 +3,10 @@ Resp <- function(DOC,temp,RespParam){
   #DOC in g/m3
   #CHL in mg/m3 or ug/L
   
-  #logR <- -0.92 + 0.41*log(CHL) + 0.30*log(DOC)
+  #R <- 10^(-0.92 + 0.41*log10(CHL) + 0.30*log10(DOC)) #M Pace and Prairie 2005, Ch. 7: Respiration in Lakes 
   
   #logR <- -0.81 + 0.56*log(CHL)
-  TempCorr <- 1.08^(T-20) #Temperature correction factor for DOC-respiration relationship
+  TempCorr <- 1.08^(temp-20) #Temperature correction factor for DOC-respiration relationship
   
   if (RespParam > 0) {
     R <- DOC*RespParam*TempCorr #g/m3
