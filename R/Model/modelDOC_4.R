@@ -5,6 +5,7 @@ modelDOC <- function (BurialFactor_init,RespParam_init,R_auto_init) {
     # if (BurialFactor_init<=0){BurialFactor_init<-10^-5}
     # if (RespParam_init<=0){RespParam_init<-10^-5}
     # if (R_auto_init<=0){R_auto_init<-10^-5}
+    if (R_auto_init > 1){R_auto_init = 1}
     
     Q_sw <- InputData$FlowIn[i] #m3/s surface water flowrate at i
     Q_gw <- Q_sw/(1-PropGW) - Q_sw #m3/s; as a function of proportion of inflow that is GW
@@ -55,8 +56,14 @@ modelDOC <- function (BurialFactor_init,RespParam_init,R_auto_init) {
       POC_df$POC_conc_gm3[i+1] <-  POC_df$POC_conc_gm3[i] + ((NPPdata$POC_mass[i] + SWGWData$POC_massIn_g[i] - SWGWData$POC_outflow[i] - SedData$POC_sedOut[i] - LeachData$POC_leachOut[i])/LakeVolume) #g/m3
       DOC_df$DOC_conc_gm3[i+1] <-  DOC_df$DOC_conc_gm3[i] + ((NPPdata$DOC_mass[i] + SWGWData$DOC_massIn_g[i] + LeachData$DOC_leachIn[i] - SWGWData$DOC_outflow[i] - NPPdata$DOC_resp_mass[i])/LakeVolume) #g/m3
       #Stop code and output error if concentrations go to negative
-      if (POC_df$POC_conc_gm3[i+1]<=0){stop("Negative POC concentration!")}
-      if (DOC_df$DOC_conc_gm3[i+1]<=0){stop("Negative DOC concentration!")}
+      if (POC_df$POC_conc_gm3[i+1] < 0){
+        #stop("Negative POC concentration!")
+        POC_df$POC_conc_gm3[i+1] = 0
+        }
+      if (DOC_df$DOC_conc_gm3[i+1] < 0){
+        stop("Negative DOC concentration!")
+        DOC_df$DOC_conc_gm3[i+1] = 0
+        }
     }
   }
 

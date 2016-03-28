@@ -1,6 +1,6 @@
 #CarbonFluxModel <- function(LakeName,PlotFlag,ValidationFlag){
 #Flags 1 for yes, else no.
-LakeName = 'Toolik'
+LakeName = 'Langtjern'
 OptimizationFlag = 1
 PlotFlag = 1
 ValidationFlag = 1
@@ -131,6 +131,7 @@ if (OptimizationFlag==1){
     modIndx = modeled$datetime %in% ValidationDataDO$datetime
     CalibrationOutputDO <- data.frame(datetime = ValidationDataDO[obsIndx,]$datetime,
                                       Measured = ValidationDataDO[obsIndx,]$Flux, Modelled = modeled[modIndx,]$MetabOxygen)
+    
     #resDO = scale(CalibrationOutputDO$Measured - CalibrationOutputDO$Modelled,center = F)
     DOScale = 10
     resDO = (CalibrationOutputDO$Measured - CalibrationOutputDO$Modelled) * DOScale
@@ -151,7 +152,7 @@ if (OptimizationFlag==1){
   
   optimOut = optim(par = c(BurialFactor,RespParam,R_auto), min.calcModelNLL,ValidationDataDOC = ValidationDataDOC,
                    ValidationDataDO = ValidationDataDO,ValidationDataMAROC = ValidationDataMAROC, 
-                   control = list(maxit = 50)) #setting maximum number of attempts for now
+                   control = list(maxit = 100)) #setting maximum number of attempts for now
                    #method = 'L-BFGS-B',lower=c(0,0,0) #To constrain
   
   print('Parameter estimates (burial, Rhet, Raut...')
@@ -170,6 +171,8 @@ if (OptimizationFlag==1){
 ####################### MAIN PROGRAM #############################################
 
 for (i in 1:(steps)){
+  if (R_auto > 1){R_auto = 1}
+  
   Q_sw <- InputData$FlowIn[i] #m3/s surface water flowrate at i
   Q_gw <- Q_sw/(1-PropGW) - Q_sw #m3/s; as a function of proportion of inflow that is GW
   Q_out <- InputData$FlowOut[i] #m3/s: total outflow. Assume steady state pending dynamic output
