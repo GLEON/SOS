@@ -25,8 +25,8 @@ modelDOC <- function (BurialFactor_init,RespParam_init,R_auto_init) {
     SWGWData[i,2:10] <- SWGW
     
     #Call Sedimentation Function
-    POC_mass <- POC_df$POC_conc_gm3[i]*LakeVolume
-    SedOutput <- SedimentationFunction(BurialFactor_init,TimeStep,POC_mass,LakeArea)
+    POC_mass <- POC_df$POC_conc_gm3[i]*LakeVolume #g
+    SedOutput <- SedimentationFunction(BurialFactor_init,TimeStep,POC_mass,LakeArea) #MARC_oc units (g OC/m2/yr), POC_burial (g/day)
     SedData[i,2:4] = SedOutput
     SedData$POC_sedOut[i] <- SedData$POC_burial[i] #g #WHY IS THIS REPEATED?
     
@@ -39,7 +39,7 @@ modelDOC <- function (BurialFactor_init,RespParam_init,R_auto_init) {
     
     #Calc metabolism (DO) estimates for NPP validation
     Metabolism$NEP[i] <- (NPPdata$DOC_mass[i] + NPPdata$POC_mass[i] - NPPdata$DOC_resp_mass[i]*(PhoticDepth/LakeDepth))/(LakeVolume*PhoticDepth/LakeDepth)/TimeStep #g/m3/d
-    Metabolism$Oxygen[i] <- Metabolism$NEP[i]*(32/12) #g/m3/d Molar conversion of C flux to O2 flux (lake metabolism)
+    Metabolism$Oxygen[i] <- (-Metabolism$NEP[i])*(32/12) #g/m3/d Molar conversion of C flux to O2 flux (lake metabolism)
     
     #Calc outflow subtractions (assuming outflow concentrations = mixed lake concentrations)
     SWGWData$POC_outflow[i] <- POC_df$POC_conc_gm3[i]*Q_out*60*60*24*TimeStep #g

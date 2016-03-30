@@ -27,7 +27,6 @@ SWGWFunction <- function(Q_sw,Q_gw,Rainfall,Aoc_day, PC, lakePerim, Woc_day, PW,
   # LOAD DOC (g/d)
   InflowData$Load_DOC <- InflowData$DOC_Wetland + InflowData$DOC_GW + InflowData$DOC_SW + InflowData$DOC_Precip # g/d DOC
   
-  
   # Internal POC (g/d)
   InflowData$POC_SW <- (InflowData$DOC_Wetland + InflowData$DOC_SW)*0.1
   
@@ -36,3 +35,4 @@ SWGWFunction <- function(Q_sw,Q_gw,Rainfall,Aoc_day, PC, lakePerim, Woc_day, PW,
   
   return(InflowData)
 }
+

@@ -29,8 +29,6 @@ NPP<-function(CHL,P,PhoticDepth,WT)
   b1=0.92
   b2=0.014
   
-
-  
   ###########################################################################
   if(missing(CHL)||is.na(CHL))
   {
@@ -45,7 +43,7 @@ NPP<-function(CHL,P,PhoticDepth,WT)
     
   }
   
-  #CHL <- CHL*PhoticDepth
+  CHL <- CHL*PhoticDepth
   P <- P*PhoticDepth
   
   NPP_rate <- 10^(b0+b1*log10(CHL)+b2*WT) #mg C/m2/d

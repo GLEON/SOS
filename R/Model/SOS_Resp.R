@@ -3,9 +3,12 @@ Resp <- function(DOC,temp,RespParam){
   #DOC in g/m3
   #CHL in mg/m3 or ug/L
   
-  #R <- 10^(-0.92 + 0.41*log10(CHL) + 0.30*log10(DOC)) #M Pace and Prairie 2005, Ch. 7: Respiration in Lakes 
+  # M Pace and Prairie 2005, Ch. 7: Respiration in Lakes 
+  # R <- 10^(-0.92 + 0.41*log10(CHL) + 0.30*log10(DOC)) # mmol O2/m3/hr 
+  # R <- R*(1/1000)*(32)*(24/1) #g O2/m3/d 
   
-  #logR <- -0.81 + 0.56*log(CHL)
+  # logR <- -0.81 + 0.56*log(CHL) # M Pace and Prairie 2005, for CHL only 
+  
   TempCorr <- 1.08^(temp-20) #Temperature correction factor for DOC-respiration relationship
   
   if (RespParam > 0) {
@@ -15,7 +18,6 @@ Resp <- function(DOC,temp,RespParam){
   }
   
   #R <- 10^logR #mmol/m3/hr
-
   #R <- R*(1/1000)*(16)*(24/1) #g O2/m3/d 
   #Output: R  (O2 mmol/m3/hr) --> * (1mol /1000 mmol) * (16g O2/mol) * (24h/1day)  -->  g/m3/d 
 
