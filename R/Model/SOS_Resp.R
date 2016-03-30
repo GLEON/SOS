@@ -13,6 +13,7 @@ Resp <- function(DOC,temp,RespParam){
   
   if (RespParam > 0) {
     R <- DOC*RespParam*TempCorr #g/m3
+    
   } else {
     R <- 0
   }
