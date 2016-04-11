@@ -1,8 +1,8 @@
 Parameter	Value	Units
 #General Parameters		
-LakePerimeter	32448	m
+LakePerimeter	4221	m
 LakeDepth	14.6	m
-LakeArea	227000	m^2
+LakeArea	224263	m^2
 LakeVolume	454000	m^3
 DOC_init	10.53	g/m^3
 POC_init	1.17	g/m^3
