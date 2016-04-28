@@ -1,6 +1,6 @@
 #CarbonFluxModel <- function(LakeName,PlotFlag,ValidationFlag){
 #Flags 1 for yes, else no.
-LakeName = 'Trout'
+LakeName = 'Vanern'
 OptimizationFlag = 1
 PlotFlag = 1
 ValidationFlag = 1
@@ -152,7 +152,7 @@ if (OptimizationFlag==1){
   
   optimOut = optim(par = c(BurialFactor,RespParam,R_auto), min.calcModelNLL,ValidationDataDOC = ValidationDataDOC,
                    ValidationDataDO = ValidationDataDO,ValidationDataMAROC = ValidationDataMAROC, 
-                   control = list(maxit = 100)) #setting maximum number of attempts for now
+                   control = list(maxit = 15)) #setting maximum number of attempts for now
                    #method = 'L-BFGS-B',lower=c(0,0,0) #To constrain
   
   print('Parameter estimates (burial, Rhet, Raut...')
@@ -205,7 +205,7 @@ for (i in 1:(steps)){
   
   #Calc metabolism (DO) estimates for NPP validation
   Metabolism$NEP[i] <- (NPPdata$DOC_mass[i] + NPPdata$POC_mass[i] - NPPdata$DOC_resp_mass[i]*(PhoticDepth/LakeDepth))/(LakeVolume*PhoticDepth/LakeDepth)/TimeStep #g/m3/d
-  Metabolism$Oxygen <- (-Metabolism$NEP)*(32/12) #g/m3/d Molar conversion of C flux to O2 flux (lake metabolism)
+  Metabolism$Oxygen <- (Metabolism$NEP)*(32/12) #g/m3/d Molar conversion of C flux to O2 flux (lake metabolism)
   
   #Calc outflow subtractions (assuming outflow concentrations = mixed lake concentrations)
   SWGWData$POC_outflow[i] <- POC_df$POC_conc_gm3[i]*Q_out*60*60*24*TimeStep #g
@@ -310,9 +310,12 @@ if (ValidationFlag==1){
   plot(CalibrationOutputDOC$datetime,CalibrationOutputDOC$Measured,type='o',pch=19,cex=0.5,ylab = 'DOC',xlab='',
        ylim = c(min(CalibrationOutputDOC[,2:3]),max(CalibrationOutputDOC[,2:3])))
   lines(CalibrationOutputDOC$datetime,CalibrationOutputDOC$Modelled,col='red',lwd=2)
+  lines(as.Date(DOC_df$Date),DOC_df$DOC_conc_gm3,col='darkgreen',lwd=2)
   plot(CalibrationOutputDO$datetime,CalibrationOutputDO$Measured,type='o',pch=19,cex=0.5,ylab = 'DO',xlab='',
        ylim = c(min(CalibrationOutputDO[,2:3]),max(CalibrationOutputDO[,2:3])))
   lines(CalibrationOutputDO$datetime,CalibrationOutputDO$Modelled,col='darkgreen',lwd=2)
+  abline(h=0,lty=2)
+
 }
 
 ################## PLOTTING ###########################################################

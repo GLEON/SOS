@@ -18,16 +18,7 @@ NPP<-function(CHL,P,PhoticDepth,WT)
   #coefficients to predict NPP from chl and WT
   #log(NPP)=b0+b1*log10(chl)+b2*WT
   
-  #M Morin et al. 1999
-  #M Areal chl a : mg chl a m-2
-  #M Authors converted chl a mass per volume to areal values by integrating 
-  #M over photic zone depth defined in original papers 
-  #M Temp degrees C
-  #M NPP output in g m-2 d-1
-  
-  b0=1.18
-  b1=0.92
-  b2=0.014
+ 
   
   ###########################################################################
   if(missing(CHL)||is.na(CHL))
@@ -46,8 +37,22 @@ NPP<-function(CHL,P,PhoticDepth,WT)
   CHL <- CHL*PhoticDepth
   P <- P*PhoticDepth
   
-  NPP_rate <- 10^(b0+b1*log10(CHL)+b2*WT) #mg C/m2/d
- 
+  #M Morin et al. 1999
+  #M Areal chl a : mg chl a m-2
+  #M Authors converted chl a mass per volume to areal values by integrating 
+  #M over photic zone depth defined in original papers 
+  #M Temp degrees C
+  #M NPP output in g m-2 d-1
+  
+  b0=1.18
+  b1=0.92
+  b2=0.014
+  if (WT > 5) {
+    NPP_rate <- 10^(b0+b1*log10(CHL)+b2*WT) #mg C/m2/d
+  } else {
+    NPP_rate = 0 
+  }
+  
   NPP_Percent_DOC <- 71.4*CHL^(-0.22) #NPP as DOC, estimated as equal to 
   #%POC respired because POC most be converted to DOC to eventually be respired.
   #Citation, Mindy? This value represents fraction of NPP that becomes DOC
