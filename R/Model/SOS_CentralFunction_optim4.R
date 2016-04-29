@@ -1,8 +1,8 @@
 #CarbonFluxModel <- function(LakeName,PlotFlag,ValidationFlag){
 #Flags 1 for yes, else no.
-LakeName = 'Harp'
+LakeName = 'Langtjern'
 OptimizationFlag = 1
-PlotFlag = 1
+PlotFlag = 0
 ValidationFlag = 1
 
 ##### INPUT FILE NAMES ################
@@ -103,6 +103,8 @@ if (OptimizationFlag==1){
   ValidationDataDO <- read.csv(ValidationFileDO,header=T)
   ValidationDataDO$datetime <- as.Date(as.POSIXct(strptime(ValidationDataDO$datetime,"%m/%d/%Y %H:%M"),tz="GMT")) #Convert time to POSIX
   ValidationDataDO = ValidationDataDO[complete.cases(ValidationDataDO),]
+  #Only compare to DO data when lake is stratified
+  ValidationDataDO = ValidationDataDO[ValidationDataDO$wtr > 8,]
   
   k <- 0.5 #m/d
   PhoticDepth <- data.frame(datetime = InputData$datetime,PhoticDepth = log(100)/(1.7/InputData$Secchi))
@@ -152,7 +154,7 @@ if (OptimizationFlag==1){
   
   optimOut = optim(par = c(BurialFactor,RespParam,R_auto), min.calcModelNLL,ValidationDataDOC = ValidationDataDOC,
                    ValidationDataDO = ValidationDataDO,ValidationDataMAROC = ValidationDataMAROC, 
-                   control = list(maxit = 15)) #setting maximum number of attempts for now
+                   control = list(maxit = 75)) #setting maximum number of attempts for now
                    #method = 'L-BFGS-B',lower=c(0,0,0) #To constrain
   
   print('Parameter estimates (burial, Rhet, Raut...')
@@ -306,12 +308,12 @@ if (ValidationFlag==1){
   CalibrationOutputDO$Modelled <- Metabolism$Oxygen[modIndx]
   
   #Plot Calibration
-  par(mfrow=c(2,1),mar=c(2.5,3,1,1),mgp=c(1.5,0.3,0),tck=-0.02)
+  par(mfrow=c(2,1),mar=c(2,3,2,1),mgp=c(1.5,0.3,0),tck=-0.02)
   plot(CalibrationOutputDOC$datetime,CalibrationOutputDOC$Measured,type='o',pch=19,cex=0.5,ylab = 'DOC',xlab='',
-       ylim = c(min(CalibrationOutputDOC[,2:3]),max(CalibrationOutputDOC[,2:3])))
+       ylim = c(min(CalibrationOutputDOC[,2:3]),max(CalibrationOutputDOC[,2:3])),main=LakeName)
   lines(CalibrationOutputDOC$datetime,CalibrationOutputDOC$Modelled,col='red',lwd=2)
   lines(as.Date(DOC_df$Date),DOC_df$DOC_conc_gm3,col='darkgreen',lwd=2)
-  plot(CalibrationOutputDO$datetime,CalibrationOutputDO$Measured,type='o',pch=19,cex=0.5,ylab = 'DO',xlab='',
+  plot(CalibrationOutputDO$datetime,CalibrationOutputDO$Measured,type='o',pch=19,cex=0.5,ylab = 'DO Flux',xlab='',
        ylim = c(min(CalibrationOutputDO[,2:3]),max(CalibrationOutputDO[,2:3])))
   lines(CalibrationOutputDO$datetime,CalibrationOutputDO$Modelled,col='darkgreen',lwd=2)
   abline(h=0,lty=2)
