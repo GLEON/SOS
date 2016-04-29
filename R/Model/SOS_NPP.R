@@ -47,7 +47,7 @@ NPP<-function(CHL,P,PhoticDepth,WT)
   b0=1.18
   b1=0.92
   b2=0.014
-  if (WT > 5) {
+  if (WT >= 10) {
     NPP_rate <- 10^(b0+b1*log10(CHL)+b2*WT) #mg C/m2/d
   } else {
     NPP_rate = 0 
