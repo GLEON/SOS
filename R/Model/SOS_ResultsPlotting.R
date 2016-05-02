@@ -1,7 +1,7 @@
 #Read in results data from SOS_CentralFunction.R and visualize output. 
 
 #User input lake name
-LakeName = 'Trout'
+LakeName = 'Vanern'
 
 #Read in results data from SOS Carbon Flux Model
 DOC_results_filename = paste('./',LakeName,'Lake/','Results/',LakeName,'_DOC_Results.csv',sep='')
@@ -46,3 +46,23 @@ plot(POC_df[,1],SOS$Net/1000,xlab='date/time',ylab='OC mass (kg/d)',
      main='Net OC Mass Sunk per Day',type='l')
 #   plotDates = seq(OutputTimeSeries[1],tail(OutputTimeSeries,1), by="year")
 #   axis.Date(1,at=plotDates,labels=format(plotDates,"%m/%y"),las=1,cex.axis = 0.8)
+
+
+######## Stacked histrogram of DOC fluxes in and out of the system ######## 
+par(mar=c(3,3,2,3),mgp=c(1.5,0.5,0),tck=-0.02,cex=0.8)
+# Fluxes in
+plot(DOC_df$Date,DOC_df$FlowIn_gm2y+DOC_df$NPPin_gm2y+DOC_df$leachIn_gm2y,type='h',col='goldenrod',
+     ylim=c(-150,150),ylab='DOC flux (gm2/y)',xlab='',main=LakeName) # Leaching 
+lines(DOC_df$Date,DOC_df$FlowIn_gm2y+DOC_df$NPPin_gm2y,type='h',col='darkblue') # NPP
+lines(DOC_df$Date,DOC_df$NPPin_gm2y,type='h',col='cyan4') # Flow
+# Fluxes out 
+lines(DOC_df$Date,-DOC_df$FlowOut_gm2y-DOC_df$respOut_gm2y,type='h',col='green4') # Flow
+lines(DOC_df$Date,-DOC_df$respOut_gm2y,type='h',col='red4') # Respiration
+
+par(new=T) # Plot DOC concentration on separate yaxis 
+plot(DOC_df$Date,DOC_df$DOC_conc_gm3,type='l',ylim=c(2,5),yaxt='n',ylab='',xlab='')
+axis(side = 4)
+mtext('DOC concentration (g/m3)',side = 4,line = 1.5,cex=0.8)
+
+legend('topleft',legend = c('Leaching In','NPP','Flow In','Respiration','Flow Out'),
+       fill = c('goldenrod','darkblue','cyan4','green4','red4'),ncol=2,cex=0.8)
