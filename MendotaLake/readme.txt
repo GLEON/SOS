@@ -9,7 +9,8 @@ LakeMendotaTS.csv
 
 - Volume: Static volume; Take from : http://limnology.wisc.edu/lake_information/mendota/mendota.html
 
-- FlowIn: Daily discharge summed from GSGS station 05427948 (Pheasant Branch Creek),05427930 (Dorn Creek at Cty Hwy), and 05427910 (Six Mile Creek at Cty Hwy), and 05427850 (Yahara River at State Hwy 113)
+- FlowIn: Daily discharge summed from GSGS station 05427930 (Dorn Creek at Cty Hwy), and 05427910 (Six Mile Creek at Cty Hwy), and 05427850 (Yahara River at State Hwy 113)
+  For data before 2012/7/26, Flowin was calculated as inflow from station 05427850 * 2.04, based on the annual ratio of inflows from Yahara River to the sums of all inflows in years with full data
 
 - FlowOut: Daily discharge based on USGS 05428500 gauge station at Yahara River, East Main St, Madison, WI.
 
