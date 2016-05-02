@@ -15,7 +15,7 @@ modelDOC <- function (BurialFactor_init,RespParam_init,R_auto_init) {
     #Call NPP Function
     PhoticDepth <- log(100)/(1.7/InputData$Secchi[i]) #Calc photic depth as function of Secchi depth
     if (PhoticDepth>LakeDepth){PhoticDepth<-LakeDepth} #QC - If photic depth calc'ed as greater than lake depth, photic depth = lake depth
-    RawProduction <- NPP(InputData$Chla[i],InputData$TP[i],PhoticDepth,InputData$EpiTemp[i]) #mg C/m^2/d
+    RawProduction <- NPP(InputData$Chla[i],InputData$TP[i],PhoticDepth,InputData$EpiTemp[i],yday(InputData$datetime[i]),ProdStartDay,ProdEndDay) #mg C/m^2/d
     NPPdata$DOC_rate[i] = RawProduction$NPP_DOC_rate
     NPPdata$POC_rate[i] = RawProduction$NPP_POC_rate
     

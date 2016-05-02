@@ -4,7 +4,7 @@
 #Configuration file should contain parameters generated from calibration routine "SOS_CentralFunction_optim4.R"
 
 #User input lake name
-LakeName = 'Mendota'
+LakeName = 'Vanern'
 
 ##### INPUT FILE NAMES ################
 TimeSeriesFile <- paste('./',LakeName,'Lake/',LakeName,'TS.csv',sep='')
@@ -104,7 +104,7 @@ for (i in 1:(steps)){
   #Call NPP Function
   PhoticDepth <- log(100)/(1.7/InputData$Secchi[i]) #Calc photic depth as function of Secchi depth
   if (PhoticDepth>LakeDepth){PhoticDepth<-LakeDepth} #QC - If photic depth calc'ed as greater than lake depth, photic depth = lake depth
-  RawProduction <- NPP(InputData$Chla[i],InputData$TP[i],PhoticDepth,InputData$EpiTemp[i]) #mg C/m^2/d
+  RawProduction <- NPP(InputData$Chla[i],InputData$TP[i],PhoticDepth,InputData$EpiTemp[i],yday(InputData$datetime[i]),ProdStartDay,ProdEndDay) #mg C/m^2/d
   NPPdata$DOC_rate[i] = RawProduction$NPP_DOC_rate
   NPPdata$POC_rate[i] = RawProduction$NPP_POC_rate
   

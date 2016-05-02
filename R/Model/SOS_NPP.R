@@ -1,5 +1,5 @@
 
-NPP<-function(CHL,P,PhoticDepth,WT)
+NPP<-function(CHL,P,PhoticDepth,WT,JulianDay,ProdStarDay,ProdEndDay)
 {
   
   NPPdata <- data.frame(NPP_DOC_rate=NA,NPP_POC_rate=NA)
@@ -47,7 +47,7 @@ NPP<-function(CHL,P,PhoticDepth,WT)
   b0=1.18
   b1=0.92
   b2=0.014
-  if (WT >= 10) {
+  if (JulianDay>ProdStarDay & JulianDay<ProdEndDay) {
     NPP_rate <- 10^(b0+b1*log10(CHL)+b2*WT) #mg C/m2/d
   } else {
     NPP_rate = 0 
