@@ -88,7 +88,7 @@ mtext('POC concentration (g/m3)',side = 4,line = 1.5,cex=0.8)
 
 legend('topleft',legend = c('Flow In','NPP In','Leaching Out','Sedimentation','Flow Out','POC Conc'),
        col = c('darkblue','cyan4','goldenrod','brown','green4','black'),pch=c(15,15,15,15,15,NA),
-       lty=c(0,0,0,0,0,1),lwd=2,ncol=2,cex=1,pt.cex=2,seg.len=1,text.width = 70000000,
+       lty=c(0,0,0,0,0,1),lwd=2,ncol=2,cex=1,pt.cex=2,seg.len=1,text.width = 80000000,
        inset=0.01)
 ############################################################################
 
