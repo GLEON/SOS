@@ -5,18 +5,35 @@ Seem to be available nutrient and chemical data for various lakes near Toolik Re
 
 Lake Nutrient data: http://ecosystems.mbl.edu/ARC/lakes/nutrients/index.shtml
 Toolik Inlet discharge: http://ecosystems.mbl.edu/ARC/landwater/discharge/index.shtml
+discharge update: site moved 5-6-16: http://arc-lter.ecosystems.mbl.edu/power-search/data-set
 
 1988-2010_Kling_Akchem: daily data, but not all variables monitored continuously for time period
 * includes inlets and outlets
+http://arc-lter.ecosystems.mbl.edu/1988-2010klingakchem
 
 Weather Data: http://ecosystems.mbl.edu/ARC/meta_template.php?FileName=./weather/tl/2007dltld.html
 (daily weather summary files)
 
+Update 5-6-16: http://arc-lter.ecosystems.mbl.edu/2009dltld (can change year in path for daily data for a given year)
+
 Secchi data: ARC_LAKES_Physchem_2000-2009.xls
+
+Phosphorus: ARC_Lakes_Chemistry_2000-2009.csv
 
 DOC validation data: directly from George Kling: 2005-2008_Kling_Toolik_DOC.xlxs
 * As instructed by Kling, I subbed out old discharge and inflow DOC with his updated values. Inflow DOC
 * seemed noticeably different, but discharge minimally different
+
+#####2002 Toolik Lake Data########
+TP for 8-9-01: 0 depth recorded as 50g/m3, looks like error, so used 1m sample
+
+
+#####2003 Toolik Lake Data########
+TP: for 7-11-03, 7-18-03: no 0m sample, so used 1m
+
+#####2004 Toolik Lake Data########
+TP: for 7-16-04: no 0m sample, so used 3m (shallowest available)
+
 
 #########2005 Toolik Lake Data#########
 
@@ -72,6 +89,9 @@ for 8-1-08, two values for SW_DOC at 3 different times of day but at same depth,
 for 8-8-08, no SW_DOC available, so used value from 8-7-08
 
 Secchi data 7-18-08: average of two values (5.6, 4.5) avg=5.05 m
+
+#########2009 Toolik Lake Data#########
+could not find phosphorus data
  
 ######### DO VALIDATON DATA #########
 
