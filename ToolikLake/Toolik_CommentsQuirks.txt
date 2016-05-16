@@ -24,6 +24,12 @@ DOC validation data: directly from George Kling: 2005-2008_Kling_Toolik_DOC.xlxs
 * As instructed by Kling, I subbed out old discharge and inflow DOC with his updated values. Inflow DOC
 * seemed noticeably different, but discharge minimally different
 
+#### Length of growing season parameters #####
+Hobbie, J. E., & Kling, G. W. (Eds.). (2014). Alaska's changing Arctic: Ecological consequences for tundra, streams, and lakes. Oxford University Press.
+based on 1989-2010 historical mean (authors found no temporal trend in that period) of
+number of days SAT (surface air temperature, measured at 5 m) is above freezing
+
+
 #####2002 Toolik Lake Data########
 TP for 8-9-01: 0 depth recorded as 50g/m3, looks like error, so used 1m sample
 
