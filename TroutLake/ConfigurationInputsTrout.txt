@@ -24,3 +24,6 @@ R_auto	0.8	unitless
 		
 #Sedimentation		
 ObservedMAR_oc	27	g/m2/yr
+#ProductionPeriod		
+ProdStartDay	105	JulianDay
+ProdEndDay	330	JulianDay
