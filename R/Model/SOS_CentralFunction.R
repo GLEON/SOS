@@ -61,18 +61,13 @@ POC_df = data.frame(Date = InputData$datetime,
                     POC_conc_gm3 = NA,
                     NPPin_gm2y=NA,FlowIn_gm2y=NA,FlowOut_gm2y=NA,sedOut_gm2y=NA,leachOut_gm2y=NA,
                     POC_out_g = NA, POC_FlowOut_cum_g = NA, POC_SedOut_cum_g = NA,
-                    POC_in_g = NA, POC_in_alloch_g = NA, POC_in_autoch_g = NA,)
-DOC_df = data.frame(Date = InputData$datetime,
-                    DOC_conc_gm3 = NA,
-                    NPPin_gm2y=NA,FlowIn_gm2y=NA,FlowOut_gm2y=NA,respOut_gm2y=NA,leachIn_gm2y=NA,
-                    DOC_out_g = NA, DOC_FlowOut_cum_g = NA, DOC_RespOut_cum_g = NA,
-                    DOC_in_g = NA, DOC_in_alloch_g = NA, DOC_in_autoch_g = NA,)
-
+                    POC_in_g = NA, POC_in_alloch_g = NA, POC_in_autoch_g = NA)
 DOC_df = data.frame(Date = InputData$datetime,
                     DOC_conc_gm3 = NA,
                     NPPin_gm2y=NA,FlowIn_gm2y=NA,FlowOut_gm2y=NA,respOut_gm2y=NA,leachIn_gm2y=NA,
                     DOC_out_g = NA, DOC_FlowOut_cum_g = NA, DOC_RespOut_cum_g = NA,
                     DOC_in_g = NA, DOC_in_alloch_g = NA, DOC_in_autoch_g = NA)
+
 
 ##### Declare Data Storage - Sed ###########
 SedData <- data.frame(Date = InputData$datetime, BurialScalingFactor=NA,MAR_oc=NA,POC_burial=NA,POC_sedOut = NA)
