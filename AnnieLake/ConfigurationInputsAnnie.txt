@@ -1,0 +1,28 @@
+Parameter	Value	Units	
+#General Parameters			
+LakePerimeter	3062	m	
+LakeDepth	10	m	
+LakeArea	3.64E+05	m^2	
+LakeVolume	2.76E+06	m^3	
+DOC_init	3.992	g/m^3	
+POC_init	0.54	g/m^3	
+#Sedimentation Parameters			
+BurialFactor	0.01	1/days	
+#SWGW Parameters			
+PropCanopy	0.291	unitless	
+PropWetlands	0.411	unitless	
+AerialLoad	1	gPOC/m/d	
+WetlandLoad	1	gDOC/m/d	
+DOC_gw		mg/L	DOC_gw = InLakeDOC
+PropGW	0.9	unitless	
+DOC_precip	2	g/m3	
+			
+#Leach/Resp Parameters			
+POC_lc	0.01	1/days	
+RespParam	0.001	unitless	
+R_auto	0.8	unitless	
+			
+#Sedimentation			
+ObservedMAR_oc	27	g/m^2/yr	
+ProdStartDay	0		
+ProdEndDay	367		
