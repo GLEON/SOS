@@ -25,4 +25,4 @@ R_auto	0.8	unitless
 #Sedimentation			
 ObservedMAR_oc	27	g/m^2/yr	
 ProdStartDay	0		
-ProdEndDay	367		
+ProdEndDay	366		

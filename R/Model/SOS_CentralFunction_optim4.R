@@ -174,10 +174,13 @@ if (OptimizationFlag==1){
 for (i in 1:(steps)){
   if (R_auto > 1){R_auto = 1}
   
+  Rainfall <- InputData$Rain[i]/TimeStep #mm/day
+  Q_out <- InputData$FlowOut[i] #m3/s: total outflow. Assume steady state pending dynamic output
+  if(LakeName=="Annie" && Rainfall>10){
+    PropGW <- 0
+  }
   Q_sw <- InputData$FlowIn[i] #m3/s surface water flowrate at i
   Q_gw <- Q_sw/(1-PropGW) - Q_sw #m3/s; as a function of proportion of inflow that is GW
-  Q_out <- InputData$FlowOut[i] #m3/s: total outflow. Assume steady state pending dynamic output
-  Rainfall <- InputData$Rain[i]/TimeStep #mm/day
   
   #Call NPP Function
   PhoticDepth <- log(100)/(1.7/InputData$Secchi[i]) #Calc photic depth as function of Secchi depth
