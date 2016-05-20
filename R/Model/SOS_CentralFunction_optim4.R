@@ -102,8 +102,8 @@ if (OptimizationFlag==1){
   ValidationDataDO$datetime <- as.Date(as.POSIXct(strptime(ValidationDataDO$datetime,"%m/%d/%Y %H:%M"),tz="GMT")) #Convert time to POSIX
   ValidationDataDO = ValidationDataDO[complete.cases(ValidationDataDO),]
   #Only compare to DO data during "production season."
-  ValidationDataDO = ValidataionDataDO[yday(ValidationDataDO$datetime)>ProdStartDay & yday(ValidationDataDO$datetime)<ProdEndDay]
-  #ValidationDataDO = ValidationDataDO[ValidationDataDO$wtr >= 10,]
+  #ValidationDataDO = ValidataionDataDO[yday(ValidationDataDO$datetime)>ProdStartDay & yday(ValidationDataDO$datetime)<ProdEndDay]
+  ValidationDataDO = ValidationDataDO[ValidationDataDO$wtr >= 10,]
   
   k <- 0.5 #m/d
   PhoticDepth <- data.frame(datetime = InputData$datetime,PhoticDepth = log(100)/(1.7/InputData$Secchi))
