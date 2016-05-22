@@ -8,27 +8,51 @@ setwd("C:/Users/Ian/Desktop/GLEON/SOS/")
 
 # Vanern
 Vanern_DOC = read.csv('VanernLake/Results/Vanern_DOC_Results.csv')
+cc = which(complete.cases(Vanern_DOC))
+Vanern_DOC = Vanern_DOC[cc[1]:tail(cc,1),]
 Vanern_POC = read.csv('VanernLake/Results/Vanern_POC_Results.csv')
+cc = which(complete.cases(Vanern_POC))
+Vanern_POC = Vanern_POC[cc[1]:tail(cc,1),]
 
 # Toolik
 Toolik_DOC = read.csv('ToolikLake/Results/Toolik_DOC_Results.csv')
+cc = which(complete.cases(Toolik_DOC))
+Toolik_DOC = Toolik_DOC[cc[1]:tail(cc,1),]
 Toolik_POC = read.csv('ToolikLake/Results/Toolik_POC_Results.csv')
+cc = which(complete.cases(Toolik_POC))
+Toolik_POC = Toolik_POC[cc[1]:tail(cc,1),]
 
 # Trout
 Trout_DOC = read.csv('TroutLake/Results/Trout_DOC_Results.csv')
+cc = which(complete.cases(Trout_DOC))
+Trout_DOC = Trout_DOC[cc[1]:tail(cc,1),]
 Trout_POC = read.csv('TroutLake/Results/Trout_POC_Results.csv')
+cc = which(complete.cases(Trout_POC))
+Trout_POC = Trout_POC[cc[1]:tail(cc,1),]
 
 # Mendota
 Mendota_DOC = read.csv('MendotaLake/Results/Mendota_DOC_Results.csv')
+cc = which(complete.cases(Mendota_DOC))
+Mendota_DOC = Mendota_DOC[cc[1]:tail(cc,1),]
 Mendota_POC = read.csv('MendotaLake/Results/Mendota_POC_Results.csv')
+cc = which(complete.cases(Mendota_POC))
+Mendota_POC = Mendota_POC[cc[1]:tail(cc,1),]
 
 # Harp
 Harp_DOC = read.csv('HarpLake/Results/Harp_DOC_Results.csv')
+cc = which(complete.cases(Harp_DOC))
+Harp_DOC = Harp_DOC[cc[1]:tail(cc,1),]
 Harp_POC = read.csv('HarpLake/Results/Harp_POC_Results.csv')
+cc = which(complete.cases(Harp_POC))
+Harp_POC = Harp_POC[cc[1]:tail(cc,1),]
 
 # Annie
 Annie_DOC = read.csv('AnnieLake/Results/Annie_DOC_Results.csv')
+cc = which(complete.cases(Annie_DOC))
+Annie_DOC = Annie_DOC[cc[1]:tail(cc,1),]
 Annie_POC = read.csv('AnnieLake/Results/Annie_POC_Results.csv')
+cc = which(complete.cases(Annie_POC))
+Annie_POC = Annie_POC[cc[1]:tail(cc,1),]
 
 #### Calculate respiration/sedimentation and autochthonous/allochthonous ratio
 
@@ -41,12 +65,12 @@ Harp_RS = Harp_DOC$respOut_gm2y/Harp_POC$sedOut_gm2y
 Annie_RS = Annie_DOC$respOut_gm2y/Annie_POC$sedOut_gm2y
 
 # Calculate autochthonous/allochthonous ratio (AA)
-Vanern_AA = Vanern_DOC$DOCautoch_g/Vanern_DOC$DOCalloch_g
-Toolik_AA = Toolik_DOC$DOCautoch_g/Toolik_DOC$DOCalloch_g
-Trout_AA = Trout_DOC$DOCautoch_g/Trout_DOC$DOCalloch_g
-Mendota_AA = Mendota_DOC$DOCautoch_g/Mendota_DOC$DOCalloch_g
-Harp_AA = Harp_DOC$DOCautoch_g/Harp_DOC$DOCalloch_g
-Annie_AA = Annie_DOC$DOCautoch_g/Annie_DOC$DOCalloch_g
+Vanern_AA = Vanern_DOC$DOC_in_autoch_g/Vanern_DOC$DOC_in_alloch_g
+Toolik_AA = Toolik_DOC$DOC_in_autoch_g/Toolik_DOC$DOC_in_alloch_g
+Trout_AA = Trout_DOC$DOC_in_autoch_g/Trout_DOC$DOC_in_alloch_g
+Mendota_AA = Mendota_DOC$DOC_in_autoch_g/Mendota_DOC$DOC_in_alloch_g
+Harp_AA = Harp_DOC$DOC_in_autoch_g/Harp_DOC$DOC_in_alloch_g
+Annie_AA = Annie_DOC$DOC_in_autoch_g/Annie_DOC$DOC_in_alloch_g
 
 # Combine into single data frame
 Vanern_df = data.frame(Date = Vanern_DOC$Date, RS = Vanern_RS, AA = Vanern_AA)
