@@ -21,6 +21,7 @@ Toolik_DOC = Toolik_DOC[cc[1]:tail(cc,1),]
 Toolik_POC = read.csv('ToolikLake/Results/Toolik_POC_Results.csv')
 cc = which(complete.cases(Toolik_POC))
 Toolik_POC = Toolik_POC[cc[1]:tail(cc,1),]
+Toolik_POC = Toolik_POC[-c(913), ]
 
 # Trout
 Trout_DOC = read.csv('TroutLake/Results/Trout_DOC_Results.csv')
