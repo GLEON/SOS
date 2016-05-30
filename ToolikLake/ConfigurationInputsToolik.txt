@@ -15,7 +15,7 @@ AerialLoad	1	gPOC/m/d
 WetlandLoad	1	gDOC/m/d
 DOC_gw	10	g/m3
 PropGW	0.19	unitless
-		
+DOC_sw	6.64	g/m3		
 DOC_precip	2	g/m3
 #Leech/Resp Parameters		
 POC_lc	0.01	1/days

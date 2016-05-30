@@ -29,6 +29,9 @@ Hobbie, J. E., & Kling, G. W. (Eds.). (2014). Alaska's changing Arctic: Ecologic
 based on 1989-2010 historical mean (authors found no temporal trend in that period) of
 number of days SAT (surface air temperature, measured at 5 m) is above freezing
 
+#### DOC_sw parameter
+mean of Toolik Inlet DOC for 1988-2010 (in uM, multiplied by 0.012017, which is 1/1000th of molar mass)
+
 
 #####2002 Toolik Lake Data########
 TP for 8-9-01: 0 depth recorded as 50g/m3, looks like error, so used 1m sample
