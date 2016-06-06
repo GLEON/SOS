@@ -116,3 +116,134 @@ vanern_sd = round(sd(Vanern_SOS$Net))
 ### plot all lakes on single plot (joining by date)
 #all_lakes_df = left_join(Vanern_SOS, Toolik_SOS, by='Date')
 #all_lakes_df = left_join(all_lakes_df, Trout_SOS, by='Date')
+
+#### Calculate annual, monthly Net Sunk means ####
+Vanern_SOS$Month = format(Vanern_SOS$Date,"%m",tz = "GMT")
+Vanern_SOS$Year = format(Vanern_SOS$Date,"%Y",tz = "GMT")
+VanernNetMonth = aggregate(Net ~ Month, Vanern_SOS, mean)
+VanernNetYear = aggregate(Net ~ Year, Vanern_SOS, mean)
+
+Toolik_SOS$Month = format(Toolik_SOS$Date,"%m",tz = "GMT")
+Toolik_SOS$Year = format(Toolik_SOS$Date,"%Y",tz = "GMT")
+ToolikNetMonth = aggregate(Net ~ Month, Toolik_SOS, mean)
+ToolikNetYear = aggregate(Net ~ Year, Toolik_SOS, mean)
+
+Trout_SOS$Month = format(Trout_SOS$Date,"%m",tz = "GMT")
+Trout_SOS$Year = format(Trout_SOS$Date,"%Y",tz = "GMT")
+TroutNetMonth = aggregate(Net ~ Month, Trout_SOS, mean)
+TroutNetYear = aggregate(Net ~ Year, Trout_SOS, mean)
+
+Mendota_SOS$Month = format(Mendota_SOS$Date,"%m",tz = "GMT")
+Mendota_SOS$Year = format(Mendota_SOS$Date,"%Y",tz = "GMT")
+MendotaNetMonth = aggregate(Net ~ Month, Mendota_SOS, mean)
+MendotaNetYear = aggregate(Net ~ Year, Mendota_SOS, mean)
+
+Harp_SOS$Month = format(Harp_SOS$Date,"%m",tz = "GMT")
+Harp_SOS$Year = format(Harp_SOS$Date,"%Y",tz = "GMT")
+HarpNetMonth = aggregate(Net ~ Month, Harp_SOS, mean)
+HarpNetYear = aggregate(Net ~ Year, Harp_SOS, mean)
+
+#Annie_SOS$Month = format(Annie_SOS$Date,"%m",tz = "GMT")
+#Annie_SOS$Year = format(Annie_SOS$Date,"%Y",tz = "GMT")
+#AnnieNetMonth = aggregate(Net ~ Month, Annie_SOS, mean)
+#AnnieNetYear = aggregate(Net ~ Year, Annie_SOS, mean)
+
+#### Plot monthly Net Sunk ####
+#par(mfrow=c(1,1)) 
+layout(matrix(c(1,2,3,4,5,6),2,3))
+months = c('Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec')
+mtext = 'OC Mass (kg)'
+ylim = c(-4e6,200000)
+#ylim=NULL
+
+barplot(VanernNetMonth$Net, main='Vanern', col='dodgerblue',
+        names.arg = months, las=2) #las=2 rotates x axis labels
+mtext(side=3, mtext, cex=0.75)
+
+barplot(ToolikNetMonth$Net, main='Toolik', col='dodgerblue', ylim=ylim,
+        names.arg = months, las=2) #las=2 rotates x axis labels
+mtext(side=3, mtext, cex=0.75)
+
+barplot(TroutNetMonth$Net, main='Trout', col='dodgerblue', ylim=ylim,
+        names.arg = months, las=2) #las=2 rotates x axis labels
+mtext(side=3, mtext, cex=0.75)
+
+barplot(MendotaNetMonth$Net, main='Mendota', col='dodgerblue', ylim=ylim,
+        names.arg = months, las=2) #las=2 rotates x axis labels
+mtext(side=3, mtext, cex=0.75)
+
+barplot(HarpNetMonth$Net, main='Harp', col='dodgerblue', ylim=ylim,
+        names.arg = months, las=2) #las=2 rotates x axis labels
+mtext(side=3, mtext, cex=0.75)
+
+#barplot(AnnieNetMonth$Net, main='Annie', col='dodgerblue', ylim=ylim,
+#        names.arg = months, las=2) #las=2 rotates x axis labels
+#mtext(side=3, mtext, cex=0.75)
+
+#### Plot annual Net Sunk ####
+#par(mfrow=c(1,1)) 
+layout(matrix(c(1,2,3,4,5,6),2,3))
+mtext = 'OC Mass (kg)'
+ylim = c(-4e6,200000)
+#ylim=NULL
+
+barplot(VanernNetYear$Net, main='Vanern', col='dodgerblue',
+        names.arg = VanernNetYear$Year, las=2) #las=2 rotates x axis labels
+mtext(side=3, mtext, cex=0.75)
+
+barplot(ToolikNetYear$Net, main='Toolik', col='dodgerblue', ylim=ylim,
+        names.arg = ToolikNetYear$Year, las=2) #las=2 rotates x axis labels
+mtext(side=3, mtext, cex=0.75)
+
+barplot(TroutNetYear$Net, main='Trout', col='dodgerblue', ylim=ylim,
+        names.arg = TroutNetYear$Year, las=2) #las=2 rotates x axis labels
+mtext(side=3, mtext, cex=0.75)
+
+barplot(MendotaNetYear$Net, main='Mendota', col='dodgerblue', ylim=ylim,
+        names.arg = MendotaNetYear$Year, las=2) #las=2 rotates x axis labels
+mtext(side=3, mtext, cex=0.75)
+
+barplot(HarpNetYear$Net, main='Harp', col='dodgerblue', ylim=ylim,
+        names.arg = HarpNetYear$Year, las=2) #las=2 rotates x axis labels
+mtext(side=3, mtext, cex=0.75)
+
+#barplot(AnnieNetYear$Net, main='Annie', col='dodgerblue', ylim=ylim,
+#        names.arg = AnnieNetYear$Year, las=2) #las=2 rotates x axis labels
+#mtext(side=3, mtext, cex=0.75)
+
+#### Plot annual Net Sunk across years and lakes on single plot ####
+as.Date(VanernNetYear$Year, format = "%Y")
+as.Date(ToolikNetYear$Year, format = "%Y")
+as.Date(TroutNetYear$Year, format = "%Y")
+as.Date(MendotaNetYear$Year, format = "%Y")
+as.Date(HarpNetYear$Year, format = "%Y")
+#as.Date(AnnieNetYear$Year, format = "%Y")
+
+par(mfrow=c(1,1)) 
+#layout(matrix(c(1,2,3,4,5,6),2,3))
+mtext = 'OC Mass (kg)'
+ylim = c(-4e6,500000)
+#ylim=NULL
+lwd = 2
+xlim = c(1991,2013)
+
+plot(Net ~ Year, VanernNetYear, type='l', lwd=lwd, col='darkgreen', xlim=xlim, ylim=ylim)
+par(new=T)
+plot(Net ~ Year, ToolikNetYear, type='l', lwd=lwd, yaxt='n', 
+     xaxt='n', xlab='', ylab='', col='navy', xlim=xlim, ylim=ylim)
+par(new=T)
+plot(Net ~ Year, TroutNetYear, type='l', lwd=lwd, yaxt='n', 
+     xaxt='n', xlab='', ylab='', col='orange', xlim=xlim, ylim=ylim)
+par(new=T)
+plot(Net ~ Year, MendotaNetYear, type='l', lwd=lwd, yaxt='n', 
+     xaxt='n', xlab='', ylab='', col='darkred', xlim=xlim, ylim=ylim)
+par(new=T)
+plot(Net ~ Year, HarpNetYear, type='l', lwd=lwd, yaxt='n', 
+     xaxt='n', xlab='', ylab='', col='darkmagenta', xlim=xlim, ylim=ylim)
+#par(new=T)
+#plot(Net ~ Year, AnnieNetYear, type='l', lwd=lwd, yaxt='n', 
+#     xaxt='n', xlab='', ylab='', col='chartreuse', xlim=xlim, ylim=ylim)
+abline(1,0, lwd=2, lty=2)
+legend('bottomleft', legend=c('Vanern','Toolik','Trout','Mendota','Harp'),
+       col = c('darkgreen','navy','orange','darkred','darkmagenta'), lwd=lwd,
+       lty=1)

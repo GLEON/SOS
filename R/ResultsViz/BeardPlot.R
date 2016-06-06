@@ -33,7 +33,7 @@ clean_shave = function(lakename) {
   # Calculate respiration-sedimentation and autochthonous/allochthonous ratio
   # and natural log transform them
   lake_df$RS = lake_df$Resp - lake_df$Sed
-  #lake_df$logRS = log(lake_df$RS)
+  lake_df$logRS = log(lake_df$RS)
   lake_df$AA = lake_df$Autoch/lake_df$Alloch
   lake_df$logAA = log(lake_df$AA)
   
@@ -57,13 +57,20 @@ Harp = clean_shave('Harp')
 
 # plot
 par(mfrow=c(2,3))
-ylab = 'Respiration - Sedimentation'
+ylab = 'ln(Respiration - Sedimentation)'
 xlab = 'ln(Autochthonous/Allochthonous Ratio)'
+xlim = c(-8,8)
+ylim = c(-8,8)
 
-plot(RS ~ logAA, Vanern, xlab = xlab, ylab = ylab, main='Vanern')
-plot(RS ~ logAA, Toolik, xlab = xlab, ylab = ylab, main='Toolik')
-plot(RS ~ logAA, Trout, xlab = xlab, ylab = ylab, main='Trout')
-plot(RS ~ logAA, Mendota, xlab = xlab, ylab = ylab, main='Mendota')
-plot(RS ~ logAA, Harp, xlab = xlab, ylab = ylab, main='Harp')
-plot(RS ~ logAA, Annie, xlab = xlab, ylab = ylab, main='Annie')
-
+plot(logRS ~ logAA, Vanern, xlab = xlab, ylab = ylab, xlim=xlim, ylim=ylim, main='Vanern')
+mtext(side=3, paste0('n=',nrow(Vanern)), cex=0.75)
+plot(logRS ~ logAA, Toolik, xlab = xlab, ylab = ylab, xlim=xlim, ylim=ylim, main='Toolik')
+mtext(side=3, paste0('n=',nrow(Toolik)), cex=0.75)
+plot(logRS ~ logAA, Trout, xlab = xlab, ylab = ylab, xlim=xlim, ylim=ylim, main='Trout')
+mtext(side=3, paste0('n=',nrow(Trout)), cex=0.75)
+plot(logRS ~ logAA, Mendota, xlab = xlab, ylab = ylab, xlim=xlim, ylim=ylim, main='Mendota')
+mtext(side=3, paste0('n=',nrow(Mendota)), cex=0.75)
+plot(logRS ~ logAA, Harp, xlab = xlab, ylab = ylab, xlim=xlim, ylim=ylim, main='Harp')
+mtext(side=3, paste0('n=',nrow(Harp)), cex=0.75)
+#plot(RS ~ logAA, Annie, xlab = xlab, ylab = ylab, xlim=xlim, ylim=ylim, main='Annie')
+#mtext(side=3, paste0('n=',nrow(Annie)), cex=0.75)
