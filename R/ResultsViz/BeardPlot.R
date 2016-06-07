@@ -38,7 +38,12 @@ clean_shave = function(lakename) {
   lake_df$logAA = log(lake_df$AA)
   
   # get rid of NAs produced by log transformation
-  lake_df = na.omit(lake_df)
+  # KF: I am #-ing this command for now; NaNs will automatically be removed when we plot, 
+  #     but if we keep this line here, it will remove lines that are complete cases if using non-logged plotting
+  # lake_df = na.omit(lake_df)
+  
+  # Output each lake as a dataframe
+  data.frame(RS = lake_df$RS, logRS = lake_df$logRS, AA = lake_df$AA, logAA = lake_df$logAA)
 }
 
 # run over the lakes
