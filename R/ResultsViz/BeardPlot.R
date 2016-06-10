@@ -4,7 +4,7 @@
 #### Set your own working directory #####
 setwd("C:/Users/Ian/Desktop/GLEON/SOS/")
 
-lake_list = c('Vanern','Toolik','Trout','Mendota','Harp')
+#lake_list = c('Vanern','Toolik','Trout','Mendota','Harp')
 
 #### define (dis)function ####
 clean_shave = function(lakename) {
@@ -40,10 +40,11 @@ clean_shave = function(lakename) {
   # get rid of NAs produced by log transformation
   # KF: I am #-ing this command for now; NaNs will automatically be removed when we plot, 
   #     but if we keep this line here, it will remove lines that are complete cases if using non-logged plotting
-  # lake_df = na.omit(lake_df)
+  # IM: OK, thank you KF 
+  #lake_df = na.omit(lake_df)
   
   # Output each lake as a dataframe
-  data.frame(RS = lake_df$RS, logRS = lake_df$logRS, AA = lake_df$AA, logAA = lake_df$logAA)
+  data.frame(Date = lake_df$Date, RS = lake_df$RS, logRS = lake_df$logRS, AA = lake_df$AA, logAA = lake_df$logAA)
 }
 
 # run over the lakes
