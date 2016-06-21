@@ -1,0 +1,7 @@
+Lake,Location,"N lat,  W lon",Data years,Area (ha),Volume (m³),Perimeter (m),Mean Depth (m),Residence Time (yrs),Trophic status,Secchi (m),TP (g/m³),DOC (g/m³)
+Annie,"Florida, USA","27°37', 81°19'",Mar 08-May 10,36,2.76E+06,2335,10,2,mesotrophic,2,5,8
+Harp,"Ontario, Canada","45°38', 79°14'",1991-2001,71,9.50E+06,4000,12,3.1,oligotrophic,6.5,5,4
+Mendota,"Wisconsin, USA","43°11', 89°42'",2006-2013,3990,5.05E+08,35200,12.7,6.2,eutrophic,2.84,20,5
+Toolik,"Alaska, USA","68°63', 149°61'",2001-2010,149,1.06E+07,8104,7,1,oligotrophic,4.75,2,5
+Trout,"Wisconsin, USA","46°02', 89°40'",2004-2013,1610,2.35E+08,25900,14.6,4.6,oligotrophic,5.32,11,3
+Vanern,Sweden,"59°06’, -13°62’",2001-2013,565000,1.53E+11,2007000,27,9.8,oligotrophic,4.47,6.3,4
