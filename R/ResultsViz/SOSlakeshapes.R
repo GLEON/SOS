@@ -4,7 +4,7 @@ library(sp)
 library(latticeExtra)
 library(raster)
 library(maptools)
-setwd('~/Documents/Rpackages/SOS/GIS/')
+setwd("~/Documents/Rpackages/SOS/R/ResultsViz")
 
 annie = readOGR('Annie/abs_LakeAnnie_Current.shp',layer = 'abs_LakeAnnie_Current')
 mendota = readOGR('Mendota/LakeMendota.shp','LakeMendota')
@@ -27,25 +27,26 @@ centerShp <- function(shape,add) {
   return(b)
 }
 
-mendota2 = centerShp(mendota)
+mendota2 = centerShp(mendota,c(0,0))
 trout2 = centerShp(trout,c(0.09,0))
 toolik2 = centerShp(toolik,c(-0.01,-0.05))
 harp2 = centerShp(harp,c(0.03,-0.05))
 lang2 = centerShp(lang,c(0.06,-0.05))
 annie2 = centerShp(annie,c(0.09,-0.05))
 
-vanern2 = centerShp(vanern)
+vanern2 = centerShp(vanern,c(0,0))
 
 plot(vanern2,lwd=2,axes=T)
 
-cols = 'lightsteelblue3'
-par(mar=c(0,0,0,0))
-plot(mendota2,lwd=2,axes=F,xlim=c(-0.09,0.14),ylim=c(-0.07,0.05),col=cols)
-plot(trout2,add=T,lwd=2,col=cols)
-plot(toolik2,add=T,lwd=2,col=cols)
-plot(harp2,add=T,lwd=2,col=cols)
-plot(lang2,add=T,lwd=2,col=cols)
-plot(annie2,add=T,lwd=2,col=cols)
-
+pdf('SOSlakeshapes.pdf',width = 6,height = 4)
+  cols = 'lightsteelblue3'
+  par(mar=c(0,0,0,0))
+  plot(mendota2,lwd=1,axes=F,xlim=c(-0.09,0.14),ylim=c(-0.07,0.05),col=cols)
+  plot(trout2,add=T,lwd=1,col=cols)
+  plot(toolik2,add=T,lwd=1,col=cols)
+  plot(harp2,add=T,lwd=1,col=cols)
+  plot(lang2,add=T,lwd=1,col=cols)
+  plot(annie2,add=T,lwd=1,col=cols)
+dev.off()
 
 

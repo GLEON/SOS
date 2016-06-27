@@ -2,6 +2,8 @@ library(maps)
 library(mapdata)
 library(mapproj)
 
+setwd("~/Documents/Rpackages/SOS/R/ResultsViz")
+
 #Members
 annie = c(27.990419, -81.607692)
 harp = c(45.378941, -79.136019)
@@ -15,7 +17,7 @@ lakes = rbind(annie,harp,mendota,toolik,trout,vanern)
 cols1 = rgb(169,16,16,200,max=255)
 cols2 = rgb(51,53,94,200,max=255)
 
-pdf(filename='SOSlakes.pdf',width=3,height=2.7)
+pdf('SOSlakes.pdf',width=6,height=4)
 par(mar = c(0,0,0,0),mgp=c(0,0,0))
 
 map('world', proj='gall',par = 0,col = 'grey90', fill = T, border = 'grey90',
@@ -30,19 +32,21 @@ points(mapproject(lakes[,2],lakes[,1]),bg=cols1,col='black', pch=21,cex=1.2)
 dev.off()
 
 
+pdf('SOSlakes2.pdf',width=6,height=4)
+par(mar = c(0,0,0,0),mgp=c(0,0,0))
 
-pdf(filename='SOSlakes.pdf',width=3,height=2.7)
-par(mar = c(0.5,0.5,0.5,0.5),mgp=c(0,0,0))
-map('world', proj='gall',par = 0,col = 'firebrick3', fill = T, border = 'firebrick3',
-    ylim = c(-55, 90),orient=c(90,0,0),resolution=0,bg='lightskyblue2')
-#map('world',projection='mollweide',col='lightblue',fill=T,border='lightblue',wrap=T,ylim=c(-50,90),orient=c(90,0,0))
-map('world',proj='gall',par = 0, interior = F,add=T,ylim = c(-55, 90),orient=c(90,0,0),
-    col='firebrick3',lwd=0.5,resolution=0)
+map('world', proj='gall',par = 0,col = 'grey90', fill = T, border = 'grey90',
+    bg = 'white',ylim = c(40, 80),orient=c(90,0,0),resolution=0,xlim=c(-140,20))
+map('world', proj='gall',par = 0,col = 'grey90', fill = T, border = 'grey90',
+    bg = 'white',orient=c(90,0,0),resolution=0,add=T)
 map('lakes',proj='gall',par = 0,add=T,border= 'grey50',fill=T,lwd=0.5,col='cadetblue3',lwd=0.3,bg='transparent',orient=c(90,0,0))
-points(mapproject(lakes[,2],lakes[,1]),bg=cols2,col='black', pch=21,cex=1.2) 
+map('world',proj='gall',par = 0, interior = F,add=T,ylim = c(-55, 90),orient=c(90,0,0),
+    col='grey70',lwd=0.5,resolution=0)
+
+#map('rivers',projection='gall',par=0,col='grey80',add=TRUE,orient=c(90,0,0))
+points(mapproject(lakes[,2],lakes[,1]),bg=cols1,col='black', pch=21,cex=1.2) 
+
 dev.off()
-
-
 
 
 
