@@ -70,11 +70,12 @@ Vanern_AM = mean(VanernNetYear$Net)
 Annie_AM = NA
 
 
-AM_df = data.frame(Lake=c('Vanern','Toolik','Trout','Mendota','Harp','Annie'),
-                   NetSunk = c(Vanern_AM,Toolik_AM,Trout_AM,Mendota_AM,Harp_AM,Annie_AM))
+AM_df = data.frame(Lake=c('Vanern','Toolik','Trout','Mendota','Harp'),
+                   NetSunk = c(Vanern_AM,Toolik_AM,Trout_AM,Mendota_AM,Harp_AM))
 
 # read in lake attribute table for reodering of rows for plotting
 laketable = read.csv('Table1_SOS_Lake_Summary.csv')
+laketable = laketable[-1,] #drop annie, which is first row
 laketable$area_rank = rank(laketable$Area..ha., na.last=T, ties.method = c('first'))
 laketable$depth_rank = rank(laketable$Mean.Depth..m., na.last = T, ties.method = c('first'))
 laketable$restime_rank = rank(laketable$Residence.Time..yrs., na.last = T, ties.method = c('first'))
@@ -99,7 +100,7 @@ layout(matrix(c(1,2,3,4,5,6),2,3)) #6 plots with 2 rows x 3 columns
 Sunk_byLakeArea = variable_df[order(variable_df$area_rank) , ]
 labels = Sunk_byLakeArea$Lake
 
-barplot(Sunk_byLakeArea$NetSunk, xlab='', ylab='OC mass (kg)', xaxt='n', ylim=c(-4e07, 1e07),
+barplot(Sunk_byLakeArea$NetSunk, xlab='', ylab='OC mass (kg)', xaxt='n', ylim=c(-3e07, 1e07),
         main='Lake Area', col='dodgerblue')
 #mtext(paste0(variable, ' avg'), side=3)
 endlabel = length(labels) * 1.2 
@@ -110,7 +111,7 @@ axis(side=1,at=c(tickedoff), labels=labels, las=2,cex.axis=1)
 Sunk_byMeanDepth = variable_df[order(variable_df$depth_rank) , ]
 labels = Sunk_byMeanDepth$Lake
 
-barplot(Sunk_byMeanDepth$NetSunk, xlab='', ylab='OC mass (kg)', xaxt='n', ylim=c(-4e07, 1e07),
+barplot(Sunk_byMeanDepth$NetSunk, xlab='', ylab='OC mass (kg)', xaxt='n', ylim=c(-3e07, 1e07),
         main='Mean Depth', col='dodgerblue')
 #mtext(paste0(variable, ' avg'), side=3)
 endlabel = length(labels) * 1.2 
@@ -121,7 +122,7 @@ axis(side=1,at=c(tickedoff), labels=labels, las=2,cex.axis=1)
 Sunk_byResTime = variable_df[order(variable_df$restime_rank) , ]
 labels = Sunk_byResTime$Lake
 
-barplot(Sunk_byResTime$NetSunk, xlab='', ylab='OC mass (kg)', xaxt='n', ylim=c(-4e07, 1e07),
+barplot(Sunk_byResTime$NetSunk, xlab='', ylab='OC mass (kg)', xaxt='n', ylim=c(-3e07, 1e07),
         main='Residence Time', col='dodgerblue')
 #mtext(paste0(variable, ' avg'), side=3)
 endlabel = length(labels) * 1.2 
@@ -132,7 +133,7 @@ axis(side=1,at=c(tickedoff), labels=labels, las=2,cex.axis=1)
 Sunk_byTP = variable_df[order(variable_df$TP_rank) , ]
 labels = Sunk_byTP$Lake
 
-barplot(Sunk_byTP$NetSunk, xlab='', ylab='OC mass (kg)', xaxt='n', ylim=c(-4e07, 1e07),
+barplot(Sunk_byTP$NetSunk, xlab='', ylab='OC mass (kg)', xaxt='n', ylim=c(-3e07, 1e07),
         main='TP', col='dodgerblue')
 #mtext(paste0(variable, ' avg'), side=3)
 endlabel = length(labels) * 1.2 
@@ -143,7 +144,7 @@ axis(side=1,at=c(tickedoff), labels=labels, las=2,cex.axis=1)
 Sunk_byVolume = variable_df[order(variable_df$volume_rank) , ]
 labels = Sunk_byVolume$Lake
 
-barplot(Sunk_byVolume$NetSunk, xlab='', ylab='OC mass (kg)', xaxt='n', ylim=c(-4e07, 1e07),
+barplot(Sunk_byVolume$NetSunk, xlab='', ylab='OC mass (kg)', xaxt='n', ylim=c(-3e07, 1e07),
         main='Volume', col='dodgerblue')
 #mtext(paste0(variable, ' avg'), side=3)
 endlabel = length(labels) * 1.2 
@@ -154,7 +155,7 @@ axis(side=1,at=c(tickedoff), labels=labels, las=2,cex.axis=1)
 Sunk_byDOC = variable_df[order(variable_df$DOC_rank) , ]
 labels = Sunk_byDOC$Lake
 
-barplot(Sunk_byDOC$NetSunk, xlab='', ylab='OC mass (kg)', xaxt='n', ylim=c(-4e07, 1e07),
+barplot(Sunk_byDOC$NetSunk, xlab='', ylab='OC mass (kg)', xaxt='n', ylim=c(-3e07, 1e07),
         main='DOC', col='dodgerblue')
 #mtext(paste0(variable, ' avg'), side=3)
 endlabel = length(labels) * 1.2 
@@ -166,7 +167,7 @@ axis(side=1,at=c(tickedoff), labels=labels, las=2,cex.axis=1)
 Sunk_bySecchi = variable_df[order(variable_df$Secchi_rank) , ]
 labels = Sunk_bySecchi$Lake
 
-barplot(Sunk_bySecchi$NetSunk, xlab='', ylab='OC mass (kg)', xaxt='n', ylim=c(-4e07, 1e07),
+barplot(Sunk_bySecchi$NetSunk, xlab='', ylab='OC mass (kg)', xaxt='n', ylim=c(-3e07, 1e07),
         main='Secchi', col='dodgerblue')
 #mtext(paste0(variable, ' avg'), side=3)
 endlabel = length(labels) * 1.2 

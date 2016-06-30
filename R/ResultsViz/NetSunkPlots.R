@@ -78,10 +78,9 @@ min_df = cbind.data.frame(min_harp, min_mendota, min_toolik, min_trout)
 max_df = cbind.data.frame(max_harp, max_mendota, max_toolik, max_trout)
 
 # IF want same y axes for all plots
+# Poster Fig 1
 ylim = c(min(min_df), max(max_df)) # Vanern is such an outlier that this doesn't quite work
-
-# If want unique y axes for all plots
-#ylim=NULL
+#ylim=NULL # If want unique y axes for all plots
 
 # plots
 layout(matrix(c(1,2,3,4,5,6),2,3)) #6 plots with 2 rows x 3 columns
@@ -149,6 +148,7 @@ HarpNetYear = aggregate(Net ~ Year, Harp_SOS, mean)
 #AnnieNetYear = aggregate(Net ~ Year, Annie_SOS, mean)
 
 #### Plot monthly Net Sunk ####
+## POSTER FIG 2
 #par(mfrow=c(1,1)) 
 layout(matrix(c(1,2,3,4,5,6),2,3))
 months = c('Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec')
