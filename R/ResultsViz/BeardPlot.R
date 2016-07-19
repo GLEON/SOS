@@ -65,22 +65,31 @@ Harp = clean_shave('Harp')
 par(mfrow=c(2,3))
 ylab = 'Respiration/Sedimentation'
 xlab = 'log(Allochthonous/Autochthonous Ratio)'
-xlim = c(-8,8)
-ylim = c(-8,8)
+xlim = c(-4,4)
+ylim = c(0,10)
 
-plot(RS ~ logAA, Vanern, xlab = xlab, ylab = ylab, main='Vanern', pch=19)
+cols = rainbow(12)[month(Vanern$Date)]
+plot(RS ~ logAA, Vanern, xlab = xlab, ylab = ylab, main='Vanern', pch=19, col=cols,xlim=xlim,ylim=ylim)
 mtext(side=3, paste0('n=',nrow(Vanern)), cex=0.75)
 abline(h=1,v=0,lty=2,col='red4',lwd=1.5)
-plot(RS ~ logAA, Toolik, xlab = xlab, ylab = ylab, main='Toolik', pch=19)
+
+cols = rainbow(12)[month(Toolik$Date)]
+plot(RS ~ logAA, Toolik, xlab = xlab, ylab = ylab, main='Toolik', pch=19, col= cols,xlim=xlim,ylim=ylim)
 mtext(side=3, paste0('n=',nrow(Toolik)), cex=0.75)
 abline(h=1,v=0,lty=2,col='red4',lwd=1.5)
-plot(RS ~ logAA, Trout, xlab = xlab, ylab = ylab, main='Trout', pch=19)
+
+cols = rainbow(12)[month(Trout$Date)]
+plot(RS ~ logAA, Trout, xlab = xlab, ylab = ylab, main='Trout', pch=19, col= cols,xlim=xlim,ylim=ylim)
 mtext(side=3, paste0('n=',nrow(Trout)), cex=0.75)
 abline(h=1,v=0,lty=2,col='red4',lwd=1.5)
-plot(RS ~ logAA, Mendota, xlab = xlab, ylab = ylab, main='Mendota', pch=19)
+
+cols = rainbow(12)[month(Mendota$Date)]
+plot(RS ~ logAA, Mendota, xlab = xlab, ylab = ylab, main='Mendota', pch=19, col= cols,xlim=xlim,ylim=ylim)
 mtext(side=3, paste0('n=',nrow(Mendota)), cex=0.75)
 abline(h=1,v=0,lty=2,col='red4',lwd=1.5)
-plot(RS ~ logAA, Harp, xlab = xlab, ylab = ylab, main='Harp', pch=19)
+
+cols = rainbow(12)[month(Harp$Date)]
+plot(RS ~ logAA, Harp, xlab = xlab, ylab = ylab, main='Harp', pch=19, col= cols,xlim=xlim,ylim=ylim)
 mtext(side=3, paste0('n=',nrow(Harp)), cex=0.75)
 abline(h=1,v=0,lty=2,col='red4',lwd=1.5)
 #plot(RS ~ logAA, Annie, xlab = xlab, ylab = ylab, xlim=xlim, ylim=ylim, main='Annie')
