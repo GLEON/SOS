@@ -32,10 +32,10 @@ clean_shave = function(lakename) {
   
   # Calculate respiration-sedimentation and autochthonous/allochthonous ratio
   # and natural log transform them
-  lake_df$RS = lake_df$Resp - lake_df$Sed
-  lake_df$logRS = log(lake_df$RS)
-  lake_df$AA = lake_df$Autoch/lake_df$Alloch
-  lake_df$logAA = log(lake_df$AA)
+  lake_df$RS = lake_df$Resp / lake_df$Sed
+  lake_df$logRS = log10(lake_df$RS)
+  lake_df$AA = lake_df$Alloch/lake_df$Autoch
+  lake_df$logAA = log10(lake_df$AA)
   
   # get rid of NAs produced by log transformation
   # KF: I am #-ing this command for now; NaNs will automatically be removed when we plot, 
@@ -63,20 +63,25 @@ Harp = clean_shave('Harp')
 
 # plot
 par(mfrow=c(2,3))
-ylab = 'ln(Respiration - Sedimentation)'
-xlab = 'ln(Autochthonous/Allochthonous Ratio)'
+ylab = 'Respiration/Sedimentation'
+xlab = 'log(Allochthonous/Autochthonous Ratio)'
 xlim = c(-8,8)
 ylim = c(-8,8)
 
-plot(logRS ~ logAA, Vanern, xlab = xlab, ylab = ylab, xlim=xlim, ylim=ylim, main='Vanern')
+plot(RS ~ logAA, Vanern, xlab = xlab, ylab = ylab, main='Vanern', pch=19)
 mtext(side=3, paste0('n=',nrow(Vanern)), cex=0.75)
-plot(logRS ~ logAA, Toolik, xlab = xlab, ylab = ylab, xlim=xlim, ylim=ylim, main='Toolik')
+abline(h=1,v=0,lty=2,col='red4',lwd=1.5)
+plot(RS ~ logAA, Toolik, xlab = xlab, ylab = ylab, main='Toolik', pch=19)
 mtext(side=3, paste0('n=',nrow(Toolik)), cex=0.75)
-plot(logRS ~ logAA, Trout, xlab = xlab, ylab = ylab, xlim=xlim, ylim=ylim, main='Trout')
+abline(h=1,v=0,lty=2,col='red4',lwd=1.5)
+plot(RS ~ logAA, Trout, xlab = xlab, ylab = ylab, main='Trout', pch=19)
 mtext(side=3, paste0('n=',nrow(Trout)), cex=0.75)
-plot(logRS ~ logAA, Mendota, xlab = xlab, ylab = ylab, xlim=xlim, ylim=ylim, main='Mendota')
+abline(h=1,v=0,lty=2,col='red4',lwd=1.5)
+plot(RS ~ logAA, Mendota, xlab = xlab, ylab = ylab, main='Mendota', pch=19)
 mtext(side=3, paste0('n=',nrow(Mendota)), cex=0.75)
-plot(logRS ~ logAA, Harp, xlab = xlab, ylab = ylab, xlim=xlim, ylim=ylim, main='Harp')
+abline(h=1,v=0,lty=2,col='red4',lwd=1.5)
+plot(RS ~ logAA, Harp, xlab = xlab, ylab = ylab, main='Harp', pch=19)
 mtext(side=3, paste0('n=',nrow(Harp)), cex=0.75)
+abline(h=1,v=0,lty=2,col='red4',lwd=1.5)
 #plot(RS ~ logAA, Annie, xlab = xlab, ylab = ylab, xlim=xlim, ylim=ylim, main='Annie')
 #mtext(side=3, paste0('n=',nrow(Annie)), cex=0.75)

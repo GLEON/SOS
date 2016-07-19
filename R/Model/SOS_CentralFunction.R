@@ -4,7 +4,7 @@
 #Configuration file should contain parameters generated from calibration routine "SOS_CentralFunction_optim4.R"
 
 #User input lake name
-LakeName = 'Vanern'
+LakeName = 'Harp'
 
 ##### INPUT FILE NAMES ################
 TimeSeriesFile <- paste('./',LakeName,'Lake/',LakeName,'TS.csv',sep='')
@@ -151,6 +151,11 @@ for (i in 1:(steps)){
     if (DOC_df$DOC_conc_gm3[i+1]<=0){stop("Negative DOC concentration!")}
   }
 }
+
+deltaPOC = tail(POC_df$POC_conc_gm3,1) - POC_df$POC_conc_gm3[1]
+deltaDOC = tail(DOC_df$DOC_conc_gm3,1) - DOC_df$DOC_conc_gm3[1]
+-deltaPOC + sum((NPPdata$POC_mass + SWGWData$POC_massIn_g - SWGWData$POC_outflow - SedData$POC_sedOut - LeachData$POC_leachOut)/LakeVolume)
+-deltaDOC + sum((NPPdata$DOC_mass + SWGWData$DOC_massIn_g + LeachData$DOC_leachIn - SWGWData$DOC_outflow - NPPdata$DOC_resp_mass)/LakeVolume) #g/m3
 
 #Store POC and DOC fluxes as mass/area/time (g/m2/yr)
 POC_df$NPPin_gm2y <-  NPPdata$POC_mass/LakeArea/(TimeStep/365)

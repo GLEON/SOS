@@ -51,54 +51,54 @@ area = ParameterFile[ParameterFile$Parameter == 'LakeArea',]$Value
 # #   plotDates = seq(OutputTimeSeries[1],tail(OutputTimeSeries,1), by="year")
 # #   axis.Date(1,at=plotDates,labels=format(plotDates,"%m/%y"),las=1,cex.axis = 0.8)
 
-
-######## Stacked histrogram of DOC fluxes in and out of the system ######## 
-png(paste0('R/ResultsViz/Figures/DOCfates_',LakeName,'.png'),width = 7,height = 5,units = 'in',res=300)
-par(mar=c(3,3,2,3),mgp=c(1.5,0.5,0),tck=-0.02,cex=0.8)
-# Fluxes in
-plot(DOC_df$Date,DOC_df$FlowIn_gm2y+DOC_df$NPPin_gm2y+DOC_df$leachIn_gm2y,type='h',col='goldenrod',
-     ylim=c(-150,150),ylab='DOC flux (gm2/y)',xlab='',main=LakeName) # Leaching 
-lines(DOC_df$Date,DOC_df$FlowIn_gm2y+DOC_df$NPPin_gm2y,type='h',col='darkblue') # FLow
-lines(DOC_df$Date,DOC_df$NPPin_gm2y,type='h',col='cyan4') # NPP
-# Fluxes out 
-lines(DOC_df$Date,-DOC_df$FlowOut_gm2y-DOC_df$respOut_gm2y,type='h',col='green4') # Flow
-lines(DOC_df$Date,-DOC_df$respOut_gm2y,type='h',col='red4') # Respiration
-
-par(new=T) # Plot DOC concentration on separate yaxis 
-plot(DOC_df$Date,DOC_df$DOC_conc_gm3,type='l',yaxt='n',ylab='',xlab='',lwd=1.5)
-axis(side = 4)
-mtext('DOC concentration (g/m3)',side = 4,line = 1.5,cex=0.8)
-
-legend('topleft',legend = c('Leaching In','Flow In','NPP','Respiration','Flow Out','DOC Conc'),
-       col = c('goldenrod','darkblue','cyan4','red4','green4','black'),pch=c(15,15,15,15,15,NA),
-       lty=c(0,0,0,0,0,1),lwd=2,ncol=2,cex=1,pt.cex=2,seg.len=1,
-       inset=0.01)
-dev.off()
-############################################################################
-
-
-# ######## Stacked histrogram of POC fluxes in and out of the system ######## 
-png(paste0('R/ResultsViz/Figures/POCfates_',LakeName,'.png'),width = 7,height = 5,units = 'in',res=300)
-par(mar=c(3,3,2,3),mgp=c(1.5,0.5,0),tck=-0.02,cex=0.8)
-# Fluxes in
-plot(POC_df$Date,POC_df$FlowIn_gm2y+POC_df$NPPin_gm2y,type='h',col='darkblue',
-     ylim=c(-60,60),ylab='POC flux (gm2/y)',xlab='',main=LakeName) # Flow 
-lines(POC_df$Date,POC_df$NPPin_gm2y,type='h',col='cyan4') # NPP IN
-# Fluxes out 
-lines(POC_df$Date,-POC_df$FlowOut_gm2y-POC_df$sedOut_gm2y-POC_df$leachOut_gm2y,type='h',col='goldenrod') # Leach
-lines(POC_df$Date,-POC_df$FlowOut_gm2y-POC_df$sedOut_gm2y,type='h',col='brown') # Sedimentation
-lines(POC_df$Date,-POC_df$FlowOut_gm2y,type='h',col='green4') # Flow Out
-
-par(new=T) # Plot POC concentration on separate yaxis 
-plot(POC_df$Date,POC_df$POC_conc_gm3,type='l',ylim=c(-0.7,0.25),yaxt='n',xaxt='n',ylab='',xlab='',lwd=1.5)
-axis(side = 4)
-mtext('POC concentration (g/m3)',side = 4,line = 1.5,cex=0.8)
-
-legend('topleft',legend = c('Flow In','NPP In','Leaching Out','Sedimentation','Flow Out','POC Conc'),
-       col = c('darkblue','cyan4','goldenrod','brown','green4','black'),pch=c(15,15,15,15,15,NA),
-       lty=c(0,0,0,0,0,1),lwd=2,ncol=2,cex=1,pt.cex=2,seg.len=1,
-       inset=0.01)
-dev.off()
+# 
+# ######## Stacked histrogram of DOC fluxes in and out of the system ######## 
+# png(paste0('R/ResultsViz/Figures/DOCfates_',LakeName,'.png'),width = 7,height = 5,units = 'in',res=300)
+# par(mar=c(3,3,2,3),mgp=c(1.5,0.5,0),tck=-0.02,cex=0.8)
+# # Fluxes in
+# plot(DOC_df$Date,DOC_df$FlowIn_gm2y+DOC_df$NPPin_gm2y+DOC_df$leachIn_gm2y,type='h',col='goldenrod',
+#      ylim=c(-150,150),ylab='DOC flux (gm2/y)',xlab='',main=LakeName) # Leaching 
+# lines(DOC_df$Date,DOC_df$FlowIn_gm2y+DOC_df$NPPin_gm2y,type='h',col='darkblue') # FLow
+# lines(DOC_df$Date,DOC_df$NPPin_gm2y,type='h',col='cyan4') # NPP
+# # Fluxes out 
+# lines(DOC_df$Date,-DOC_df$FlowOut_gm2y-DOC_df$respOut_gm2y,type='h',col='green4') # Flow
+# lines(DOC_df$Date,-DOC_df$respOut_gm2y,type='h',col='red4') # Respiration
+# 
+# par(new=T) # Plot DOC concentration on separate yaxis 
+# plot(DOC_df$Date,DOC_df$DOC_conc_gm3,type='l',yaxt='n',ylab='',xlab='',lwd=1.5)
+# axis(side = 4)
+# mtext('DOC concentration (g/m3)',side = 4,line = 1.5,cex=0.8)
+# 
+# legend('topleft',legend = c('Leaching In','Flow In','NPP','Respiration','Flow Out','DOC Conc'),
+#        col = c('goldenrod','darkblue','cyan4','red4','green4','black'),pch=c(15,15,15,15,15,NA),
+#        lty=c(0,0,0,0,0,1),lwd=2,ncol=2,cex=1,pt.cex=2,seg.len=1,
+#        inset=0.01)
+# dev.off()
+# ############################################################################
+# 
+# 
+# # ######## Stacked histrogram of POC fluxes in and out of the system ######## 
+# png(paste0('R/ResultsViz/Figures/POCfates_',LakeName,'.png'),width = 7,height = 5,units = 'in',res=300)
+# par(mar=c(3,3,2,3),mgp=c(1.5,0.5,0),tck=-0.02,cex=0.8)
+# # Fluxes in
+# plot(POC_df$Date,POC_df$FlowIn_gm2y+POC_df$NPPin_gm2y,type='h',col='darkblue',
+#      ylim=c(-60,60),ylab='POC flux (gm2/y)',xlab='',main=LakeName) # Flow 
+# lines(POC_df$Date,POC_df$NPPin_gm2y,type='h',col='cyan4') # NPP IN
+# # Fluxes out 
+# lines(POC_df$Date,-POC_df$FlowOut_gm2y-POC_df$sedOut_gm2y-POC_df$leachOut_gm2y,type='h',col='goldenrod') # Leach
+# lines(POC_df$Date,-POC_df$FlowOut_gm2y-POC_df$sedOut_gm2y,type='h',col='brown') # Sedimentation
+# lines(POC_df$Date,-POC_df$FlowOut_gm2y,type='h',col='green4') # Flow Out
+# 
+# par(new=T) # Plot POC concentration on separate yaxis 
+# plot(POC_df$Date,POC_df$POC_conc_gm3,type='l',ylim=c(-0.7,0.25),yaxt='n',xaxt='n',ylab='',xlab='',lwd=1.5)
+# axis(side = 4)
+# mtext('POC concentration (g/m3)',side = 4,line = 1.5,cex=0.8)
+# 
+# legend('topleft',legend = c('Flow In','NPP In','Leaching Out','Sedimentation','Flow Out','POC Conc'),
+#        col = c('darkblue','cyan4','goldenrod','brown','green4','black'),pch=c(15,15,15,15,15,NA),
+#        lty=c(0,0,0,0,0,1),lwd=2,ncol=2,cex=1,pt.cex=2,seg.len=1,
+#        inset=0.01)
+# dev.off()
 ############################################################################
 
 # ######## Stacked histrogram of OC fluxes in and out of the system ######## 
@@ -108,14 +108,12 @@ par(mar=c(3,3,2,3),mgp=c(1.5,0.5,0),tck=-0.02,cex=0.8)
 # Fluxes in
 ocInflow = POC_df$FlowIn_gm2y + DOC_df$FlowIn_gm2y
 ocNPP = POC_df$NPPin_gm2y + DOC_df$NPPin_gm2y
-ocGW = DOC_df$leachIn_gm2y
 
-plot(POC_df$Date,ocInflow + ocNPP + ocGW,col='darkblue',type='l',
+plot(POC_df$Date,ocInflow + ocNPP,col='darkblue',type='l',
      ylim=c(-150,150),ylab='OC flux (gm2/y)',xlab='',main=LakeName) # Inflow 
 # Flow 
-lines(POC_df$Date,ocInflow + ocNPP + ocGW,col='darkblue',type='h') #inflow
-lines(POC_df$Date,ocNPP + ocGW,type='h',col='cyan4') # NPP in
-lines(POC_df$Date,ocGW,type='h',col='goldenrod') # GW IN
+lines(POC_df$Date,ocInflow + ocNPP,col='darkblue',type='h') #inflow
+lines(POC_df$Date,ocNPP,type='h',col='cyan4') # NPP in
 
 # Fluxes out 
 ocOutflow = -POC_df$FlowOut_gm2y -DOC_df$FlowOut_gm2y
@@ -132,9 +130,9 @@ plot(DOC_df$Date,DOC_df$DOC_conc_gm3+POC_df$POC_conc_gm3,type='l',yaxt='n',ylab=
 axis(side = 4)
 mtext('OC concentration (g/m3)',side = 4,line = 1.5,cex=0.8)
 
-legend('topleft',legend = c('Inflow','NPP','GW In','Flow Out','Sed','Respiration','DOC Conc'),
-       col = c('darkblue','cyan4','goldenrod','green4','brown','grey50','black'),pch=c(15,15,15,15,15,15,NA),
-       lty=c(0,0,0,0,0,0,1),lwd=2,ncol=2,cex=1,pt.cex=2,seg.len=1,
+legend('topleft',legend = c('Inflow','NPP','Flow Out','Sed','Respiration','DOC Conc'),
+       col = c('darkblue','cyan4','goldenrod','brown','grey50','black'),pch=c(15,15,15,15,15,NA),
+       lty=c(0,0,0,0,0,1),lwd=2,ncol=2,cex=1,pt.cex=2,seg.len=1,
        inset=0.01)
 dev.off()
 
@@ -144,5 +142,5 @@ ocLake = (DOC_df$DOC_conc_gm3+POC_df$POC_conc_gm3) * volume/area
 ocDelta = tail(ocLake,1) - ocLake[1]
 
 # Fluxes out of the lake are already negative 
-sum(ocInflow + ocNPP + ocGW + ocOutflow + ocResp + ocSed + ocLeachOut) - ocDelta
+sum(ocInflow + ocNPP +  ocOutflow + ocResp + ocSed )/365 - ocDelta
 
