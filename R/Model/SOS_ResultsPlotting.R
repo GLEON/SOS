@@ -1,7 +1,7 @@
 #Read in results data from SOS_CentralFunction.R and visualize output. 
 
 #User input lake name
-LakeName = 'Vanern'
+LakeName = 'Mendota'
 
 #Read in results data from SOS Carbon Flux Model
 DOC_results_filename = paste('./',LakeName,'Lake/','Results/',LakeName,'_DOC_Results.csv',sep='')

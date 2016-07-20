@@ -1,6 +1,6 @@
 #CarbonFluxModel <- function(LakeName,PlotFlag,ValidationFlag){
 #Flags 1 for yes, else no.
-LakeName = 'Trout'
+LakeName = 'Mendota'
 OptimizationFlag = 1
 PlotFlag = 0
 ValidationFlag = 1
@@ -138,7 +138,7 @@ if (OptimizationFlag==1){
                                       Measured = ValidationDataDO[obsIndx,]$Flux, Modelled = modeled[modIndx,]$MetabOxygen)
     
     #resDO = scale(CalibrationOutputDO$Measured - CalibrationOutputDO$Modelled,center = F)
-    DOScale = 10
+    DOScale = 1
     resDO = (CalibrationOutputDO$Measured - CalibrationOutputDO$Modelled) * DOScale
     sedScale = 0.001
     resSedData = (mean(modeled$SedData_MAR,na.rm = T) - ValidationDataMAROC) * sedScale #not scaled because it is 1 value
@@ -168,7 +168,7 @@ if (OptimizationFlag==1){
   NLL <- optimOut$value #value of nll
   
   BurialFactor <- optimOut$par[1] #
-  RespParam <- optimOut$par[2]
+  RespParam <- sqrt(optimOut$par[2])
   R_auto <- optimOut$par[3]
 }
 
@@ -326,41 +326,11 @@ if (ValidationFlag==1){
 ################## PLOTTING ###########################################################
 
 if (PlotFlag==1){
-  #Plot POC and DOC fluxes in standardized units (g/m2/yr)
-  ylabelPOC <- c("NPP POC In (g/m2/yr)","Flow POC In (g/m2/yr)","Flow POC Out (g/m2/yr)","Sed POC Out (g/m2/yr)")
-  ylabelDOC <- c("NPP DOC In (g/m2/yr)","Flow DOC In (g/m2/yr)","Flow  DOC Out (g/m2/yr)","Respiration DOC Out (g/m2/yr)","Leach In (g/m2/yr)")
-  
-  par(mfrow=c(2,2),mar=c(2.5,3,1,1),mgp=c(1.5,0.3,0),tck=-0.02)
-  for (n in 1:4){
-    plot(OutputTimeSeries,POC_df[,n+2],xlab='Date',ylab=ylabelPOC[n],type='l')
-  }
-  
-  par(mfrow=c(3,2),mar=c(2.5,3,1,1),mgp=c(1.5,0.3,0),tck=-0.02)
-  for (n in 1:5){
-    plot(OutputTimeSeries,DOC_df[,n+2],xlab='Date',ylab=ylabelDOC[n],type='l')
-  }
-  
   #POC and DOC concentration in time (g/m3)
-  par(mfrow=c(2,1),mar=c(2.5,3,1,1),mgp=c(1.5,0.3,0),tck=-0.02,cex=0.8)
-  plot(OutputTimeSeries,POC_df$POC_conc_gm3,xlab='Date',ylab="POC Conc (g/m3)",type="l")
-  # Better axes tick marks 
-  #   plotDates = seq(OutputTimeSeries[1],tail(OutputTimeSeries,1), by="year")
-  #   axis.Date(1,at=plotDates,labels=format(plotDates,"%m/%y"),las=1,cex.axis = 0.8)
+  par(mar=c(2.5,3,1,1),mgp=c(1.5,0.3,0),tck=-0.02,cex=0.8)
   plot(OutputTimeSeries,DOC_df$DOC_conc_gm3,xlab='Date',ylab="DOC Conc (g/m3)",type="l")
-  
-  #Plot cumulative fates
-  par(mfrow=c(2,2),mar=c(2.5,3,1,1),mgp=c(1.5,0.3,0),tck=-0.02,cex=0.8)
-  plot(OutputTimeSeries,POC_df$POC_flowOut_gm2y,xlab='Date',ylab="Cumulative POC Outflow (g)",type='l')
-  plot(OutputTimeSeries,POC_df$POC_sedOut_gm2y,xlab='Date',ylab="Cumulative POC Sed Burial (g)",type='l')
-  plot(OutputTimeSeries,DOC_df$DOC_flowOut_gm2y,xlab='Date',ylab="Cumulative DOC Outflow (g)",type='l')
-  plot(OutputTimeSeries,DOC_df$DOC_respOut_gm2y,xlab='Date',ylab="Cumulative DOC Respired (g)",type='l')
-  
-  #Plot net SOS
-  par(mfrow=c(1,1),mar=c(3,3,2,1),mgp=c(1.5,0.3,0),tck=-0.01,cex=0.8)
-  plot(OutputTimeSeries,SOS$Net/1000,xlab='date/time',ylab='OC mass (kg/d)',
-       main='Net OC Mass Sunk per Day',type='l')
-  #   plotDates = seq(OutputTimeSeries[1],tail(OutputTimeSeries,1), by="year")
-  #   axis.Date(1,at=plotDates,labels=format(plotDates,"%m/%y"),las=1,cex.axis = 0.8)
+  lines(ValidationDataDOC$datetime,ValidationDataDOC$DOC,col='red3')
+
 }
 
-#}  
+
