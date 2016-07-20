@@ -4,7 +4,7 @@
 #Configuration file should contain parameters generated from calibration routine "SOS_CentralFunction_optim4.R"
 
 #User input lake name
-LakeName = 'Trout'
+LakeName = 'Mendota'
 
 ##### INPUT FILE NAMES ################
 TimeSeriesFile <- paste('./',LakeName,'Lake/',LakeName,'TS.csv',sep='')

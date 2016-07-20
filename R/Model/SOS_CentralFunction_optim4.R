@@ -1,6 +1,6 @@
 #CarbonFluxModel <- function(LakeName,PlotFlag,ValidationFlag){
 #Flags 1 for yes, else no.
-LakeName = 'Mendota'
+LakeName = 'Langtjern'
 OptimizationFlag = 1
 PlotFlag = 0
 ValidationFlag = 1
@@ -138,7 +138,7 @@ if (OptimizationFlag==1){
                                       Measured = ValidationDataDO[obsIndx,]$Flux, Modelled = modeled[modIndx,]$MetabOxygen)
     
     #resDO = scale(CalibrationOutputDO$Measured - CalibrationOutputDO$Modelled,center = F)
-    DOScale = 1
+    DOScale = 10
     resDO = (CalibrationOutputDO$Measured - CalibrationOutputDO$Modelled) * DOScale
     sedScale = 0.001
     resSedData = (mean(modeled$SedData_MAR,na.rm = T) - ValidationDataMAROC) * sedScale #not scaled because it is 1 value
@@ -168,7 +168,7 @@ if (OptimizationFlag==1){
   NLL <- optimOut$value #value of nll
   
   BurialFactor <- optimOut$par[1] #
-  RespParam <- sqrt(optimOut$par[2])
+  RespParam <- optimOut$par[2]^2
   R_auto <- optimOut$par[3]
 }
 
