@@ -19,8 +19,8 @@ DOC_sw		0	g/m3
 DOC_precip	2	g/m3
 #Min/Resp Parameters		
 DOC_miner_const	0.003	1/days
-RespParam	0.00024	unitless
+RespParam	0.0001	unitless
 POC_lc	0.01	1/days
-R_auto	0.8	unitless
+R_auto	0.82	unitless
 #Sediment		
 ObservedMAR_oc	249	g/m2/yr
