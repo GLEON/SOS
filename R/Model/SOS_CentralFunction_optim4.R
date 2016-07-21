@@ -138,7 +138,7 @@ if (OptimizationFlag==1){
                                       Measured = ValidationDataDO[obsIndx,]$Flux, Modelled = modeled[modIndx,]$MetabOxygen)
     
     #resDO = scale(CalibrationOutputDO$Measured - CalibrationOutputDO$Modelled,center = F)
-    DOScale = 2
+    DOScale = 5
     resDO = (CalibrationOutputDO$Measured - CalibrationOutputDO$Modelled) * DOScale
     sedScale = 0.001
     resSedData = (mean(modeled$SedData_MAR,na.rm = T) - ValidationDataMAROC) * sedScale #not scaled because it is 1 value

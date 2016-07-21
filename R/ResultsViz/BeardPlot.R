@@ -111,14 +111,16 @@ plotEllipse <- function(lakedata) {
 ylab = 'Respiration/Sedimentation'
 xlab = 'log(Alloch/Autoch)'
 cols = add.alpha(rainbow(12),0.6)
-plot(c(-4,3), c(0,6), type="n", main=deparse(substitute(lakedata)),
-     ylab = ylab, xlab = xlab)
 
 eData <- lakedata %>% mutate(quarter = quarter(Date), month = month(Date)) %>%
   group_by(month) %>%
-  dplyr::summarise(meanRS = mean(RS),sdRS = sd(RS),meanlogAA = mean(logAA),
+  dplyr::summarise(medRS = median(RS),sdRS = sd(RS),medlogAA = median(logAA),
                    sdlogAA = sd(logAA))
-draw.ellipse(eData$meanlogAA,eData$meanRS, 1*eData$sdlogAA, 1*eData$sdRS,col=cols)
+
+plot(c(-4,3), c(0,6), type="n", main=deparse(substitute(lakedata)),
+     ylab = ylab, xlab = xlab)
+
+draw.ellipse(eData$medlogAA,eData$medRS, 1*eData$sdlogAA, 1*eData$sdRS,col=cols)
 abline(h=1,v=0,lty=2,col='red4',lwd=1.5)
 }
 
