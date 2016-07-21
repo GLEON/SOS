@@ -1,7 +1,6 @@
 modelDOC <- function (BurialFactor_init,RespParam_init,R_auto_init) {
   
   for (i in 1:(steps)){
-    RespParam_init = RespParam_init^2
     #Prevent negative parameter guesses from blowing model up
     # if (BurialFactor_init<=0){BurialFactor_init<-10^-5}
     # if (RespParam_init<=0){RespParam_init<-10^-5}

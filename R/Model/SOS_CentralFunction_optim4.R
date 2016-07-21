@@ -1,7 +1,7 @@
 #CarbonFluxModel <- function(LakeName,PlotFlag,ValidationFlag){
 #Flags 1 for yes, else no.
-LakeName = 'Langtjern'
-OptimizationFlag = 1
+LakeName = 'Toolik'
+OptimizationFlag = 0
 PlotFlag = 0
 ValidationFlag = 1
 
@@ -92,34 +92,34 @@ POC_df$POC_conc_gm3[1] <- POC_init # #Initialize POC concentration as baseline a
 DOC_df$DOC_conc_gm3[1] <- DOC_init #Initialize DOC concentration g/m3
 
 ####################### Validation Output Setup ######################################
-if (OptimizationFlag==1){
-  #DOC Validation Output Setup
-  ValidationDataDOC <- read.csv(ValidationFileDOC,header=T)
-  ValidationDataDOC$datetime <- as.Date(as.POSIXct(strptime(ValidationDataDOC$datetime,"%m/%d/%Y %H:%M"),tz="GMT")) #Convert time to POSIX
-  ValidationDataDOC = ValidationDataDOC[complete.cases(ValidationDataDOC),]
-  outlier.limit = (mean(ValidationDataDOC$DOC) + 3*(sd(ValidationDataDOC$DOC))) # Calculate mean + 3 SD of DOC column
-  ValidationDataDOC = ValidationDataDOC[ValidationDataDOC$DOC <= outlier.limit,] # Remove rows where DOC > outlier.limit
-  ValidationDataDOC = ddply(ValidationDataDOC,'datetime',summarize,DOC=mean(DOC))
-  
-  #DO Validation Output Setup
-  ValidationDataDO <- read.csv(ValidationFileDO,header=T)
-  ValidationDataDO$datetime <- as.Date(as.POSIXct(strptime(ValidationDataDO$datetime,"%m/%d/%Y %H:%M"),tz="GMT")) #Convert time to POSIX
-  ValidationDataDO = ValidationDataDO[complete.cases(ValidationDataDO),]
-  #Only compare to DO data during "production season."
-  ValidationDataDO = ValidationDataDO[yday(ValidationDataDO$datetime)>ProdStartDay & yday(ValidationDataDO$datetime)<ProdEndDay,]
-  #ValidationDataDO = ValidationDataDO[ValidationDataDO$wtr >= 10,]
-  
-  k <- 0.5 #m/d
-  PhoticDepth <- data.frame(datetime = InputData$datetime,PhoticDepth = log(100)/(1.7/InputData$Secchi))
-  IndxVal = ValidationDataDO$datetime %in% as.Date(PhoticDepth$datetime)
-  IndxPhotic = as.Date(PhoticDepth$datetime) %in% ValidationDataDO$datetime
-  
-  ValidationDataDO = ValidationDataDO[IndxVal,]
-  DO_sat <- o2.at.sat(ValidationDataDO[,1:2])  
-  ValidationDataDO$Flux <- k*(ValidationDataDO$DO_con-DO_sat$do.sat)/PhoticDepth$PhoticDepth[IndxPhotic]
-  #SedData MAR OC 
-  ValidationDataMAROC <- ObservedMAR_oc #g/m2
-}
+
+#DOC Validation Output Setup
+ValidationDataDOC <- read.csv(ValidationFileDOC,header=T)
+ValidationDataDOC$datetime <- as.Date(as.POSIXct(strptime(ValidationDataDOC$datetime,"%m/%d/%Y %H:%M"),tz="GMT")) #Convert time to POSIX
+ValidationDataDOC = ValidationDataDOC[complete.cases(ValidationDataDOC),]
+outlier.limit = (mean(ValidationDataDOC$DOC) + 3*(sd(ValidationDataDOC$DOC))) # Calculate mean + 3 SD of DOC column
+ValidationDataDOC = ValidationDataDOC[ValidationDataDOC$DOC <= outlier.limit,] # Remove rows where DOC > outlier.limit
+ValidationDataDOC = ddply(ValidationDataDOC,'datetime',summarize,DOC=mean(DOC))
+
+#DO Validation Output Setup
+ValidationDataDO <- read.csv(ValidationFileDO,header=T)
+ValidationDataDO$datetime <- as.Date(as.POSIXct(strptime(ValidationDataDO$datetime,"%m/%d/%Y %H:%M"),tz="GMT")) #Convert time to POSIX
+ValidationDataDO = ValidationDataDO[complete.cases(ValidationDataDO),]
+#Only compare to DO data during "production season."
+ValidationDataDO = ValidationDataDO[yday(ValidationDataDO$datetime)>ProdStartDay & yday(ValidationDataDO$datetime)<ProdEndDay,]
+#ValidationDataDO = ValidationDataDO[ValidationDataDO$wtr >= 10,]
+
+k <- 0.5 #m/d
+PhoticDepth <- data.frame(datetime = InputData$datetime,PhoticDepth = log(100)/(1.7/InputData$Secchi))
+IndxVal = ValidationDataDO$datetime %in% as.Date(PhoticDepth$datetime)
+IndxPhotic = as.Date(PhoticDepth$datetime) %in% ValidationDataDO$datetime
+
+ValidationDataDO = ValidationDataDO[IndxVal,]
+DO_sat <- o2.at.sat(ValidationDataDO[,1:2])  
+ValidationDataDO$Flux <- k*(ValidationDataDO$DO_con-DO_sat$do.sat)/PhoticDepth$PhoticDepth[IndxPhotic]
+#SedData MAR OC 
+ValidationDataMAROC <- ObservedMAR_oc #g/m2
+
 
 #################### OPTIMIZATION ROUTINE ############################################
 if (OptimizationFlag==1){
@@ -138,7 +138,7 @@ if (OptimizationFlag==1){
                                       Measured = ValidationDataDO[obsIndx,]$Flux, Modelled = modeled[modIndx,]$MetabOxygen)
     
     #resDO = scale(CalibrationOutputDO$Measured - CalibrationOutputDO$Modelled,center = F)
-    DOScale = 10
+    DOScale = 2
     resDO = (CalibrationOutputDO$Measured - CalibrationOutputDO$Modelled) * DOScale
     sedScale = 0.001
     resSedData = (mean(modeled$SedData_MAR,na.rm = T) - ValidationDataMAROC) * sedScale #not scaled because it is 1 value
@@ -168,7 +168,7 @@ if (OptimizationFlag==1){
   NLL <- optimOut$value #value of nll
   
   BurialFactor <- optimOut$par[1] #
-  RespParam <- optimOut$par[2]^2
+  RespParam <- optimOut$par[2]
   R_auto <- optimOut$par[3]
 }
 
@@ -286,6 +286,7 @@ OutputTimeSeries <- as.Date(InputData$datetime)
 
 ####################### Validation Output Setup ######################################
 if (ValidationFlag==1){
+  
   #DOC Validation Output Setup
   ValidationDOCIndeces = ValidationDataDOC$datetime %in% OutputTimeSeries
   modIndx = OutputTimeSeries %in% ValidationDataDOC$datetime

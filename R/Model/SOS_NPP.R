@@ -18,8 +18,6 @@ NPP<-function(CHL,P,PhoticDepth,WT,JulianDay,ProdStarDay,ProdEndDay)
   #coefficients to predict NPP from chl and WT
   #log(NPP)=b0+b1*log10(chl)+b2*WT
   
- 
-  
   ###########################################################################
   if(missing(CHL)||is.na(CHL))
   {
@@ -48,7 +46,7 @@ NPP<-function(CHL,P,PhoticDepth,WT,JulianDay,ProdStarDay,ProdEndDay)
   b1=0.92
   b2=0.014
   #if (JulianDay>ProdStarDay & JulianDay<ProdEndDay) {
-  if (WT>4) {
+  if (WT>=4) {
     NPP_rate <- 10^(b0+b1*log10(CHL)+b2*WT) #mg C/m2/d
   } else {
     NPP_rate = 0 

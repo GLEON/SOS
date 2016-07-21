@@ -2,7 +2,7 @@
 # Warning: things could get hairy
 
 #### Set your own working directory #####
-setwd("C:/Users/Ian/Desktop/GLEON/SOS/")
+#setwd("C:/Users/Ian/Desktop/GLEON/SOS/")
 
 #lake_list = c('Vanern','Toolik','Trout','Mendota','Harp')
 
