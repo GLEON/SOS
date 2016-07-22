@@ -8,166 +8,171 @@
 library(zoo)
 library(dplyr)
 
-### Plot Net Sunk Results for all lakes ###
+#### Set your own working directory #####
+setwd("C:/Users/Ian/Desktop/GLEON/SOS/")
 
-# Read in SOS csv outputs from model runs
-setwd('H:/Ian_GIS/gleon/tump')
-dir()
-Annie = read.csv('Annie_output.csv', header=T)
-Center = read.csV('Center_output.csv', header=T)
-Harp = read.csv('Harp_output.csv', header=T)
-Langtjern = read.csv('Langtjern.csv', header=T)
-Mendota = read.csv('Mendota_output.csv', header=T)
-Silver = read.csv('Silver_output.csv', header=T)
-Toolik = read.csv('Toolik.csv', header=T)
-Trout = read.csv('Trout_output.csv', header=T)
-Vanern = read.csv('Vanern.csv', header=T)
-WestOkoboji = read.csv('WestOkoboji.csv', header=T)
+#### Plot Net Sunk Results for all lakes ####
+
+# read in SOS results files for each lake
+Vanern_SOS = read.csv('VanernLake/Results/Vanern_SOS_Results.csv')
+Toolik_SOS = read.csv('ToolikLake/Results/Toolik_SOS_Results.csv')
+Trout_SOS = read.csv('TroutLake/Results/Trout_SOS_Results.csv')
+Mendota_SOS = read.csv('MendotaLake/Results/Mendota_SOS_Results.csv')
+Harp_SOS = read.csv('HarpLake/Results/Harp_SOS_Results.csv')
+#Annie_SOS = read.csv('AnnieLake/Results/Annie_SOS_Results.csv')
 
 # Date conversions
-Annie$Date = as.POSIXct(strptime(Annie$Date,"%Y-%m-%d"),tz="GMT")
-Center$Date = as.POSIXct(strptime(Center$Date,"%Y-%m-%d"),tz="GMT")
-Harp$Date = as.POSIXct(strptime(Harp$Date,"%Y-%m-%d"),tz="GMT")
-Langtjern$Date = as.POSIXct(strptime(Langtjern$Date,"%Y-%m-%d"),tz="GMT")
-Mendota$Date = as.POSIXct(strptime(Mendota$Date,"%Y-%m-%d"),tz="GMT")
-Silver$Date = as.POSIXct(strptime(Silver$Date,"%Y-%m-%d"),tz="GMT")
-Toolik$Date = as.POSIXct(strptime(Toolik$Date,"%Y-%m-%d"),tz="GMT")
-Trout$Date = as.POSIXct(strptime(Trout$Date,"%Y-%m-%d"),tz="GMT")
-Vanern$Date = as.POSIXct(strptime(Vanern$Date,"%Y-%m-%d"),tz="GMT")
-WestOkoboji$Date = as.POSIXct(strptime(WestOkoboji$Date,"%Y-%m-%d"),tz="GMT")
+Vanern_SOS$Date = as.POSIXct(strptime(Vanern_SOS$Date,"%Y-%m-%d"),tz="GMT")
+Toolik_SOS$Date = as.POSIXct(strptime(Toolik_SOS$Date,"%Y-%m-%d"),tz="GMT")
+Trout_SOS$Date = as.POSIXct(strptime(Trout_SOS$Date,"%Y-%m-%d"),tz="GMT")
+Mendota_SOS$Date = as.POSIXct(strptime(Mendota_SOS$Date,"%Y-%m-%d"),tz="GMT")
+Harp_SOS$Date = as.POSIXct(strptime(Harp_SOS$Date,"%Y-%m-%d"),tz="GMT")
+#Annie_SOS$Date = as.POSIXct(strptime(Annie_SOS$Date,"%Y-%m-%d"),tz="GMT")
 
-# Create date/month column for monthly data aggregation
-Annie$DateMonth = zoo::as.yearmon(Annie$Date) # class 'yearmon' stored as four digit year (e.g., 1995)
-Center$DateMonth = zoo::as.yearmon(Center$Date) 
-Harp$DateMonth = zoo::as.yearmon(Harp$Date) 
-Langtjern$DateMonth = zoo::as.yearmon(Langtjern$Date)
-Mendota$DateMonth = zoo::as.yearmon(Mendota$Date)
-Silver$DateMonth = zoo::as.yearmon(Silver$Date) 
-Toolik$DateMonth = zoo::as.yearmon(Toolik$Date)
-Trout$DateMonth = zoo::as.yearmon(Trout$Date)
-Vanern$DateMonth = zoo::as.yearmon(Vanern$Date)
-WestOkoboji$DateMonth = zoo::as.yearmon(WestOkoboji$Date) 
+# Calculate annual, monthly Net Sunk means
+Vanern_SOS$Month = format(Vanern_SOS$Date,"%m",tz = "GMT")
+Vanern_SOS$Year = format(Vanern_SOS$Date,"%Y",tz = "GMT")
+VanernNetMonth = aggregate(Net ~ Month, Vanern_SOS, mean)
+VanernNetYear = aggregate(Net ~ Year, Vanern_SOS, mean)
 
-# Aggregate date column by month
-Annie_byMonth = aggregate(cbind(Source,Sink,Pipe,Net)~DateMonth, data=Annie, FUN=sum)
-Center_byMonth = aggregate(cbind(Source,Sink,Pipe,Net)~DateMonth, data=Center, FUN=sum)
-Harp_byMonth = aggregate(cbind(Source,Sink,Pipe,Net)~DateMonth, data=Harp, FUN=sum)
-#plot(Net~DateMonth, Harp_byMonth, type='l')
-Langtjern_byMonth = aggregate(cbind(Source,Sink,Pipe,Net)~DateMonth, data=Langtjern, FUN=sum)
-Mendota_byMonth = aggregate(cbind(Source,Sink,Pipe,Net)~DateMonth, data=Mendota, FUN=sum)
-Silver_byMonth = aggregate(cbind(Source,Sink,Pipe,Net)~DateMonth, data=Silver, FUN=sum)
-Toolik_byMonth = aggregate(cbind(Source,Sink,Pipe,Net)~DateMonth, data=Toolik, FUN=sum)
-Trout_byMonth = aggregate(cbind(Source,Sink,Pipe,Net)~DateMonth, data=Trout, FUN=sum)
-Vanern_byMonth = aggregate(cbind(Source,Sink,Pipe,Net)~DateMonth, data=Vanern, FUN=sum)
-WestOkoboji_byMonth = aggregate(cbind(Source,Sink,Pipe,Net)~DateMonth, data=WestOkoboji, FUN=sum)
+Toolik_SOS$Month = format(Toolik_SOS$Date,"%m",tz = "GMT")
+Toolik_SOS$Year = format(Toolik_SOS$Date,"%Y",tz = "GMT")
+ToolikNetMonth = aggregate(Net ~ Month, Toolik_SOS, mean)
+ToolikNetYear = aggregate(Net ~ Year, Toolik_SOS, mean)
 
-# Pull out variable of interest for comparison across lakes
-variable = 'Jul'
+Trout_SOS$Month = format(Trout_SOS$Date,"%m",tz = "GMT")
+Trout_SOS$Year = format(Trout_SOS$Date,"%Y",tz = "GMT")
+TroutNetMonth = aggregate(Net ~ Month, Trout_SOS, mean)
+TroutNetYear = aggregate(Net ~ Year, Trout_SOS, mean)
 
-Anniex = subset(Annie_byMonth, grepl(variable, DateMonth))
-Centerx = subset(Center_byMonth, grepl(variable, DateMonth))
-Harpx = subset(Harp_byMonth, grepl(variable, DateMonth))
-Langtjernx = subset(Langtjern_byMonth, grepl(variable, DateMonth))
-Mendotax = subset(Mendota_byMonth, grepl(variable, DateMonth))
-Silverx = subset(Silver_byMonth, grepl(variable, DateMonth))
-Toolikx = subset(Toolik_byMonth, grepl(variable, DateMonth))
-Troutx = subset(Trout_byMonth, grepl(variable, DateMonth))
-Vanernx = subset(Vanern_byMonth, grepl(variable, DateMonth))
-WestOkobojix = subset(WestOkoboji_byMonth, grepl(variable, DateMonth))
+Mendota_SOS$Month = format(Mendota_SOS$Date,"%m",tz = "GMT")
+Mendota_SOS$Year = format(Mendota_SOS$Date,"%Y",tz = "GMT")
+MendotaNetMonth = aggregate(Net ~ Month, Mendota_SOS, mean)
+MendotaNetYear = aggregate(Net ~ Year, Mendota_SOS, mean)
 
-Annie = mean(Anniex$Net)
-Center = mean(Center$Net)
-Harp = mean(Harpx$Net)
-Langtjern = mean(Langtjernx$Net)
-Mendota = mean(Mendotax$Net)
-Silver = mean(Silverx$Net)
-Toolik = mean(Toolikx$Net)
-Trout = mean(Troutx$Net)
-Vanern = mean(Vanernx$Net)
-WestOkoboji = mean(WestOkobojix$Net)
+Harp_SOS$Month = format(Harp_SOS$Date,"%m",tz = "GMT")
+Harp_SOS$Year = format(Harp_SOS$Date,"%Y",tz = "GMT")
+HarpNetMonth = aggregate(Net ~ Month, Harp_SOS, mean)
+HarpNetYear = aggregate(Net ~ Year, Harp_SOS, mean)
+
+#Annie_SOS$Month = format(Annie_SOS$Date,"%m",tz = "GMT")
+#Annie_SOS$Year = format(Annie_SOS$Date,"%Y",tz = "GMT")
+#AnnieNetMonth = aggregate(Net ~ Month, Annie_SOS, mean)
+#AnnieNetYear = aggregate(Net ~ Year, Annie_SOS, mean)
+
+# Calculate annual means for each lake (...could be some other summary variable)
+Harp_AM = mean(HarpNetYear$Net)
+Toolik_AM = mean(ToolikNetYear$Net)
+Trout_AM = mean(TroutNetYear$Net)
+Mendota_AM = mean(MendotaNetYear$Net)
+Vanern_AM = mean(VanernNetYear$Net)
+#Annie_AM = mean(AnnieNetYear$Net)
+Annie_AM = NA
+
+
+AM_df = data.frame(Lake=c('Vanern','Toolik','Trout','Mendota','Harp'),
+                   NetSunk = c(Vanern_AM,Toolik_AM,Trout_AM,Mendota_AM,Harp_AM))
 
 # read in lake attribute table for reodering of rows for plotting
-laketable = read.csv('H:/Ian_GIS/gleon/SOS/Table1_SOS_Lake_Summary.csv')
+laketable = read.csv('Table1_SOS_Lake_Summary.csv')
+laketable = laketable[-1,] #drop annie, which is first row
 laketable$area_rank = rank(laketable$Area..ha., na.last=T, ties.method = c('first'))
 laketable$depth_rank = rank(laketable$Mean.Depth..m., na.last = T, ties.method = c('first'))
 laketable$restime_rank = rank(laketable$Residence.Time..yrs., na.last = T, ties.method = c('first'))
 laketable$TP_rank = rank(laketable$TP, na.last = T, ties.method = c('first'))
-laketable$volume_rank = rank(laketable[4], na.last = T, ties.method = c('first'))
-laketable$latitude_rank = rank(laketable$N.lat...W.long, na.last = T, ties.method = c('first'))
+laketable$volume_rank = rank(laketable$Volume, na.last = T, ties.method = c('first'))
+laketable$Secchi_rank = rank(laketable$Secchi..m., na.last = T, ties.method = c('first'))
+laketable$DOC_rank = rank(laketable$DOC, na.last = T, ties.method = c('first'))
 
 # join ranks to variable of interest table
-variable_df = rbind.data.frame(Harp,Langtjern,Mendota,Toolik,Trout) #vanern consistently outlier...what to do
-colnames(variable_df) = variable
-variable_df$Lake = c('Harp','Langtjern','Mendota','Toolik','Trout')
-variable_ranks = left_join(variable_df, laketable, by='Lake')
+variable_df = left_join(AM_df, laketable, by='Lake') #vanern consistently outlier...what to do
 
-# make barplots
+## Ian: how are we going to deal with Vanern's big values? Some sort of NetSunk ratio?
+#variable_df$NS_areaRatio = variable_df$NetSunk/variable_df$Area..ha.
+
+#### make barplot panel ####
 #par(mfrow=c(1,1)) #for single plot per window
+variable = 'NetSunk'
 layout(matrix(c(1,2,3,4,5,6),2,3)) #6 plots with 2 rows x 3 columns
-
+par(mar=c(3,3,3,0),mgp=c(1.5,0.3,0),tck=-0.03)
+par('cex.axis'= 1.5) 
+par('cex'=1.5)
+par('cex.main'=2)
 ## lake area
 # reorder data frame in ascending order for variable of interest
-Sunk_byLakeArea = variable_ranks[order(variable_ranks$area_rank) , ]
+Sunk_byLakeArea = variable_df[order(variable_df$area_rank) , ]
 labels = Sunk_byLakeArea$Lake
 
-barplot(Sunk_byLakeArea$Jul, xlab='', ylab='OC mass (kg)', xaxt='n', ylim=c(-4e07, 1e07),
+barplot(Sunk_byLakeArea$NetSunk, xlab='', ylab='OC mass (kg)', xaxt='n', ylim=c(-3e07, 1e07),
         main='Lake Area', col='dodgerblue')
-mtext(paste0(variable, ' avg'), side=3)
+#mtext(paste0(variable, ' avg'), side=3)
 endlabel = length(labels) * 1.2 
 tickedoff = seq(0.7, endlabel, 1.2)
-axis(side=1,at=c(tickedoff), labels=labels, las=2,cex.axis=0.75)
+axis(side=1,at=c(tickedoff), labels=labels, las=2)
 
 ## mean lake depth
-Sunk_byMeanDepth = variable_ranks[order(variable_ranks$depth_rank) , ]
+Sunk_byMeanDepth = variable_df[order(variable_df$depth_rank) , ]
 labels = Sunk_byMeanDepth$Lake
 
-barplot(Sunk_byMeanDepth$Jul, xlab='', ylab='OC mass (kg)', xaxt='n', ylim=c(-4e07, 1e07),
+barplot(Sunk_byMeanDepth$NetSunk, xlab='', ylab='OC mass (kg)', xaxt='n', ylim=c(-3e07, 1e07),
         main='Mean Depth', col='dodgerblue')
-mtext(paste0(variable, ' avg'), side=3)
+#mtext(paste0(variable, ' avg'), side=3)
 endlabel = length(labels) * 1.2 
 tickedoff = seq(0.7, endlabel, 1.2)
-axis(side=1,at=c(tickedoff), labels=labels, las=2,cex.axis=0.75)
+axis(side=1,at=c(tickedoff), labels=labels, las=2,cex.axis=1)
 
 ## Residence time
-Sunk_byResTime = variable_ranks[order(variable_ranks$restime_rank) , ]
+Sunk_byResTime = variable_df[order(variable_df$restime_rank) , ]
 labels = Sunk_byResTime$Lake
 
-barplot(Sunk_byResTime$Jul, xlab='', ylab='OC mass (kg)', xaxt='n', ylim=c(-4e07, 1e07),
+barplot(Sunk_byResTime$NetSunk, xlab='', ylab='OC mass (kg)', xaxt='n', ylim=c(-3e07, 1e07),
         main='Residence Time', col='dodgerblue')
-mtext(paste0(variable, ' avg'), side=3)
+#mtext(paste0(variable, ' avg'), side=3)
 endlabel = length(labels) * 1.2 
 tickedoff = seq(0.7, endlabel, 1.2)
-axis(side=1,at=c(tickedoff), labels=labels, las=2,cex.axis=0.75)
+axis(side=1,at=c(tickedoff), labels=labels, las=2,cex.axis=1)
 
 ## TP
-Sunk_byTP = variable_ranks[order(variable_ranks$TP_rank) , ]
+Sunk_byTP = variable_df[order(variable_df$TP_rank) , ]
 labels = Sunk_byTP$Lake
 
-barplot(Sunk_byTP$Jul, xlab='', ylab='OC mass (kg)', xaxt='n', ylim=c(-4e07, 1e07),
+barplot(Sunk_byTP$NetSunk, xlab='', ylab='OC mass (kg)', xaxt='n', ylim=c(-3e07, 1e07),
         main='TP', col='dodgerblue')
-mtext(paste0(variable, ' avg'), side=3)
+#mtext(paste0(variable, ' avg'), side=3)
 endlabel = length(labels) * 1.2 
 tickedoff = seq(0.7, endlabel, 1.2)
-axis(side=1,at=c(tickedoff), labels=labels, las=2,cex.axis=0.75)
+axis(side=1,at=c(tickedoff), labels=labels, las=2,cex.axis=1)
 
 ## Lake volume
-Sunk_byVolume = variable_ranks[order(variable_ranks$volume_rank) , ]
+Sunk_byVolume = variable_df[order(variable_df$volume_rank) , ]
 labels = Sunk_byVolume$Lake
 
-barplot(Sunk_byVolume$Jul, xlab='', ylab='OC mass (kg)', xaxt='n', ylim=c(-4e07, 1e07),
+barplot(Sunk_byVolume$NetSunk, xlab='', ylab='OC mass (kg)', xaxt='n', ylim=c(-3e07, 1e07),
         main='Volume', col='dodgerblue')
-mtext(paste0(variable, ' avg'), side=3)
+#mtext(paste0(variable, ' avg'), side=3)
 endlabel = length(labels) * 1.2 
 tickedoff = seq(0.7, endlabel, 1.2)
-axis(side=1,at=c(tickedoff), labels=labels, las=2,cex.axis=0.75)
+axis(side=1,at=c(tickedoff), labels=labels, las=2,cex.axis=1)
 
-## Lake volume
-Sunk_byLatitude = variable_ranks[order(variable_ranks$latitude_rank) , ]
-labels = Sunk_byLatitude$Lake
+## Lake DOC
+Sunk_byDOC = variable_df[order(variable_df$DOC_rank) , ]
+labels = Sunk_byDOC$Lake
 
-barplot(Sunk_byLatitude$Jul, xlab='', ylab='OC mass (kg)', xaxt='n', ylim=c(-4e07, 1e07),
-        main='Latitude', col='dodgerblue')
-mtext(paste0(variable, ' avg'), side=3)
+barplot(Sunk_byDOC$NetSunk, xlab='', ylab='OC mass (kg)', xaxt='n', ylim=c(-3e07, 1e07),
+        main='DOC', col='dodgerblue')
+#mtext(paste0(variable, ' avg'), side=3)
 endlabel = length(labels) * 1.2 
 tickedoff = seq(0.7, endlabel, 1.2)
-axis(side=1,at=c(tickedoff), labels=labels, las=2,cex.axis=0.75)
+axis(side=1,at=c(tickedoff), labels=labels, las=2,cex.axis=1)
+
+
+## Secchi depth
+Sunk_bySecchi = variable_df[order(variable_df$Secchi_rank) , ]
+labels = Sunk_bySecchi$Lake
+
+barplot(Sunk_bySecchi$NetSunk, xlab='', ylab='OC mass (kg)', xaxt='n', ylim=c(-3e07, 1e07),
+        main='Secchi', col='dodgerblue')
+#mtext(paste0(variable, ' avg'), side=3)
+endlabel = length(labels) * 1.2 
+tickedoff = seq(0.7, endlabel, 1.2)
+axis(side=1,at=c(tickedoff), labels=labels, las=2,cex.axis=1)

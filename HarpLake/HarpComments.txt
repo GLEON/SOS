@@ -1,0 +1,7 @@
+Harp comments
+
+
+Harp on 1993-04-28 and 1993-05-20 has chlorophyll listed as 0. Therefore
+the lake basically has no authochtony. The problem is there is a huge
+difference between chl = 0 and chl = 0.1 in the resulting levels of
+authochtony. Changed value to 0.1.

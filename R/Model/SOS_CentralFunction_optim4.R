@@ -1,7 +1,7 @@
 #CarbonFluxModel <- function(LakeName,PlotFlag,ValidationFlag){
 #Flags 1 for yes, else no.
-LakeName = 'Vanern'
-OptimizationFlag = 1
+LakeName = 'Mendota'
+OptimizationFlag = 0
 PlotFlag = 0
 ValidationFlag = 1
 
@@ -59,13 +59,15 @@ steps <- nrow(InputData)
 POC_df = data.frame(Date = InputData$datetime,
                     POC_conc_gm3 = NA,
                     NPPin_gm2y=NA,FlowIn_gm2y=NA,FlowOut_gm2y=NA,sedOut_gm2y=NA,leachOut_gm2y=NA,
-                    POC_out_g = NA, POC_FlowOut_cum_g = NA, POC_SedOut_cum_g = NA,
-                    POC_in_g = NA, POC_in_alloch_g = NA, POC_in_autoch_g = NA)
+                    POC_flowOut_gm2y = NA, POC_sedOut_gm2y = NA,
+                    POCload_g = NA, POCalloch_g = NA, POCautoch_g = NA,
+                    POCout_g = NA)
 DOC_df = data.frame(Date = InputData$datetime,
                     DOC_conc_gm3 = NA,
                     NPPin_gm2y=NA,FlowIn_gm2y=NA,FlowOut_gm2y=NA,respOut_gm2y=NA,leachIn_gm2y=NA,
-                    DOC_out_g = NA, DOC_FlowOut_cum_g = NA, DOC_RespOut_cum_g = NA,
-                    DOC_in_g = NA, DOC_in_alloch_g = NA, DOC_in_autoch_g = NA)
+                    DOC_flowOut_gm2y = NA, DOC_respOut_gm2y = NA,
+                    DOCload_g = NA, DOCalloch_g = NA, DOCautoch_g = NA,
+                    DOCout_g = NA)
 
 ##### Declare Data Storage - Sed ###########
 SedData <- data.frame(Date = InputData$datetime, BurialScalingFactor=NA,MAR_oc=NA,POC_burial=NA,POC_sedOut = NA)
@@ -90,32 +92,34 @@ POC_df$POC_conc_gm3[1] <- POC_init # #Initialize POC concentration as baseline a
 DOC_df$DOC_conc_gm3[1] <- DOC_init #Initialize DOC concentration g/m3
 
 ####################### Validation Output Setup ######################################
-if (OptimizationFlag==1){
-  #DOC Validation Output Setup
-  ValidationDataDOC <- read.csv(ValidationFileDOC,header=T)
-  ValidationDataDOC$datetime <- as.Date(as.POSIXct(strptime(ValidationDataDOC$datetime,"%m/%d/%Y %H:%M"),tz="GMT")) #Convert time to POSIX
-  ValidationDataDOC = ValidationDataDOC[complete.cases(ValidationDataDOC),]
-  ValidationDataDOC = ddply(ValidationDataDOC,'datetime',summarize,DOC=mean(DOC))
-  
-  #DO Validation Output Setup
-  ValidationDataDO <- read.csv(ValidationFileDO,header=T)
-  ValidationDataDO$datetime <- as.Date(as.POSIXct(strptime(ValidationDataDO$datetime,"%m/%d/%Y %H:%M"),tz="GMT")) #Convert time to POSIX
-  ValidationDataDO = ValidationDataDO[complete.cases(ValidationDataDO),]
-  #Only compare to DO data during "production season."
-  #ValidationDataDO = ValidataionDataDO[yday(ValidationDataDO$datetime)>ProdStartDay & yday(ValidationDataDO$datetime)<ProdEndDay]
-  ValidationDataDO = ValidationDataDO[ValidationDataDO$wtr >= 10,]
-  
-  k <- 0.5 #m/d
-  PhoticDepth <- data.frame(datetime = InputData$datetime,PhoticDepth = log(100)/(1.7/InputData$Secchi))
-  IndxVal = ValidationDataDO$datetime %in% as.Date(PhoticDepth$datetime)
-  IndxPhotic = as.Date(PhoticDepth$datetime) %in% ValidationDataDO$datetime
-  
-  ValidationDataDO = ValidationDataDO[IndxVal,]
-  DO_sat <- o2.at.sat(ValidationDataDO[,1:2])  
-  ValidationDataDO$Flux <- k*(ValidationDataDO$DO_con-DO_sat$do.sat)/PhoticDepth$PhoticDepth[IndxPhotic]
-  #SedData MAR OC 
-  ValidationDataMAROC <- ObservedMAR_oc #g/m2
-}
+
+#DOC Validation Output Setup
+ValidationDataDOC <- read.csv(ValidationFileDOC,header=T)
+ValidationDataDOC$datetime <- as.Date(as.POSIXct(strptime(ValidationDataDOC$datetime,"%m/%d/%Y %H:%M"),tz="GMT")) #Convert time to POSIX
+ValidationDataDOC = ValidationDataDOC[complete.cases(ValidationDataDOC),]
+outlier.limit = (mean(ValidationDataDOC$DOC) + 3*(sd(ValidationDataDOC$DOC))) # Calculate mean + 3 SD of DOC column
+ValidationDataDOC = ValidationDataDOC[ValidationDataDOC$DOC <= outlier.limit,] # Remove rows where DOC > outlier.limit
+ValidationDataDOC = ddply(ValidationDataDOC,'datetime',summarize,DOC=mean(DOC))
+
+#DO Validation Output Setup
+ValidationDataDO <- read.csv(ValidationFileDO,header=T)
+ValidationDataDO$datetime <- as.Date(as.POSIXct(strptime(ValidationDataDO$datetime,"%m/%d/%Y %H:%M"),tz="GMT")) #Convert time to POSIX
+ValidationDataDO = ValidationDataDO[complete.cases(ValidationDataDO),]
+#Only compare to DO data during "production season."
+ValidationDataDO = ValidationDataDO[yday(ValidationDataDO$datetime)>ProdStartDay & yday(ValidationDataDO$datetime)<ProdEndDay,]
+#ValidationDataDO = ValidationDataDO[ValidationDataDO$wtr >= 10,]
+
+k <- 0.5 #m/d
+PhoticDepth <- data.frame(datetime = InputData$datetime,PhoticDepth = log(100)/(1.7/InputData$Secchi))
+IndxVal = ValidationDataDO$datetime %in% as.Date(PhoticDepth$datetime)
+IndxPhotic = as.Date(PhoticDepth$datetime) %in% ValidationDataDO$datetime
+
+ValidationDataDO = ValidationDataDO[IndxVal,]
+DO_sat <- o2.at.sat(ValidationDataDO[,1:2])  
+ValidationDataDO$Flux <- k*(ValidationDataDO$DO_con-DO_sat$do.sat)/PhoticDepth$PhoticDepth[IndxPhotic]
+#SedData MAR OC 
+ValidationDataMAROC <- ObservedMAR_oc #g/m2
+
 
 #################### OPTIMIZATION ROUTINE ############################################
 if (OptimizationFlag==1){
@@ -134,7 +138,7 @@ if (OptimizationFlag==1){
                                       Measured = ValidationDataDO[obsIndx,]$Flux, Modelled = modeled[modIndx,]$MetabOxygen)
     
     #resDO = scale(CalibrationOutputDO$Measured - CalibrationOutputDO$Modelled,center = F)
-    DOScale = 10
+    DOScale = 5
     resDO = (CalibrationOutputDO$Measured - CalibrationOutputDO$Modelled) * DOScale
     sedScale = 0.001
     resSedData = (mean(modeled$SedData_MAR,na.rm = T) - ValidationDataMAROC) * sedScale #not scaled because it is 1 value
@@ -174,13 +178,10 @@ if (OptimizationFlag==1){
 for (i in 1:(steps)){
   if (R_auto > 1){R_auto = 1}
   
-  Rainfall <- InputData$Rain[i]/TimeStep #mm/day
-  Q_out <- InputData$FlowOut[i] #m3/s: total outflow. Assume steady state pending dynamic output
-  if(LakeName=="Annie" && Rainfall>10){
-    PropGW <- 0
-  }
   Q_sw <- InputData$FlowIn[i] #m3/s surface water flowrate at i
   Q_gw <- Q_sw/(1-PropGW) - Q_sw #m3/s; as a function of proportion of inflow that is GW
+  Q_out <- InputData$FlowOut[i] #m3/s: total outflow. Assume steady state pending dynamic output
+  Rainfall <- InputData$Rain[i]/TimeStep #mm/day
   
   #Call NPP Function
   PhoticDepth <- log(100)/(1.7/InputData$Secchi[i]) #Calc photic depth as function of Secchi depth
@@ -232,11 +233,11 @@ for (i in 1:(steps)){
 }
 
 #Store POC and DOC fluxes as mass/area/time (g/m2/yr)
-POC_df$NPPin_gm2y <-  NPPdata$POC_mass/LakeArea/(TimeStep/365) #g/m2/yr
-POC_df$FlowIn_gm2y <- SWGWData$POC_massIn_g/LakeArea/(TimeStep/365) #g/m2/yr
-POC_df$FlowOut_gm2y <- SWGWData$POC_outflow/LakeArea/(TimeStep/365) #g/m2/yr
-POC_df$sedOut_gm2y <- SedData$POC_sedOut/LakeArea/(TimeStep/365) #g/m2/yr
-POC_df$leachOut_gm2y <- LeachData$POC_leachOut/LakeArea/(TimeStep/365) #g/m2/yr
+POC_df$NPPin_gm2y <-  NPPdata$POC_mass/LakeArea/(TimeStep/365)
+POC_df$FlowIn_gm2y <- SWGWData$POC_massIn_g/LakeArea/(TimeStep/365)
+POC_df$FlowOut_gm2y <- SWGWData$POC_outflow/LakeArea/(TimeStep/365)
+POC_df$sedOut_gm2y <- SedData$POC_sedOut/LakeArea/(TimeStep/365)
+POC_df$leachOut_gm2y <- LeachData$POC_leachOut/LakeArea/(TimeStep/365)
 
 DOC_df$NPPin_gm2y <- NPPdata$DOC_mass/LakeArea/(TimeStep/365)
 DOC_df$FlowIn_gm2y <- SWGWData$DOC_massIn_g/LakeArea/(TimeStep/365)
@@ -245,20 +246,20 @@ DOC_df$respOut_gm2y<- NPPdata$DOC_resp_mass/LakeArea/(TimeStep/365)
 DOC_df$leachIn_gm2y <- LeachData$DOC_leachIn/LakeArea/(TimeStep/365)
 
 #Cumulative DOC and POC fate (grams)
-POC_df$POC_FlowOut_cum_g <- cumsum(SWGWData$POC_outflow) #g
-POC_df$POC_SedOut_cum_g <- cumsum(SedData$POC_sedOut) #g
-DOC_df$DOC_FlowOut_cum_g = cumsum(SWGWData$DOC_outflow) #g
-DOC_df$DOC_RespOut_cum_g = cumsum(NPPdata$DOC_resp_mass) #g
+POC_df$POC_flowOut_gm2y <- cumsum(SWGWData$POC_outflow)
+POC_df$POC_sedOut_gm2y <- cumsum(SedData$POC_sedOut)
+DOC_df$DOC_flowOut_gm2y = cumsum(SWGWData$DOC_outflow)
+DOC_df$DOC_respOut_gm2y = cumsum(NPPdata$DOC_resp_mass)
 #POC and DOC load (in) and fate (out) (g)
-POC_df$POC_in_g <- NPPdata$POC_mass + SWGWData$POC_massIn_g #g
-POC_df$POC_in_alloch_g <- SWGWData$POC_massIn_g
-POC_df$POC_in_autoch_g <- NPPdata$POC_mass
-POC_df$POC_out_g = SWGWData$POC_outflow + SedData$POC_sedOut + LeachData$POC_leachOut
+POC_df$POCload_g <- NPPdata$POC_mass + SWGWData$POC_massIn_g #g
+POC_df$POCalloch_g <- SWGWData$POC_massIn_g
+POC_df$POCautoch_g <- NPPdata$POC_mass
+POC_df$POCout_g = SWGWData$POC_outflow + SedData$POC_sedOut + LeachData$POC_leachOut
 
-DOC_df$DOC_in_g <- NPPdata$DOC_mass + SWGWData$DOC_massIn_g #g
-DOC_df$DOC_in_alloch_g <- SWGWData$DOC_massIn_g #g
-DOC_df$DOC_in_autoch_g <- NPPdata$DOC_mass #g
-DOC_df$DOC_out_g = SWGWData$DOC_outflow + NPPdata$DOC_resp_mass #g
+DOC_df$DOCload_g <- NPPdata$DOC_mass + SWGWData$DOC_massIn_g #g
+DOC_df$DOCalloch_g <- SWGWData$DOC_massIn_g
+DOC_df$DOCautoch_g <- NPPdata$DOC_mass
+DOC_df$DOCout_g = SWGWData$DOC_outflow + NPPdata$DOC_resp_mass #g
 
 #OC mass sourced/sank at each time step
 SOS$Sink <- SedData$POC_sedOut
@@ -273,8 +274,8 @@ FinalDOC <-  DOC_df$DOC_conc_gm3[steps] + ((NPPdata$DOC_mass[steps] + SWGWData$D
 DeltaPOC <- FinalPOC*LakeVolume -  POC_df$POC_conc_gm3[1]*LakeVolume #g
 DeltaDOC <- FinalDOC*LakeVolume - DOC_df$DOC_conc_gm3[1]*LakeVolume #g
 #Mass balance check (should be near zero)
-POCcheck <- (sum(POC_df$POC_in_alloch_g) + sum(POC_df$POC_in_autoch_g) -  sum(POC_df$POC_out_g)) - DeltaPOC
-DOCcheck <- (sum(DOC_df$DOC_in_alloch_g) + sum(DOC_df$DOC_in_autoch_g) + sum(LeachData$DOC_leachIn) - sum(DOC_df$DOC_out_g)) - DeltaDOC
+POCcheck <- (sum(POC_df$POCalloch_g) + sum(POC_df$POCautoch_g) -  sum(POC_df$POCout_g)) - DeltaPOC
+DOCcheck <- (sum(DOC_df$DOCalloch_g) + sum(DOC_df$DOCautoch_g) + sum(LeachData$DOC_leachIn) - sum(DOC_df$DOCout_g)) - DeltaDOC
 #Return mass balance checks
 print(paste('POC Balance: ',POCcheck,' and DOC Balance: ',DOCcheck,sep=''))
 
@@ -285,6 +286,7 @@ OutputTimeSeries <- as.Date(InputData$datetime)
 
 ####################### Validation Output Setup ######################################
 if (ValidationFlag==1){
+  
   #DOC Validation Output Setup
   ValidationDOCIndeces = ValidationDataDOC$datetime %in% OutputTimeSeries
   modIndx = OutputTimeSeries %in% ValidationDataDOC$datetime
@@ -325,41 +327,11 @@ if (ValidationFlag==1){
 ################## PLOTTING ###########################################################
 
 if (PlotFlag==1){
-  #Plot POC and DOC fluxes in standardized units (g/m2/yr)
-  ylabelPOC <- c("NPP POC In (g/m2/yr)","Flow POC In (g/m2/yr)","Flow POC Out (g/m2/yr)","Sed POC Out (g/m2/yr)")
-  ylabelDOC <- c("NPP DOC In (g/m2/yr)","Flow DOC In (g/m2/yr)","Flow  DOC Out (g/m2/yr)","Respiration DOC Out (g/m2/yr)","Leach In (g/m2/yr)")
-  
-  par(mfrow=c(2,2),mar=c(2.5,3,1,1),mgp=c(1.5,0.3,0),tck=-0.02)
-  for (n in 1:4){
-    plot(OutputTimeSeries,POC_df[,n+2],xlab='Date',ylab=ylabelPOC[n],type='l')
-  }
-  
-  par(mfrow=c(3,2),mar=c(2.5,3,1,1),mgp=c(1.5,0.3,0),tck=-0.02)
-  for (n in 1:5){
-    plot(OutputTimeSeries,DOC_df[,n+2],xlab='Date',ylab=ylabelDOC[n],type='l')
-  }
-  
   #POC and DOC concentration in time (g/m3)
-  par(mfrow=c(2,1),mar=c(2.5,3,1,1),mgp=c(1.5,0.3,0),tck=-0.02,cex=0.8)
-  plot(OutputTimeSeries,POC_df$POC_conc_gm3,xlab='Date',ylab="POC Conc (g/m3)",type="l")
-  # Better axes tick marks 
-  #   plotDates = seq(OutputTimeSeries[1],tail(OutputTimeSeries,1), by="year")
-  #   axis.Date(1,at=plotDates,labels=format(plotDates,"%m/%y"),las=1,cex.axis = 0.8)
+  par(mar=c(2.5,3,1,1),mgp=c(1.5,0.3,0),tck=-0.02,cex=0.8)
   plot(OutputTimeSeries,DOC_df$DOC_conc_gm3,xlab='Date',ylab="DOC Conc (g/m3)",type="l")
-  
-  #Plot cumulative fates
-  par(mfrow=c(2,2),mar=c(2.5,3,1,1),mgp=c(1.5,0.3,0),tck=-0.02,cex=0.8)
-  plot(OutputTimeSeries,POC_df$POC_FlowOut_cum_g,xlab='Date',ylab="Cumulative POC Outflow (g)",type='l')
-  plot(OutputTimeSeries,POC_df$POC_SedOut_cum_g,xlab='Date',ylab="Cumulative POC Sed Burial (g)",type='l')
-  plot(OutputTimeSeries,DOC_df$DOC_FlowOut_cum_g,xlab='Date',ylab="Cumulative DOC Outflow (g)",type='l')
-  plot(OutputTimeSeries,DOC_df$DOC_RespOut_cum_g,xlab='Date',ylab="Cumulative DOC Respired (g)",type='l')
-  
-  #Plot net SOS
-  par(mfrow=c(1,1),mar=c(3,3,2,1),mgp=c(1.5,0.3,0),tck=-0.01,cex=0.8)
-  plot(OutputTimeSeries,SOS$Net/1000,xlab='date/time',ylab='OC mass (kg/d)',
-       main='Net OC Mass Sunk per Day',type='l')
-  #   plotDates = seq(OutputTimeSeries[1],tail(OutputTimeSeries,1), by="year")
-  #   axis.Date(1,at=plotDates,labels=format(plotDates,"%m/%y"),las=1,cex.axis = 0.8)
+  lines(ValidationDataDOC$datetime,ValidationDataDOC$DOC,col='red3')
+
 }
 
-#}  
+

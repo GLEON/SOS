@@ -4,7 +4,7 @@
 #Configuration file should contain parameters generated from calibration routine "SOS_CentralFunction_optim4.R"
 
 #User input lake name
-LakeName = 'Vanern'
+LakeName = 'Mendota'
 
 ##### INPUT FILE NAMES ################
 TimeSeriesFile <- paste('./',LakeName,'Lake/',LakeName,'TS.csv',sep='')
@@ -212,6 +212,5 @@ SOS_results_filename = paste('./',LakeName,'Lake/','Results/',LakeName,'_SOS_Res
 write.csv(DOC_df,file = DOC_results_filename)
 write.csv(POC_df,file = POC_results_filename)
 write.csv(SOS,file = SOS_results_filename)
-
 
 
