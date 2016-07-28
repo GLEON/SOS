@@ -1,5 +1,5 @@
 
-NPP<-function(CHL,P,PhoticDepth,WT,JulianDay,ProdStarDay,ProdEndDay)
+NPP<-function(CHL,P,PhoticDepth,WT,JulianDay,ProdStartDay,ProdEndDay)
 {
   
   NPPdata <- data.frame(NPP_DOC_rate=NA,NPP_POC_rate=NA)
