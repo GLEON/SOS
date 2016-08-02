@@ -4,7 +4,7 @@
 #Configuration file should contain parameters generated from calibration routine "SOS_CentralFunction_optim4.R"
 
 #User input lake name
-LakeName = 'Mendota'
+LakeName = 'Vanern'
 
 ##### INPUT FILE NAMES ################
 TimeSeriesFile <- paste('./',LakeName,'Lake/',LakeName,'TS.csv',sep='')
@@ -111,7 +111,7 @@ for (i in 1:(steps)){
   NPPdata$POC_rate[i] = RawProduction$NPP_POC_rate
   
   #Call SWGW Function
-  SWGW <- SWGWFunction(Q_sw,Q_gw,Rainfall,AerialLoad, PropCanopy, LakePerimeter, WetlandLoad, PropWetlands, DOC_gw, PropGW, 
+  SWGW <- SWGWFunction(Q_sw,Q_gw,Rainfall,AerialLoad, PropCanopy, LakePerimeter, WetlandLoad, PropWetlands, DOC_gw, 
                        InputData$SW_DOC[i], DOC_precip, LakeArea) #change these inputs to iterative [i] values when inputs are dynamic
   SWGWData[i,2:10] <- SWGW
   
