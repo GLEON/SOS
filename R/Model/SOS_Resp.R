@@ -3,12 +3,12 @@
 # the GLEON Fellowship Cohort 2 SOS working group project on organic carbon modelling. 
 
 ##Purpose:
-#Model respiration due to primary productivity. 
+#Model heterotrophic respiration.  
 
 ## Inputs: 
 # DOC - modelled DOC concentration (g/m3) in water column
 # temp - temp of "photic zone layer" (estimated as epilimnion temp, deg C)
-# RespParam - calibrated parameter for primary productivity
+# RespParam - calibrated parameter heterotrophic respiration
 
 ##Output:
 #DOC metabolized into inorganic C and O2 (g/m3)
