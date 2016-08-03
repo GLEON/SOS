@@ -29,10 +29,10 @@ NPP<-function(CHL,P,PhoticDepth,WT,JulianDay,ProdStartDay,ProdEndDay)
   a0=-0.390   #! 
   a1=0.874
   
-  #coefficients to predict NPP from chl and WT
-  b0=1.18
-  b1=0.92
-  b2=0.014
+  #coefficients to predict NPP from chl and WT from Table 1: Morin et al 1999
+  b0=1.18 # intercept
+  b1=0.92 # log10 chla
+  b2=0.014 # temperature
   
   #If no chl-a data, use P data
   if(missing(CHL)||is.na(CHL))
@@ -48,18 +48,18 @@ NPP<-function(CHL,P,PhoticDepth,WT,JulianDay,ProdStartDay,ProdEndDay)
   }
   
   #Scale areal value to volume
-  CHL <- CHL*PhoticDepth
-  P <- P*PhoticDepth
+  CHL <- CHL*PhoticDepth #KF: need to include conversion from L to m3 for this (i.e., *0.001)
+  P <- P*PhoticDepth #KF: need to include conversion from L to m3 for this (i.e., *0.001)
   
   #M Morin et al. 1999
-  #M Areal chl a : mg chl a m-2
-  #M Authors converted chl a mass per volume to areal values by integrating 
+  #M Areal chl a : mg chl-a m-2
+  #M Authors converted chl-a mass per volume to areal values by integrating 
   #M over photic zone depth defined in original papers 
   #M NPP output in g m-2 d-1
 
   #if (JulianDay>ProdStarDay & JulianDay<ProdEndDay) {
   if (WT>=4) {
-    NPP_rate <- 10^(b0+b1*log10(CHL)+b2*WT) #mg C/m2/d
+    NPP_rate <- 10^(b0+(b1*log10(CHL))+(b2*WT)) #mg C/m2/d
   } else {
     NPP_rate = 0 
   }
