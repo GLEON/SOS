@@ -190,17 +190,6 @@ for (i in 1:(steps)){
   NPPdata$DOC_rate[i] = RawProduction$NPP_DOC_rate
   NPPdata$POC_rate[i] = RawProduction$NPP_POC_rate
   
-  #Call SWGW Function
-  SWGW <- SWGWFunction(Q_sw,Q_gw,Rainfall,AerialLoad, PropCanopy, LakePerimeter, WetlandLoad, PropWetlands, DOC_gw, 
-                       InputData$SW_DOC[i], DOC_precip, LakeArea) #change these inputs to iterative [i] values when inputs are dynamic
-  SWGWData[i,2:10] <- SWGW
-  
-  #Call Sedimentation Function
-  POC_mass <- POC_df$POC_conc_gm3[i]*LakeVolume
-  SedOutput <- SedimentationFunction(BurialFactor,TimeStep,POC_mass,LakeArea)
-  SedData[i,2:4] = SedOutput
-  SedData$POC_sedOut[i] <- SedData$POC_burial[i] #g #WHY IS THIS REPEATED?
-  
   #Call respiration function
   DOC_resp_rate <- Resp(DOC_df$DOC_conc_gm3[i],InputData$EpiTemp[i],RespParam) #g C/m3/d ##CHANGE TO AVERAGE OR LAYER TEMP WHEN AVAILABLE IN TIME SERIES
   NPPdata$DOC_resp_mass[i] = DOC_resp_rate*LakeVolume*TimeStep #g C
@@ -211,6 +200,17 @@ for (i in 1:(steps)){
   #Calc metabolism (DO) estimates for NPP validation
   Metabolism$NEP[i] <- (NPPdata$DOC_mass[i] + NPPdata$POC_mass[i] - NPPdata$DOC_resp_mass[i]*(PhoticDepth/LakeDepth))/(LakeVolume*PhoticDepth/LakeDepth)/TimeStep #g/m3/d
   Metabolism$Oxygen <- (Metabolism$NEP)*(32/12) #g/m3/d Molar conversion of C flux to O2 flux (lake metabolism)
+  
+  #Call SWGW Function
+  SWGW <- SWGWFunction(Q_sw,Q_gw,Rainfall,AerialLoad, PropCanopy, LakePerimeter, WetlandLoad, PropWetlands, DOC_gw, 
+                       InputData$SW_DOC[i], DOC_precip, LakeArea) #change these inputs to iterative [i] values when inputs are dynamic
+  SWGWData[i,2:10] <- SWGW
+  
+  #Call Sedimentation Function
+  POC_mass <- POC_df$POC_conc_gm3[i]*LakeVolume
+  SedOutput <- SedimentationFunction(BurialFactor,TimeStep,POC_mass,LakeArea)
+  SedData[i,2:4] = SedOutput
+  SedData$POC_sedOut[i] <- SedData$POC_burial[i] #g #WHY IS THIS REPEATED?
   
   #Calc outflow subtractions (assuming outflow concentrations = mixed lake concentrations)
   SWGWData$POC_outflow[i] <- POC_df$POC_conc_gm3[i]*Q_out*60*60*24*TimeStep #g
