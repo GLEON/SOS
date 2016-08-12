@@ -20,7 +20,7 @@
 # These values are changed to NPP in lines following the sub-function call in the main code. 
 
 
-NPP<-function(CHL,P,PhoticDepth,WT,JulianDay,ProdStartDay,ProdEndDay)
+NPP<-function(CHL,P,PhoticDepth,WT,JulianDay)
 {
   
   NPPdata <- data.frame(NPP_DOC_rate=NA,NPP_POC_rate=NA)
