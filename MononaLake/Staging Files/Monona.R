@@ -9,7 +9,7 @@ phys$sampledate = as.Date(strptime(phys$sampledate,'%Y-%m-%d'))
 
 physWide <- phys %>%
   group_by(sampledate,depth) %>%
-  summarise(wtempA = mean(wtemp,na.rm=T),o2A = mean(o2,na.rm=T),datetime = first(sampledate)) %>%
+  dplyr::summarise(wtempA = mean(wtemp,na.rm=T),o2A = mean(o2,na.rm=T),datetime = first(sampledate)) %>%
   ungroup() %>%
   dplyr::select(datetime,depth,wtempA) %>%
   spread(depth,wtempA)
@@ -37,7 +37,7 @@ surfTemp = data.frame(date = physWide_2$datetime, surfTemp = physWide_2$wtr_0)
 ######################## OXYGEN ########################
 o2Wide <- phys %>%
   group_by(sampledate,depth) %>%
-  summarise(wtempA = mean(wtemp,na.rm=T),o2A = mean(o2,na.rm=T),datetime = first(sampledate)) %>%
+  dplyr::summarise(wtempA = mean(wtemp,na.rm=T),o2A = mean(o2,na.rm=T),datetime = first(sampledate)) %>%
   ungroup() %>%
   dplyr::select(datetime,depth,o2A) %>%
   spread(depth,o2A)
@@ -57,19 +57,19 @@ chem$totpuf_sloh[chem$totpuf_sloh < 0 & !is.na(chem$totpuf_sloh)] = NA # Remove 
 # MEAN DOC and TP
 chem2 = chem %>% select(date = sampledate, doc = doc, tp = totpuf_sloh) %>%
   group_by(date) %>%
-  summarise(docMean = round(mean(doc,na.rm=T),2),tp = round(mean(tp,na.rm=T),2)) %>%
+  dplyr::summarise(docMean = round(mean(doc,na.rm=T),2),tp = round(mean(tp,na.rm=T),2)) %>%
   ungroup
 
 # SURFACE DOC
 chem3 = chem %>% select(date = sampledate,depth, doc = doc) %>%
-  filter(depth == 0) %>%
+  dplyr::filter(depth == 0 | depth==1) %>%
   group_by(date) %>%
-  summarise(docSurf = round(mean(doc,na.rm=T),2)) %>%
+  dplyr::summarise(docSurf = round(mean(doc,na.rm=T),2)) %>%
   ungroup
 
 chem4 = left_join(chem2,chem3,by='date')
 
-chem5 = data.frame(datetime = chem4$date,DOC = round(chem4$docMean,3),DOCwc = chem4$docSurf)
+chem5 = data.frame(datetime = chem4$date,DOC = chem4$docSurf,DOCwc = round(chem4$docMean,3))
 chem5 = chem5[!is.na(chem5$DOC),]
 chem5 = chem5[chem5$DOC < 30,]
 write.csv(chem5,'../MononaValidationDOC.csv',row.names = F,quote=F)
@@ -85,7 +85,7 @@ chl$sampledate = as.Date(strptime(chl$sampledate,'%Y-%m-%d'))
 
 chl2 = chl %>% select(date = sampledate, chl = correct_chl_fluor) %>%
   group_by(date) %>%
-  summarise(chl = mean(chl,na.rm=T)) %>%
+  dplyr::summarise(chl = mean(chl,na.rm=T)) %>%
   ungroup
 
 
