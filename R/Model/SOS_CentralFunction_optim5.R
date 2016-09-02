@@ -132,7 +132,10 @@ ValidationDataDO$Flux <- k*(ValidationDataDO$DO_con-DO_sat$do.sat)/PhoticDepth$P
 #SedData MAR OC 
 ValidationDataMAROC <- ObservedMAR_oc #g/m2
 
-
+DOCR_RespParam = 0.0005
+DOCL_RespParam = 0.003
+BurialFactor_R = 0.003
+BurialFactor_L = 0.001
 #################### OPTIMIZATION ROUTINE ############################################
 if (OptimizationFlag==1){
   min.calcModelNLL <- function(pars,ValidationDataDOC,ValidationDataDO,ValidationDataMAROC){
@@ -166,12 +169,16 @@ if (OptimizationFlag==1){
     print(paste('parameters: ',pars,sep=''))
     return(NLL)
   }
+  ## Test call ##
+  # min.calcModelNLL(par = c(0.003,0.001,0.001,0.01,0.91),ValidationDataDOC = ValidationDataDOC,
+  #                  ValidationDataDO = ValidationDataDO,ValidationDataMAROC = ValidationDataMAROC)
+  # # 
   
   optimOut = optim(par = c(BurialFactor_R,BurialFactor_L,DOCR_RespParam,DOCL_RespParam,R_auto), min.calcModelNLL,ValidationDataDOC = ValidationDataDOC,
                    ValidationDataDO = ValidationDataDO,ValidationDataMAROC = ValidationDataMAROC, 
-                   control = list(maxit = 15)) #setting maximum number of attempts for now
+                   control = list(maxit = 100)) #setting maximum number of attempts for now
                    #method = 'L-BFGS-B',lower=c(0,0,0) #To constrain
-  
+
   print('Parameter estimates (burial, Rhet, Raut...')
   print(optimOut$par)
   ## New parameters from optimization output
@@ -185,14 +192,14 @@ if (OptimizationFlag==1){
   DOCL_RespParam <- optimOut$par[4]
   R_auto <- optimOut$par[5]
 }
-
-####################### END OPTIMIZATION ROUTINE #################################
-####################### MAIN PROGRAM #############################################
-DOCR_RespParam = 0.0005
-DOCL_RespParam = 0.003
-BurialFactor_R = 0.003
-BurialFactor_L = 0.001
-R_auto
+# 
+# ####################### END OPTIMIZATION ROUTINE #################################
+# ####################### MAIN PROGRAM #############################################
+# DOCR_RespParam = 0.0005
+# DOCL_RespParam = 0.003
+# BurialFactor_R = 0.003
+# BurialFactor_L = 0.001
+# R_auto
 
 for (i in 1:(steps)){
   if (R_auto > 1){R_auto = 1}
