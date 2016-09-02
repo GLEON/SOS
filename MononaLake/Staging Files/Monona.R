@@ -1,5 +1,7 @@
 setwd('~/Documents/Rpackages/SOS/MononaLake/Staging Files/')
-
+setwd('MononaLake/Staging Files/')
+library(dplyr)
+library(tidyr)
 ### Lake Monona ####
 vol = 110*10^6 #m3
 
@@ -55,13 +57,13 @@ chem$doc[chem$doc < 0 & !is.na(chem$doc)] = NA # Remove negative numbers
 chem$totpuf_sloh[chem$totpuf_sloh < 0 & !is.na(chem$totpuf_sloh)] = NA # Remove negative numbers
 
 # MEAN DOC and TP
-chem2 = chem %>% select(date = sampledate, doc = doc, tp = totpuf_sloh) %>%
+chem2 = chem %>% dplyr::select(date = sampledate, doc = doc, tp = totpuf_sloh) %>%
   group_by(date) %>%
-  dplyr::summarise(docMean = round(mean(doc,na.rm=T),2),tp = round(mean(tp,na.rm=T),2)) %>%
+  dplyr::summarise(docMean = round(mean(doc,na.rm=T),2),tp = round(mean(tp,na.rm=T)*1000,2)) %>% #convert TP to ug/L
   ungroup
 
 # SURFACE DOC
-chem3 = chem %>% select(date = sampledate,depth, doc = doc) %>%
+chem3 = chem %>% dplyr::select(date = sampledate,depth, doc = doc) %>%
   dplyr::filter(depth == 0 | depth==1) %>%
   group_by(date) %>%
   dplyr::summarise(docSurf = round(mean(doc,na.rm=T),2)) %>%
@@ -77,13 +79,13 @@ write.csv(chem5,'../MononaValidationDOC.csv',row.names = F,quote=F)
 secchi = read.csv('north_temperate_lakes_lter__secchi_disk_depth__other_auxiliary_base_crew_sample_data.csv',stringsAsFactors = F)
 secchi$sampledate = as.Date(strptime(secchi$sampledate,'%Y-%m-%d'))
 
-secchi2 = secchi %>% select(date = sampledate,secchi = secnview)
+secchi2 = secchi %>% dplyr::select(date = sampledate,secchi = secnview)
 
 ######################## CHL ########################
 chl = read.csv('north_temperate_lakes_lter__chlorophyll_-_madison_lakes_area.csv',stringsAsFactors = F)
 chl$sampledate = as.Date(strptime(chl$sampledate,'%Y-%m-%d'))
 
-chl2 = chl %>% select(date = sampledate, chl = correct_chl_fluor) %>%
+chl2 = chl %>% dplyr::select(date = sampledate, chl = correct_chl_fluor) %>%
   group_by(date) %>%
   dplyr::summarise(chl = mean(chl,na.rm=T)) %>%
   ungroup
@@ -94,10 +96,10 @@ inflow = read.csv('USGS-05428500_NWIS_YaharaOutlet.csv',stringsAsFactors = F)
 inflow$datetime = as.Date(strptime(inflow$datetime,'%Y-%m-%d'))
 inflow$Discharge_ft3_s = as.numeric(inflow$Discharge_ft3_s)* 0.0283168
 
-inflow2 = inflow %>% select(date = datetime, discharge = Discharge_ft3_s )
+inflow2 = inflow %>% dplyr::select(date = datetime, discharge = Discharge_ft3_s )
 
 ######################## INFLOW DOC FROM MENDOTA ########################
-inDOC = read.csv('../../MendotaLake_HD/MendotaValidationDOC.csv',stringsAsFactors = F)
+inDOC = read.csv('../../aMendotaLake/aMendotaValidationDOC.csv',stringsAsFactors = F)
 inDOC$datetime = as.Date(strptime(inDOC$datetime,'%Y-%m-%d'))
 
 ######################## RAIN ########################
@@ -110,9 +112,9 @@ write.csv(rain,'../MononaRain.csv',row.names = F,quote=F)
 ######################## COMBINE DATAFRAMES ########################
 df = data.frame(datetime = seq.Date(as.Date('2003-12-02'),as.Date('2014-12-31'),by='day'))
 df$Volume = vol
-df$FlowIn[df$datetime %in% inflow2$date] = inflow2$discharge[inflow2$date %in% df$datetime]
+df$FlowIn[df$datetime %in% inflow2$date] = round(inflow2$discharge[inflow2$date %in% df$datetime],2)
 df$FlowOut = df$FlowIn
-df$Rain[df$datetime %in% rain$datetime] = rain$Rain[rain$datetime %in% df$datetime]
+df$Rain[df$datetime %in% rain$datetime] = round(rain$Rain[rain$datetime %in% df$datetime],2)
 df$HypoTemp[df$datetime %in% layerTemps$date] = layerTemps$hypoTemp[layerTemps$date %in% df$datetime]
 df$EpiTemp[df$datetime %in% layerTemps$date] = layerTemps$epiTemp[layerTemps$date %in% df$datetime]
 df$TP[df$datetime %in% chem4$date] = chem4$tp[chem4$date %in% df$datetime]
