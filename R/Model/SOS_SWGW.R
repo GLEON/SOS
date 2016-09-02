@@ -29,14 +29,14 @@
 # Load_DOC - cumulative input rate of DOC in this function (g/d)
 # Load_POC - cumulative input rate of POC in this function (g/d)
 
-                                                        
-  SWGWFunction <- function(Q_sw,Q_gw,Rainfall,Aoc_day, PC, lakePerim, Woc_day, PW, DOC_GW,
-                         DOC_SW, DOC_Precip,lakeArea) {
 
+SWGWFunction <- function(Q_sw,Q_gw,Rainfall,Aoc_day, PC, lakePerim, Woc_day, PW, DOC_GW,
+                         DOC_SW, DOC_Precip,lakeArea) {
+  
   InflowData = data.frame(POC_Aerial=NA, POC_SW=NA, DOC_Wetland=NA, 
                           DOC_GW=NA, DOC_SW=NA, DailyRain=NA, 
                           DOC_Precip=NA, Load_DOC=NA, Load_POC=NA)
-    
+  
   # Aerial POC (g/d)
   InflowData$POC_Aerial <- (PC*Aoc_day*lakePerim) #g/d
   
@@ -48,7 +48,7 @@
   
   # Sw DOC (g/d)
   InflowData$DOC_SW <- DOC_SW * Q_sw * 86400 #g/d
-
+  
   # Precipitation DOC (g/d)
   InflowData$DailyRain <- (Rainfall * 0.001) * lakeArea #m3/d: daily precip.
   InflowData$DOC_Precip <- DOC_Precip * InflowData$DailyRain #g/d
@@ -64,4 +64,5 @@
   
   return(InflowData)
 }
-
+  
+  

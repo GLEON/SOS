@@ -22,6 +22,6 @@ Resp <- function(DOC,temp,RespParam){
   } else {
     R <- 0
   }
-
+  
   return(R)  
 }
