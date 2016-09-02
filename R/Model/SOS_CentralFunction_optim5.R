@@ -170,13 +170,13 @@ if (OptimizationFlag==1){
     return(NLL)
   }
   ## Test call ##
-  # min.calcModelNLL(par = c(0.003,0.001,0.001,0.01,0.91),ValidationDataDOC = ValidationDataDOC,
-  #                  ValidationDataDO = ValidationDataDO,ValidationDataMAROC = ValidationDataMAROC)
+  min.calcModelNLL(par = c(0.003,0.001,0.001,0.01,0.91),ValidationDataDOC = ValidationDataDOC,
+                   ValidationDataDO = ValidationDataDO,ValidationDataMAROC = ValidationDataMAROC)
   # # 
   
   optimOut = optim(par = c(BurialFactor_R,BurialFactor_L,DOCR_RespParam,DOCL_RespParam,R_auto), min.calcModelNLL,ValidationDataDOC = ValidationDataDOC,
                    ValidationDataDO = ValidationDataDO,ValidationDataMAROC = ValidationDataMAROC, 
-                   control = list(maxit = 100)) #setting maximum number of attempts for now
+                   control = list(maxit = 200)) #setting maximum number of attempts for now
                    #method = 'L-BFGS-B',lower=c(0,0,0) #To constrain
 
   print('Parameter estimates (burial, Rhet, Raut...')
@@ -195,11 +195,12 @@ if (OptimizationFlag==1){
 # 
 # ####################### END OPTIMIZATION ROUTINE #################################
 # ####################### MAIN PROGRAM #############################################
-# DOCR_RespParam = 0.0005
-# DOCL_RespParam = 0.003
-# BurialFactor_R = 0.003
-# BurialFactor_L = 0.001
-# R_auto
+BurialFactor_R = 0.003
+BurialFactor_L = 0.001
+DOCR_RespParam = 0.001
+DOCL_RespParam = 0.01 #0.002983842
+R_auto =  0.91
+# 0.1075408225 -0.0004499569  0.0015787615  0.0028859111  0.9126268293
 
 for (i in 1:(steps)){
   if (R_auto > 1){R_auto = 1}
@@ -280,7 +281,7 @@ for (i in 1:(steps)){
 
 #Store POC and DOC fluxes as mass/area/time (g/m2/yr)
 POC_df$NPPin_gm2y <-  PPdata$NPP_POCL_mass/LakeArea/(TimeStep/365)
-POC_df$FlowIn_gm2y <- SWGWData$POC_massIn_g/LakeArea/(TimeStep/365)
+POC_df$FlowIn_gm2y <- SWGWData$POCR_massIn_g/LakeArea/(TimeStep/365)
 POC_df$FlowOut_gm2y <- (SWGWData$POCR_outflow + SWGWData$POCL_outflow)/LakeArea/(TimeStep/365)
 POC_df$sedOut_gm2y <- SedData$POC_burial_total/LakeArea/(TimeStep/365)
 POC_df$leachOut_gm2y <- (LeachData$POCR_leachOut + LeachData$POCL_leachOut)/LakeArea/(TimeStep/365)

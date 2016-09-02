@@ -75,9 +75,12 @@ modelDOC <- function (BurialFactorR_init,BurialFactorL_init,RespParamR_init,Resp
       DOC_df$DOCR_conc_gm3[i+1] <- DOC_df$DOCR_conc_gm3[i] + ((SWGWData$DOCR_massIn_g[i] + LeachData$DOCR_leachIn[i] - SWGWData$DOCR_outflow[i] - PPdata$DOCR_massRespired[i])/LakeVolume) #g/m3
       DOC_df$DOCtotal_conc_gm3[i+1] = DOC_df$DOCR_conc_gm3[i+1] + DOC_df$DOCL_conc_gm3[i+1]
       
-      #Stop code and output error if concentrations go to negative
-      # if (POC_df$POCtotal_conc_gm3[i+1]<=0){stop("Negative POC concentration!")}
-      # if (DOC_df$DOCtotal_conc_gm3[i+1]<=0){stop("Negative DOC concentration!")}
+      #Make calibration terrible if concentrations go to negative
+      if (POC_df$POCtotal_conc_gm3[i+1]<=0 | DOC_df$DOCtotal_conc_gm3[i+1]<=0){
+        DOC_df$DOCtotal_conc_gm3 = 0
+        Metabolism$Oxygen = 0
+        SedData$MAR_oc_total = 0
+      }
     }
   }
 
