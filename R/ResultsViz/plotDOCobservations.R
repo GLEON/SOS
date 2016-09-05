@@ -1,11 +1,11 @@
 #CarbonFluxModel <- function(LakeName,PlotFlag,ValidationFlag){
 library(lubridate)
 library(zoo)
-names = c('Mendota','Toolik','Vanern','Harp','Trout')
+names = c('Mendota','Toolik','Vanern','Harp','Trout','Monona')
 
 var = 'DOC'
 annual = FALSE
-par(mfrow=c(6,1))
+#par(mfrow=c(6,1))
 for (LakeName in names){
   ##### INPUT FILE NAMES ################
   TimeSeriesFile <- paste('./',LakeName,'Lake/',LakeName,'TS.csv',sep='')
@@ -38,7 +38,8 @@ for (LakeName in names){
   if (var == 'DOC'){
     #DOC Validation Output Setup
     DOC <- read.csv(ValidationFileDOC,header=T)
-    DOC$datetime <- as.Date(as.POSIXct(strptime(DOC$datetime,"%m/%d/%Y %H:%M"),tz="GMT")) #Convert time to POSIX
+    #DOC$datetime <- as.Date(as.POSIXct(strptime(DOC$datetime,"%m/%d/%Y %H:%M"),tz="GMT")) #Convert time to POSIX
+    DOC$datetime <- as.Date(as.POSIXct(strptime(DOC$datetime,"%Y-%m-%d"),tz="GMT")) #Convert time to POSIX
     DOC$year = year(DOC$datetime)
     
     ########## Following filter leaves some nans
@@ -50,9 +51,14 @@ for (LakeName in names){
     myData = na.omit(myData)
     myData = myData[1:length(myData)]
     myTime = DOC$datetime[iGood]
-    print('Removing trend...')     
+    print('Removing trend...')    
+    acf(myData,main=LakeName)
     ###########
-    
+    plot(myTime,myData,type='o')
+    for (year in seq(1998,2014,by = 1)){
+      abline(v=as.Date(paste0(year,'-01-01')),lty=2)
+    }
+           
     # sampFreq = round(nrow(DOC)/length(years),0)
     # DOC$runMean = rollmean(x = DOC$DOC,k = sampFreq,fill = NA)
     # DOC$resid = DOC$DOC - DOC$runMean
@@ -62,7 +68,7 @@ for (LakeName in names){
     year(new$yday) = 2000
   
     years = unique(new$year)
-    par(mar=c(2,3,1.5,1),mgp=c(1.5,0.5,0))
+    #par(mar=c(2,3,1.5,1),mgp=c(1.5,0.5,0))
     
     if (annual == T) {
       df = new[new$year == years[1],]

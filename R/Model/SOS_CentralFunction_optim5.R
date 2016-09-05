@@ -1,7 +1,8 @@
+setwd('../..')
 #CarbonFluxModel <- function(LakeName,PlotFlag,ValidationFlag){
 #Flags 1 for yes, else no.
-LakeName = 'Monona'
-OptimizationFlag = 1
+LakeName = 'Trout'
+OptimizationFlag = 0
 PlotFlag = 0
 ValidationFlag = 1
 
@@ -25,7 +26,7 @@ source("./R/Model/SOS_Sedimentation.R")
 source("./R/Model/SOS_SWGW.R")
 source("./R/Model/SOS_GPP.R")
 source("./R/Model/SOS_Resp.R")
-source("./R/Model/modelDOC_4.R")
+source("./R/Model/modelDOC_5.R")
 
 ##### READ MAIN INPUT FILE #################
 RawData <- read.csv(TimeSeriesFile,header=T) #Read main data file with GLM outputs (physical input) and NPP input
@@ -121,6 +122,7 @@ ValidationDataDO = ValidationDataDO[complete.cases(ValidationDataDO),]
 ValidationDataDO = ValidationDataDO[yday(ValidationDataDO$datetime)>ProdStartDay & yday(ValidationDataDO$datetime)<ProdEndDay,]
 #ValidationDataDO = ValidationDataDO[ValidationDataDO$wtr >= 10,]
 
+
 k <- 0.5 #m/d
 PhoticDepth <- data.frame(datetime = InputData$datetime,PhoticDepth = log(100)/(1.7/InputData$Secchi))
 IndxVal = ValidationDataDO$datetime %in% as.Date(PhoticDepth$datetime)
@@ -128,14 +130,15 @@ IndxPhotic = as.Date(PhoticDepth$datetime) %in% ValidationDataDO$datetime
 
 ValidationDataDO = ValidationDataDO[IndxVal,]
 DO_sat <- o2.at.sat(ValidationDataDO[,1:2])  
-ValidationDataDO$Flux <- k*(ValidationDataDO$DO_con-DO_sat$do.sat)/PhoticDepth$PhoticDepth[IndxPhotic]
+ValidationDataDO$Flux <- k*(ValidationDataDO$DO_con-DO_sat$do.sat)/PhoticDepth$PhoticDepth[IndxPhotic] #g/m3/d
 #SedData MAR OC 
 ValidationDataMAROC <- ObservedMAR_oc #g/m2
 
-DOCR_RespParam = 0.0005
-DOCL_RespParam = 0.003
-BurialFactor_R = 0.003
-BurialFactor_L = 0.001
+BurialFactor_R = 0.1075
+BurialFactor_L = 0
+DOCR_RespParam = 0.00158
+DOCL_RespParam = 0.00288
+R_auto =  0.75
 #################### OPTIMIZATION ROUTINE ############################################
 if (OptimizationFlag==1){
   min.calcModelNLL <- function(pars,ValidationDataDOC,ValidationDataDO,ValidationDataMAROC){
@@ -153,7 +156,7 @@ if (OptimizationFlag==1){
                                       Measured = ValidationDataDO[obsIndx,]$Flux, Modelled = modeled[modIndx,]$MetabOxygen)
     
     #resDO = scale(CalibrationOutputDO$Measured - CalibrationOutputDO$Modelled,center = F)
-    DOScale = 5
+    DOScale = 10
     resDO = (CalibrationOutputDO$Measured - CalibrationOutputDO$Modelled) * DOScale
     sedScale = 0.001
     resSedData = (mean(modeled$SedData_MAR,na.rm = T) - ValidationDataMAROC) * sedScale #not scaled because it is 1 value
@@ -195,13 +198,14 @@ if (OptimizationFlag==1){
 # 
 # ####################### END OPTIMIZATION ROUTINE #################################
 # ####################### MAIN PROGRAM #############################################
-BurialFactor_R = 0.003
-BurialFactor_L = 0.001
-DOCR_RespParam = 0.001
-DOCL_RespParam = 0.01 #0.002983842
-R_auto =  0.91
-# 0.1075408225 -0.0004499569  0.0015787615  0.0028859111  0.9126268293
-
+BurialFactor_R = 
+BurialFactor_L = 
+DOCR_RespParam = 
+DOCL_RespParam = 
+R_auto =  
+# Monona 0.270671129 -0.011526258  0.000596066  0.062588791  0.792906357
+# Harp -0.003703229 -0.001875320  0.002166187  0.002918230  1.012749361
+  
 for (i in 1:(steps)){
   if (R_auto > 1){R_auto = 1}
   
@@ -227,8 +231,10 @@ for (i in 1:(steps)){
   PPdata$DOCL_massRespired[i] = DOCL_resp_rate*LakeVolume*TimeStep #g C
   
   #Calc metabolism (DO) estimates for PP validation
-  Metabolism$NEP[i] <- (PPdata$NPP_DOCL_mass[i] + PPdata$NPP_POCL_mass[i] - PPdata$DOCR_massRespired[i]*(PhoticDepth/LakeDepth) - PPdata$DOCL_massRespired[i]*(PhoticDepth/LakeDepth))/
-                        (LakeVolume*PhoticDepth/LakeDepth)/TimeStep #g/m3/d #volume of photic zone
+  # Metabolism$NEP[i] <- (PPdata$NPP_DOCL_mass[i] + PPdata$NPP_POCL_mass[i] - PPdata$DOCR_massRespired[i]*(PhoticDepth/LakeDepth) - PPdata$DOCL_massRespired[i]*(PhoticDepth/LakeDepth))/
+  #                       (LakeVolume*PhoticDepth/LakeDepth)/TimeStep #g/m3/d #volume of photic zone
+  Metabolism$NEP[i] <- (PPdata$NPP_DOCL_mass[i] + PPdata$NPP_POCL_mass[i] - PPdata$DOCR_massRespired[i] - PPdata$DOCL_massRespired[i])/
+    (LakeVolume*PhoticDepth/LakeDepth)/TimeStep #g/m3/d #volume of photic zone
   Metabolism$Oxygen[i] <- (Metabolism$NEP[i])*(32/12) #g/m3/d Molar conversion of C flux to O2 flux (lake metabolism)
   
   #Call SWGW Function (Surface Water/GroundWater)
