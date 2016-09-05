@@ -5,6 +5,8 @@ LakeName = 'Trout'
 OptimizationFlag = 0
 PlotFlag = 0
 ValidationFlag = 1
+timestampFormat = '%m/%d/%Y'
+timestampFormat = '%Y-%m-%d'
 
 ##### INPUT FILE NAMES ################
 TimeSeriesFile <- paste('./',LakeName,'Lake/',LakeName,'TS.csv',sep='')
@@ -30,8 +32,7 @@ source("./R/Model/modelDOC_5.R")
 
 ##### READ MAIN INPUT FILE #################
 RawData <- read.csv(TimeSeriesFile,header=T) #Read main data file with GLM outputs (physical input) and NPP input
-#RawData$datetime <- as.POSIXct(strptime(RawData$datetime,"%m/%d/%Y %H:%M"),tz="GMT") #Convert time to POSIX
-RawData$datetime <- as.POSIXct(strptime(RawData$datetime,"%Y-%m-%d"),tz="GMT") #Convert time to POSIX
+RawData$datetime <- as.POSIXct(strptime(RawData$datetime,timestampFormat),tz="GMT") #Convert time to POSIX
 cc = which(complete.cases(RawData))
 RawData = RawData[cc[1]:tail(cc,1),]
 
@@ -43,8 +44,7 @@ for (col in 2:ncol(InputData)){
 InputData$Chla[InputData$Chla == 0] = 0.0001
 ##### READ RAIN FILE #######################
 RainData <- read.csv(RainFile,header=T,stringsAsFactors = F) #Read daily rain file (units=mm) Read separately and added back to main file to avoid issues of linear interpolation with rain data in length units
-#RainData$datetime <- as.POSIXct(strptime(RainData$datetime,'%m/%d/%Y',tz='GMT'))
-RainData$datetime <- as.POSIXct(strptime(RainData$datetime,'%Y-%m-%d',tz='GMT'))
+RainData$datetime <- as.POSIXct(strptime(RainData$datetime,timestampFormat,tz='GMT'))
 
 InputData$Rain <- RainData$Rain[RainData$datetime %in% InputData$datetime] #Plug daily rain data into InputData file to integrate with original code.
 
@@ -106,8 +106,7 @@ POC_df$POCL_conc_gm3[1] <- POC_init*0.2 #Initialize POC concentration g/m3
 
 #DOC Validation Output Setup
 ValidationDataDOC <- read.csv(ValidationFileDOC,header=T)
-#ValidationDataDOC$datetime <- as.Date(as.POSIXct(strptime(ValidationDataDOC$datetime,"%m/%d/%Y %H:%M"),tz="GMT")) #Convert time to POSIX
-ValidationDataDOC$datetime <- as.Date(as.POSIXct(strptime(ValidationDataDOC$datetime,"%Y-%m-%d"),tz="GMT")) #Convert time to POSIX
+ValidationDataDOC$datetime <- as.Date(as.POSIXct(strptime(ValidationDataDOC$datetime,timestampFormat),tz="GMT")) #Convert time to POSIX
 ValidationDataDOC = ValidationDataDOC[complete.cases(ValidationDataDOC),]
 outlier.limit = (mean(ValidationDataDOC$DOC) + 3*(sd(ValidationDataDOC$DOC))) # Calculate mean + 3 SD of DOC column
 ValidationDataDOC = ValidationDataDOC[ValidationDataDOC$DOC <= outlier.limit,] # Remove rows where DOC > outlier.limit
@@ -115,8 +114,7 @@ ValidationDataDOC = ddply(ValidationDataDOC,'datetime',summarize,DOC=mean(DOC))
 
 #DO Validation Output Setup
 ValidationDataDO <- read.csv(ValidationFileDO,header=T)
-#ValidationDataDO$datetime <- as.Date(as.POSIXct(strptime(ValidationDataDO$datetime,"%m/%d/%Y %H:%M"),tz="GMT")) #Convert time to POSIX
-ValidationDataDO$datetime <- as.Date(as.POSIXct(strptime(ValidationDataDO$datetime,"%Y-%m-%d"),tz="GMT")) #Convert time to POSIX
+ValidationDataDO$datetime <- as.Date(as.POSIXct(strptime(ValidationDataDO$datetime,timestampFormat),tz="GMT")) #Convert time to POSIX
 ValidationDataDO = ValidationDataDO[complete.cases(ValidationDataDO),]
 #Only compare to DO data during "production season."
 ValidationDataDO = ValidationDataDO[yday(ValidationDataDO$datetime)>ProdStartDay & yday(ValidationDataDO$datetime)<ProdEndDay,]
@@ -129,8 +127,8 @@ IndxVal = ValidationDataDO$datetime %in% as.Date(PhoticDepth$datetime)
 IndxPhotic = as.Date(PhoticDepth$datetime) %in% ValidationDataDO$datetime
 
 ValidationDataDO = ValidationDataDO[IndxVal,]
-DO_sat <- o2.at.sat(ValidationDataDO[,1:2])  
-ValidationDataDO$Flux <- k*(ValidationDataDO$DO_con-DO_sat$do.sat)/PhoticDepth$PhoticDepth[IndxPhotic] #g/m3/d
+ValidationDataDO$DO_sat <- o2.at.sat(ValidationDataDO[,1:2])[,2]  
+ValidationDataDO$Flux <- k*(ValidationDataDO$DO_con - ValidationDataDO$DO_sat)/PhoticDepth$PhoticDepth[IndxPhotic] #g/m3/d
 #SedData MAR OC 
 ValidationDataMAROC <- ObservedMAR_oc #g/m2
 
