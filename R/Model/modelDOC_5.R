@@ -1,4 +1,5 @@
-modelDOC <- function (BurialFactorR_init,BurialFactorL_init,RespParamR_init,RespParamL_init,R_auto_init) {
+modelDOC <- function (RespParamR_init,RespParamL_init,R_auto_init,BurialFactorR_init,BurialFactorL_init,
+                      POC_lc_init) {
   
   for (i in 1:(steps)){
     #Prevent negative parameter guesses from blowing model up
@@ -29,7 +30,9 @@ modelDOC <- function (BurialFactorR_init,BurialFactorL_init,RespParamR_init,Resp
     PPdata$DOCL_massRespired[i] = DOCL_resp_rate*LakeVolume*TimeStep #g C
     
     #Calc metabolism (DO) estimates for PP validation
-    Metabolism$NEP[i] <- (PPdata$NPP_DOCL_mass[i] + PPdata$NPP_POCL_mass[i] - PPdata$DOCR_massRespired[i]*(PhoticDepth/LakeDepth) - PPdata$DOCL_massRespired[i]*(PhoticDepth/LakeDepth))/
+    # Metabolism$NEP[i] <- (PPdata$NPP_DOCL_mass[i] + PPdata$NPP_POCL_mass[i] - PPdata$DOCR_massRespired[i]*(PhoticDepth/LakeDepth) - PPdata$DOCL_massRespired[i]*(PhoticDepth/LakeDepth))/
+    #   (LakeVolume*PhoticDepth/LakeDepth)/TimeStep #g/m3/d #volume of photic zone
+    Metabolism$NEP[i] <- (PPdata$NPP_DOCL_mass[i] + PPdata$NPP_POCL_mass[i] - PPdata$DOCR_massRespired[i] - PPdata$DOCL_massRespired[i])/
       (LakeVolume*PhoticDepth/LakeDepth)/TimeStep #g/m3/d #volume of photic zone
     Metabolism$Oxygen[i] <- (Metabolism$NEP[i])*(32/12) #g/m3/d Molar conversion of C flux to O2 flux (lake metabolism)
     
@@ -60,9 +63,9 @@ modelDOC <- function (BurialFactorR_init,BurialFactorL_init,RespParamR_init,Resp
     SWGWData$DOCR_massIn_g[i] <- SWGWData$Load_DOCR[i]*TimeStep #g
     SWGWData$POCR_massIn_g[i] <- SWGWData$Load_POCR[i]*TimeStep #g
     #Calc POC-to-DOC leaching
-    LeachData$POCR_leachOut[i] <- POC_df$POCR_conc_gm3[i]*POC_lc*LakeVolume*TimeStep #g - POC concentration times leaching parameter
+    LeachData$POCR_leachOut[i] <- POC_df$POCR_conc_gm3[i]*POC_lc_init*LakeVolume*TimeStep #g - POC concentration times leaching parameter
     LeachData$DOCR_leachIn[i] <- LeachData$POCR_leachOut[i]
-    LeachData$POCL_leachOut[i] <- POC_df$POCL_conc_gm3[i]*POC_lc*LakeVolume*TimeStep #g - POC concentration times leaching parameter
+    LeachData$POCL_leachOut[i] <- POC_df$POCL_conc_gm3[i]*POC_lc_init*LakeVolume*TimeStep #g - POC concentration times leaching parameter
     LeachData$DOCL_leachIn[i] <- LeachData$POCL_leachOut[i]
     if (i < steps) { #don't calculate for last time step
       #Update POC and DOC concentration values (g/m3) for whole lake
@@ -83,7 +86,7 @@ modelDOC <- function (BurialFactorR_init,BurialFactorL_init,RespParamR_init,Resp
       }
     }
   }
-
+  
   # Final output
   return(data.frame('datetime' = as.Date(InputData$datetime), 'DOC_conc' = DOC_df$DOCtotal_conc_gm3,
                     'MetabOxygen' = Metabolism$Oxygen,'SedData_MAR' = SedData$MAR_oc_total))

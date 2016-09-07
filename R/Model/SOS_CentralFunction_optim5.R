@@ -1,13 +1,12 @@
-setwd('../..')
+setwd('C:/Users/hdugan/Documents/Rpackages/SOS/')
 #CarbonFluxModel <- function(LakeName,PlotFlag,ValidationFlag){
 #Flags 1 for yes, else no.
-LakeName = 'Trout'
-OptimizationFlag = 0
+LakeName = 'Monona'
+OptimizationFlag = 1
 PlotFlag = 0
 ValidationFlag = 1
-timestampFormat = '%m/%d/%Y'
-timestampFormat = '%Y-%m-%d'
-
+timestampFormat =	'%m/%d/%Y'
+timestampFormat =	'%Y-%m-%d'
 ##### INPUT FILE NAMES ################
 TimeSeriesFile <- paste('./',LakeName,'Lake/',LakeName,'TS.csv',sep='')
 RainFile <- paste('./',LakeName,'Lake/',LakeName,'Rain.csv',sep='')
@@ -30,6 +29,12 @@ source("./R/Model/SOS_GPP.R")
 source("./R/Model/SOS_Resp.R")
 source("./R/Model/modelDOC_5.R")
 
+##### READ PARAMETER FILE ##################
+parameters <- read.table(file = ParameterFile,header=TRUE,comment.char="#",stringsAsFactors = F)
+for (i in 1:nrow(parameters)){ # assign parameters
+  assign(parameters[i,1],parameters[i,2])
+}
+
 ##### READ MAIN INPUT FILE #################
 RawData <- read.csv(TimeSeriesFile,header=T) #Read main data file with GLM outputs (physical input) and NPP input
 RawData$datetime <- as.POSIXct(strptime(RawData$datetime,timestampFormat),tz="GMT") #Convert time to POSIX
@@ -47,12 +52,6 @@ RainData <- read.csv(RainFile,header=T,stringsAsFactors = F) #Read daily rain fi
 RainData$datetime <- as.POSIXct(strptime(RainData$datetime,timestampFormat,tz='GMT'))
 
 InputData$Rain <- RainData$Rain[RainData$datetime %in% InputData$datetime] #Plug daily rain data into InputData file to integrate with original code.
-
-##### READ PARAMETER FILE ##################
-parameters <- read.table(file = ParameterFile,header=TRUE,comment.char="#",stringsAsFactors = F)
-for (i in 1:nrow(parameters)){ # assign parameters
-  assign(parameters[i,1],parameters[i,2])
-}
 
 ###### Run Period and Time Step Setup #####
 TimeStep <- as.numeric(InputData$datetime[2]-InputData$datetime[1]) #days
@@ -110,7 +109,7 @@ ValidationDataDOC$datetime <- as.Date(as.POSIXct(strptime(ValidationDataDOC$date
 ValidationDataDOC = ValidationDataDOC[complete.cases(ValidationDataDOC),]
 outlier.limit = (mean(ValidationDataDOC$DOC) + 3*(sd(ValidationDataDOC$DOC))) # Calculate mean + 3 SD of DOC column
 ValidationDataDOC = ValidationDataDOC[ValidationDataDOC$DOC <= outlier.limit,] # Remove rows where DOC > outlier.limit
-ValidationDataDOC = ddply(ValidationDataDOC,'datetime',summarize,DOC=mean(DOC))
+ValidationDataDOC = ddply(ValidationDataDOC,'datetime',summarize,DOC=mean(DOC),DOCwc=mean(DOCwc))
 
 #DO Validation Output Setup
 ValidationDataDO <- read.csv(ValidationFileDO,header=T)
@@ -132,15 +131,10 @@ ValidationDataDO$Flux <- k*(ValidationDataDO$DO_con - ValidationDataDO$DO_sat)/P
 #SedData MAR OC 
 ValidationDataMAROC <- ObservedMAR_oc #g/m2
 
-BurialFactor_R = 0.1075
-BurialFactor_L = 0
-DOCR_RespParam = 0.00158
-DOCL_RespParam = 0.00288
-R_auto =  0.75
 #################### OPTIMIZATION ROUTINE ############################################
 if (OptimizationFlag==1){
   min.calcModelNLL <- function(pars,ValidationDataDOC,ValidationDataDO,ValidationDataMAROC){
-    modeled = modelDOC(pars[1],pars[2],pars[3],pars[4],pars[5])
+    modeled = modelDOC(pars[1],pars[2],pars[3],pars[4],pars[5],pars[6])
     
     obsIndx = ValidationDataDOC$datetime %in% modeled$datetime
     modIndx = modeled$datetime %in% ValidationDataDOC$datetime
@@ -154,7 +148,7 @@ if (OptimizationFlag==1){
                                       Measured = ValidationDataDO[obsIndx,]$Flux, Modelled = modeled[modIndx,]$MetabOxygen)
     
     #resDO = scale(CalibrationOutputDO$Measured - CalibrationOutputDO$Modelled,center = F)
-    DOScale = 10
+    DOScale = 5
     resDO = (CalibrationOutputDO$Measured - CalibrationOutputDO$Modelled) * DOScale
     sedScale = 0.001
     resSedData = (mean(modeled$SedData_MAR,na.rm = T) - ValidationDataMAROC) * sedScale #not scaled because it is 1 value
@@ -171,15 +165,16 @@ if (OptimizationFlag==1){
     return(NLL)
   }
   ## Test call ##
-  min.calcModelNLL(par = c(0.003,0.001,0.001,0.01,0.91),ValidationDataDOC = ValidationDataDOC,
+  min.calcModelNLL(par = c(0.000596,0.06258,0.792,0.270,-0.011,0.01),ValidationDataDOC = ValidationDataDOC,
                    ValidationDataDO = ValidationDataDO,ValidationDataMAROC = ValidationDataMAROC)
   # # 
   
-  optimOut = optim(par = c(BurialFactor_R,BurialFactor_L,DOCR_RespParam,DOCL_RespParam,R_auto), min.calcModelNLL,ValidationDataDOC = ValidationDataDOC,
+  optimOut = optim(par = c(DOCR_RespParam,DOCL_RespParam,R_auto,BurialFactor_R,BurialFactor_L,POC_lc), 
+                   min.calcModelNLL,ValidationDataDOC = ValidationDataDOC,
                    ValidationDataDO = ValidationDataDO,ValidationDataMAROC = ValidationDataMAROC, 
                    control = list(maxit = 200)) #setting maximum number of attempts for now
-                   #method = 'L-BFGS-B',lower=c(0,0,0) #To constrain
-
+  #method = 'L-BFGS-B',lower=c(0,0,0) #To constrain
+  
   print('Parameter estimates (burial, Rhet, Raut...')
   print(optimOut$par)
   ## New parameters from optimization output
@@ -187,24 +182,25 @@ if (OptimizationFlag==1){
   conv <- optimOut$convergence  #did model converge or not (0=yes, 1=no)
   NLL <- optimOut$value #value of nll
   
-  BurialFactor_R <- optimOut$par[1]
-  BurialFactor_L <- optimOut$par[2] #
-  DOCR_RespParam <- optimOut$par[3]
-  DOCL_RespParam <- optimOut$par[4]
-  R_auto <- optimOut$par[5]
+  
+  DOCR_RespParam <- optimOut$par[1]
+  DOCL_RespParam <- optimOut$par[2]
+  R_auto <- optimOut$par[3]
+  BurialFactor_R <- optimOut$par[4]
+  BurialFactor_L <- optimOut$par[5] 
+  POC_lc <- optimOut$par[6]
 }
 # 
 # ####################### END OPTIMIZATION ROUTINE #################################
 # ####################### MAIN PROGRAM #############################################
-BurialFactor_R = 
-BurialFactor_L = 
-DOCR_RespParam = 
-DOCL_RespParam = 
-R_auto =  
-# Monona 0.270671129 -0.011526258  0.000596066  0.062588791  0.792906357
-# Harp -0.003703229 -0.001875320  0.002166187  0.002918230  1.012749361
-  
-for (i in 1:(steps)){
+# Monona c(0.00059606,0.062588791,0.792906357,0.270671129,-0.011526258) 
+# Monona c(0.0007301516 0.0098158459 0.9051277244 0.2850467201 0.0104989802) #NLL 301
+# Harp: c(0.002230285,0.002745391,0.995244529,0.333380628,-0.009177321) #NLL 87
+# Trout:  c( 0.0011254525  0.1520756581  0.7253578540  0.1120424232 -0.0003273584) #NLL: 225
+# Mendota: c(0.0008463344,0.3467401103,0.5110130504,0.0986506182,0.0024431470)
+# Vanern: c(0.001512181,0.030140450,0.758617333,0.328194576,-0.008648217) #NLL = 7.6
+
+for (i in 1:(steps)) {
   if (R_auto > 1){R_auto = 1}
   
   Q_sw <- InputData$FlowIn[i] #m3/s surface water flowrate at i
@@ -229,10 +225,10 @@ for (i in 1:(steps)){
   PPdata$DOCL_massRespired[i] = DOCL_resp_rate*LakeVolume*TimeStep #g C
   
   #Calc metabolism (DO) estimates for PP validation
-  # Metabolism$NEP[i] <- (PPdata$NPP_DOCL_mass[i] + PPdata$NPP_POCL_mass[i] - PPdata$DOCR_massRespired[i]*(PhoticDepth/LakeDepth) - PPdata$DOCL_massRespired[i]*(PhoticDepth/LakeDepth))/
-  #                       (LakeVolume*PhoticDepth/LakeDepth)/TimeStep #g/m3/d #volume of photic zone
-  Metabolism$NEP[i] <- (PPdata$NPP_DOCL_mass[i] + PPdata$NPP_POCL_mass[i] - PPdata$DOCR_massRespired[i] - PPdata$DOCL_massRespired[i])/
+  Metabolism$NEP[i] <- (PPdata$NPP_DOCL_mass[i] + PPdata$NPP_POCL_mass[i] - PPdata$DOCR_massRespired[i]*(PhoticDepth/LakeDepth) - PPdata$DOCL_massRespired[i]*(PhoticDepth/LakeDepth))/
     (LakeVolume*PhoticDepth/LakeDepth)/TimeStep #g/m3/d #volume of photic zone
+  # Metabolism$NEP[i] <- (PPdata$NPP_DOCL_mass[i] + PPdata$NPP_POCL_mass[i] - PPdata$DOCR_massRespired[i] - PPdata$DOCL_massRespired[i])/
+  #   (LakeVolume*PhoticDepth/LakeDepth)/TimeStep #g/m3/d #volume of photic zone
   Metabolism$Oxygen[i] <- (Metabolism$NEP[i])*(32/12) #g/m3/d Molar conversion of C flux to O2 flux (lake metabolism)
   
   #Call SWGW Function (Surface Water/GroundWater)
@@ -268,7 +264,7 @@ for (i in 1:(steps)){
   
   if (i < steps) { #don't calculate for last time step
     #Update POC and DOC concentration values (g/m3) for whole lake
-  
+    
     POC_df$POCL_conc_gm3[i+1] <-  POC_df$POCL_conc_gm3[i] + ((PPdata$NPP_POCL_mass[i] - LeachData$POCL_leachOut[i] - SWGWData$POCL_outflow[i] - SedData$POC_burial_L[i])/LakeVolume) #g/m3
     POC_df$POCR_conc_gm3[i+1] <-  POC_df$POCR_conc_gm3[i] + ((SWGWData$POCR_massIn_g[i] - LeachData$POCR_leachOut[i] - SWGWData$POCR_outflow[i] - SedData$POC_burial_L[i])/LakeVolume)
     POC_df$POCtotal_conc_gm3[i+1] = POC_df$POCR_conc_gm3[i+1] + POC_df$POCL_conc_gm3[i+1]
@@ -347,16 +343,17 @@ if (ValidationFlag==1){
   modIndx = OutputTimeSeries %in% ValidationDataDOC$datetime
   
   CalibrationOutputDOC = data.frame(datetime = rep(NA,sum(ValidationDOCIndeces)),
-                                    Measured = NA, Modelled = NA)
+                                    Measured = NA, MeasuredWC = NA ,Modelled = NA)
   CalibrationOutputDOC$datetime <- ValidationDataDOC$datetime[ValidationDOCIndeces]
   CalibrationOutputDOC$Measured <- ValidationDataDOC$DOC[ValidationDOCIndeces]
+  CalibrationOutputDOC$MeasuredWC <- ValidationDataDOC$DOCwc[ValidationDOCIndeces]
   CalibrationOutputDOC$Modelled <- DOC_df$DOCtotal_conc_gm3[modIndx]
   
   #DO Validation Output Setup
   ValidationDataDO_match = ValidationDataDO[ValidationDataDO$datetime %in% OutputTimeSeries,]
   modIndx = OutputTimeSeries %in% ValidationDataDO_match$datetime
   CalibrationOutputDO = data.frame(datetime = ValidationDataDO_match$datetime,
-                                    Measured = NA, Modelled = NA)
+                                   Measured = NA, Modelled = NA)
   
   PhoticDepth <- data.frame(datetime = InputData$datetime,PhoticDepth = log(100)/(1.7/InputData$Secchi))
   DO_sat <- o2.at.sat(ValidationDataDO_match[,1:2])  
@@ -365,17 +362,22 @@ if (ValidationFlag==1){
   CalibrationOutputDO$Measured <- k*(ValidationDataDO_match$DO_con-DO_sat$do.sat)/PhoticDepth$PhoticDepth[IndxPhotic]
   CalibrationOutputDO$Modelled <- Metabolism$Oxygen[modIndx]
   
-  #Plot Calibration
+  #Plot Calibration DOC
   par(mfrow=c(2,1),mar=c(2,3,2,1),mgp=c(1.5,0.3,0),tck=-0.02)
-  plot(CalibrationOutputDOC$datetime,CalibrationOutputDOC$Measured,type='o',pch=19,cex=0.5,ylab = 'DOC',xlab='',
+  plot(CalibrationOutputDOC$datetime,CalibrationOutputDOC$Measured,type='o',pch=19,cex=0.7,ylab = 'DOC',xlab='',
        ylim = c(min(CalibrationOutputDOC[,2:3]),max(CalibrationOutputDOC[,2:3])),main=LakeName)
   lines(CalibrationOutputDOC$datetime,CalibrationOutputDOC$Modelled,col='red',lwd=2)
   lines(as.Date(DOC_df$Date),DOC_df$DOC_conc_gm3,col='darkgreen',lwd=2)
-  plot(CalibrationOutputDO$datetime,CalibrationOutputDO$Measured,type='o',pch=19,cex=0.5,ylab = 'DO Flux',xlab='',
+  abline(v = as.Date(paste0(unique(year(DOC_df$Date)),'-01-01')),lty=2,col='grey50') #lines at Jan 1
+  abline(v = as.Date(paste0(unique(year(DOC_df$Date)),'-06-01')),lty=3,col='grey80') #lines at Jul 1
+  
+  #Plot Calibration DO
+  plot(CalibrationOutputDO$datetime,CalibrationOutputDO$Measured,type='o',pch=19,cex=0.7,ylab = 'DO Flux',xlab='',
        ylim = c(min(CalibrationOutputDO[,2:3]),max(CalibrationOutputDO[,2:3])))
   lines(CalibrationOutputDO$datetime,CalibrationOutputDO$Modelled,col='darkgreen',lwd=2)
   abline(h=0,lty=2)
-
+  abline(v = as.Date(paste0(unique(year(DOC_df$Date)),'-01-01')),lty=2,col='grey50') #lines at Jan 1
+  abline(v = as.Date(paste0(unique(year(DOC_df$Date)),'-06-01')),lty=3,col='grey80') #lines at Jul 1
 }
 
 ################## PLOTTING ###########################################################
@@ -385,7 +387,20 @@ if (PlotFlag==1){
   par(mar=c(2.5,3,1,1),mgp=c(1.5,0.3,0),tck=-0.02,cex=0.8)
   plot(OutputTimeSeries,DOC_df$DOC_conc_gm3,xlab='Date',ylab="DOC Conc (g/m3)",type="l")
   lines(ValidationDataDOC$datetime,ValidationDataDOC$DOC,col='red3')
-
+  
 }
+
+################## Write results files ##################
+DOC_results_filename = paste('./',LakeName,'Lake/','Results/',LakeName,'_DOC_Results.csv',sep='')
+POC_results_filename = paste('./',LakeName,'Lake/','Results/',LakeName,'_POC_Results.csv',sep='')
+Input_filename = paste('./',LakeName,'Lake/','Results/',LakeName,'_InputData.csv',sep='')
+DOC_validation_filename = paste('./',LakeName,'Lake/','Results/',LakeName,'_DOCvalidation.csv',sep='')
+DO_validation_filename = paste('./',LakeName,'Lake/','Results/',LakeName,'_DOvalidation.csv',sep='')
+
+write.csv(DOC_df,file = DOC_results_filename,row.names = F,quote = F)
+write.csv(POC_df,file = POC_results_filename,row.names = F,quote = F)
+write.csv(InputData,file = Input_filename,row.names = F,quote = F)
+write.csv(CalibrationOutputDOC,file = DOC_validation_filename,row.names = F,quote = F)
+write.csv(CalibrationOutputDO,file = DO_validation_filename,row.names = F,quote = F)
 
 

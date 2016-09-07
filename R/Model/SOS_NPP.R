@@ -57,7 +57,7 @@ NPP<-function(CHL,P,PhoticDepth,WT,JulianDay)
   #M over photic zone depth defined in original papers 
   #M NPP output in g m-2 d-1
 
-  if (WT>=4) {
+  if (WT>=2) {
     NPP_rate <- 10^(b0+(b1*log10(CHL))+(b2*WT)) #mg C/m2/d
   } else {
     NPP_rate = 0 
