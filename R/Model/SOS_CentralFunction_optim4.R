@@ -1,6 +1,11 @@
 #CarbonFluxModel <- function(LakeName,PlotFlag,ValidationFlag){
 #Flags 1 for yes, else no.
-LakeName = 'Mendota'
+LakeName = 'Monona'
+
+# With DOC ~ Inflow
+# Parameters = c(0.647496073 0.002959697 0.758720514) #NLL 287
+# With DOC ~! Inflow
+# Parameters = c(0.84365741 0.00274874 0.78449935) #NLL 279
 OptimizationFlag = 1
 PlotFlag = 0
 ValidationFlag = 1
@@ -29,7 +34,9 @@ source("./R/Model/modelDOC_4.R")
 
 ##### READ MAIN INPUT FILE #################
 RawData <- read.csv(TimeSeriesFile,header=T) #Read main data file with GLM outputs (physical input) and NPP input
-RawData$datetime <- as.POSIXct(strptime(RawData$datetime,"%m/%d/%Y %H:%M"),tz="GMT") #Convert time to POSIX
+#RawData$datetime <- as.POSIXct(strptime(RawData$datetime,"%m/%d/%Y %H:%M"),tz="GMT") #Convert time to POSIX
+RawData$datetime <- as.POSIXct(strptime(RawData$datetime,"%Y-%m-%d"),tz="GMT") #Convert time to POSIX
+
 cc = which(complete.cases(RawData))
 RawData = RawData[cc[1]:tail(cc,1),]
 
@@ -41,7 +48,8 @@ for (col in 2:ncol(InputData)){
 InputData$Chla[InputData$Chla == 0] = 0.0001
 ##### READ RAIN FILE #######################
 RainData <- read.csv(RainFile,header=T,stringsAsFactors = F) #Read daily rain file (units=mm) Read separately and added back to main file to avoid issues of linear interpolation with rain data in length units
-RainData$datetime <- as.POSIXct(strptime(RainData$datetime,'%m/%d/%Y',tz='GMT'))
+#RainData$datetime <- as.POSIXct(strptime(RainData$datetime,'%m/%d/%Y',tz='GMT'))
+RainData$datetime <- as.POSIXct(strptime(RainData$datetime,'%Y-%m-%d',tz='GMT'))
 
 InputData$Rain <- RainData$Rain[RainData$datetime %in% InputData$datetime] #Plug daily rain data into InputData file to integrate with original code.
 
@@ -95,7 +103,8 @@ DOC_df$DOC_conc_gm3[1] <- DOC_init #Initialize DOC concentration g/m3
 
 #DOC Validation Output Setup
 ValidationDataDOC <- read.csv(ValidationFileDOC,header=T)
-ValidationDataDOC$datetime <- as.Date(as.POSIXct(strptime(ValidationDataDOC$datetime,"%m/%d/%Y %H:%M"),tz="GMT")) #Convert time to POSIX
+#ValidationDataDOC$datetime <- as.Date(as.POSIXct(strptime(ValidationDataDOC$datetime,"%m/%d/%Y %H:%M"),tz="GMT")) #Convert time to POSIX
+ValidationDataDOC$datetime <- as.Date(as.POSIXct(strptime(ValidationDataDOC$datetime,"%Y-%m-%d"),tz="GMT")) #Convert time to POSIX
 ValidationDataDOC = ValidationDataDOC[complete.cases(ValidationDataDOC),]
 outlier.limit = (mean(ValidationDataDOC$DOC) + 3*(sd(ValidationDataDOC$DOC))) # Calculate mean + 3 SD of DOC column
 ValidationDataDOC = ValidationDataDOC[ValidationDataDOC$DOC <= outlier.limit,] # Remove rows where DOC > outlier.limit
@@ -103,7 +112,8 @@ ValidationDataDOC = ddply(ValidationDataDOC,'datetime',summarize,DOC=mean(DOC))
 
 #DO Validation Output Setup
 ValidationDataDO <- read.csv(ValidationFileDO,header=T)
-ValidationDataDO$datetime <- as.Date(as.POSIXct(strptime(ValidationDataDO$datetime,"%m/%d/%Y %H:%M"),tz="GMT")) #Convert time to POSIX
+#ValidationDataDO$datetime <- as.Date(as.POSIXct(strptime(ValidationDataDO$datetime,"%m/%d/%Y %H:%M"),tz="GMT")) #Convert time to POSIX
+ValidationDataDO$datetime <- as.Date(as.POSIXct(strptime(ValidationDataDO$datetime,"%Y-%m-%d"),tz="GMT")) #Convert time to POSIX
 ValidationDataDO = ValidationDataDO[complete.cases(ValidationDataDO),]
 #Only compare to DO data during "production season."
 ValidationDataDO = ValidationDataDO[yday(ValidationDataDO$datetime)>ProdStartDay & yday(ValidationDataDO$datetime)<ProdEndDay,]
@@ -317,11 +327,13 @@ if (ValidationFlag==1){
        ylim = c(min(CalibrationOutputDOC[,2:3]),max(CalibrationOutputDOC[,2:3])),main=LakeName)
   lines(CalibrationOutputDOC$datetime,CalibrationOutputDOC$Modelled,col='red',lwd=2)
   lines(as.Date(DOC_df$Date),DOC_df$DOC_conc_gm3,col='darkgreen',lwd=2)
+  legend('topleft',legend = c('observed','modeled'),lty = c(1,1),pch = c(16,NA),
+         col = c('black','darkgreen'),bty='n',cex=0.8)
+  
   plot(CalibrationOutputDO$datetime,CalibrationOutputDO$Measured,type='o',pch=19,cex=0.5,ylab = 'DO Flux',xlab='',
        ylim = c(min(CalibrationOutputDO[,2:3]),max(CalibrationOutputDO[,2:3])))
   lines(CalibrationOutputDO$datetime,CalibrationOutputDO$Modelled,col='darkgreen',lwd=2)
   abline(h=0,lty=2)
-
 }
 
 ################## PLOTTING ###########################################################
@@ -331,7 +343,6 @@ if (PlotFlag==1){
   par(mar=c(2.5,3,1,1),mgp=c(1.5,0.3,0),tck=-0.02,cex=0.8)
   plot(OutputTimeSeries,DOC_df$DOC_conc_gm3,xlab='Date',ylab="DOC Conc (g/m3)",type="l")
   lines(ValidationDataDOC$datetime,ValidationDataDOC$DOC,col='red3')
-
 }
 
 
