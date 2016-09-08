@@ -1,7 +1,7 @@
 setwd('C:/Users/hdugan/Documents/Rpackages/SOS/')
 #CarbonFluxModel <- function(LakeName,PlotFlag,ValidationFlag){
 #Flags 1 for yes, else no.
-LakeName = 'Harp'
+LakeName = 'Trout'
 OptimizationFlag = 1
 PlotFlag = 0
 ValidationFlag = 1
@@ -154,7 +154,6 @@ if (OptimizationFlag==1){
     resSedData = (mean(modeled$SedData_MAR,na.rm = T) - ValidationDataMAROC) * sedScale #not scaled because it is 1 value
     
     res = c(resDOC,resDO,rep(resSedData,length(resDOC)))
-    res = c(resDOC)
     
     nRes 	= length(res)
     SSE 	= sum(res^2)
@@ -203,6 +202,7 @@ if (OptimizationFlag==1){
 # Vanern2: c(0.00146343281 0.01426637001 0.92157986978 0.42846889871 0.00008978815 0.00781871285) #NLL 4.37
 # Mendota2: c(0.0014666541  0.4081472578  0.6001340076 -0.0289949672 -0.0000245212 -0.0004031551) #NLL 555
 # Harp2: c(0.001945615 -0.267369996  0.985575162  0.208813556  0.444911813  0.010922284) #NLL 135
+# Trout2: c(0.0010642196  0.0728945862  0.6861702029  0.1883407073 -0.0004104246  0.0368199462) #NLL 59
 
 for (i in 1:(steps)) {
   if (R_auto > 1){R_auto = 1}
