@@ -1,12 +1,12 @@
 setwd('C:/Users/hdugan/Documents/Rpackages/SOS/')
 #CarbonFluxModel <- function(LakeName,PlotFlag,ValidationFlag){
 #Flags 1 for yes, else no.
-LakeName = 'Monona'
+LakeName = 'Harp'
 OptimizationFlag = 1
 PlotFlag = 0
 ValidationFlag = 1
 timestampFormat =	'%m/%d/%Y'
-timestampFormat =	'%Y-%m-%d'
+#timestampFormat =	'%Y-%m-%d'
 ##### INPUT FILE NAMES ################
 TimeSeriesFile <- paste('./',LakeName,'Lake/',LakeName,'TS.csv',sep='')
 RainFile <- paste('./',LakeName,'Lake/',LakeName,'Rain.csv',sep='')
@@ -154,7 +154,7 @@ if (OptimizationFlag==1){
     resSedData = (mean(modeled$SedData_MAR,na.rm = T) - ValidationDataMAROC) * sedScale #not scaled because it is 1 value
     
     res = c(resDOC,resDO,rep(resSedData,length(resDOC)))
-    #res = c(resDOC,resDO)
+    res = c(resDOC)
     
     nRes 	= length(res)
     SSE 	= sum(res^2)
@@ -194,11 +194,15 @@ if (OptimizationFlag==1){
 # ####################### END OPTIMIZATION ROUTINE #################################
 # ####################### MAIN PROGRAM #############################################
 # Monona c(0.00059606,0.062588791,0.792906357,0.270671129,-0.011526258) 
-# Monona c(0.0007301516 0.0098158459 0.9051277244 0.2850467201 0.0104989802) #NLL 301
 # Harp: c(0.002230285,0.002745391,0.995244529,0.333380628,-0.009177321) #NLL 87
 # Trout:  c( 0.0011254525  0.1520756581  0.7253578540  0.1120424232 -0.0003273584) #NLL: 225
 # Mendota: c(0.0008463344,0.3467401103,0.5110130504,0.0986506182,0.0024431470)
 # Vanern: c(0.001512181,0.030140450,0.758617333,0.328194576,-0.008648217) #NLL = 7.6
+
+# Monona2 c(0.001760347 0.000825484 0.900335669 0.382236083 0.010878626 0.016376368) #NLL 287
+# Vanern2: c(0.00146343281 0.01426637001 0.92157986978 0.42846889871 0.00008978815 0.00781871285) #NLL 4.37
+# Mendota2: c(0.0014666541  0.4081472578  0.6001340076 -0.0289949672 -0.0000245212 -0.0004031551) #NLL 555
+# Harp2: c(0.001945615 -0.267369996  0.985575162  0.208813556  0.444911813  0.010922284) #NLL 135
 
 for (i in 1:(steps)) {
   if (R_auto > 1){R_auto = 1}
