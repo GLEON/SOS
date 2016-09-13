@@ -1,12 +1,13 @@
 setwd('C:/Users/hdugan/Documents/Rpackages/SOS/')
 #CarbonFluxModel <- function(LakeName,PlotFlag,ValidationFlag){
 #Flags 1 for yes, else no.
-LakeName = 'Trout'
-OptimizationFlag = 1
+LakeName = 'Monona'
+OptimizationFlag = 0
 PlotFlag = 0
 ValidationFlag = 1
+WriteFiles = 0
 timestampFormat =	'%m/%d/%Y'
-#timestampFormat =	'%Y-%m-%d'
+timestampFormat =	'%Y-%m-%d'
 ##### INPUT FILE NAMES ################
 TimeSeriesFile <- paste('./',LakeName,'Lake/',LakeName,'TS.csv',sep='')
 RainFile <- paste('./',LakeName,'Lake/',LakeName,'Rain.csv',sep='')
@@ -270,7 +271,7 @@ for (i in 1:(steps)) {
     #Update POC and DOC concentration values (g/m3) for whole lake
     
     POC_df$POCL_conc_gm3[i+1] <-  POC_df$POCL_conc_gm3[i] + ((PPdata$NPP_POCL_mass[i] - LeachData$POCL_leachOut[i] - SWGWData$POCL_outflow[i] - SedData$POC_burial_L[i])/LakeVolume) #g/m3
-    POC_df$POCR_conc_gm3[i+1] <-  POC_df$POCR_conc_gm3[i] + ((SWGWData$POCR_massIn_g[i] - LeachData$POCR_leachOut[i] - SWGWData$POCR_outflow[i] - SedData$POC_burial_L[i])/LakeVolume)
+    POC_df$POCR_conc_gm3[i+1] <-  POC_df$POCR_conc_gm3[i] + ((SWGWData$POCR_massIn_g[i] - LeachData$POCR_leachOut[i] - SWGWData$POCR_outflow[i] - SedData$POC_burial_R[i])/LakeVolume)
     POC_df$POCtotal_conc_gm3[i+1] = POC_df$POCR_conc_gm3[i+1] + POC_df$POCL_conc_gm3[i+1]
     
     DOC_df$DOCL_conc_gm3[i+1] <- DOC_df$DOCL_conc_gm3[i] + ((PPdata$NPP_DOCL_mass[i] + LeachData$DOCL_leachIn[i] - SWGWData$DOCL_outflow[i] - PPdata$DOCL_massRespired[i])/LakeVolume) #g/m3
@@ -377,7 +378,7 @@ if (ValidationFlag==1){
   
   #Plot Calibration DO
   plot(CalibrationOutputDO$datetime,CalibrationOutputDO$Measured,type='o',pch=19,cex=0.7,ylab = 'DO Flux',xlab='',
-       ylim = c(min(CalibrationOutputDO[,2:3]),max(CalibrationOutputDO[,2:3])))
+       ylim = c(min(CalibrationOutputDO[,2:3],na.rm = T),max(CalibrationOutputDO[,2:3],na.rm = T)))
   lines(CalibrationOutputDO$datetime,CalibrationOutputDO$Modelled,col='darkgreen',lwd=2)
   abline(h=0,lty=2)
   abline(v = as.Date(paste0(unique(year(DOC_df$Date)),'-01-01')),lty=2,col='grey50') #lines at Jan 1
@@ -395,16 +396,17 @@ if (PlotFlag==1){
 }
 
 ################## Write results files ##################
-DOC_results_filename = paste('./',LakeName,'Lake/','Results/',LakeName,'_DOC_Results.csv',sep='')
-POC_results_filename = paste('./',LakeName,'Lake/','Results/',LakeName,'_POC_Results.csv',sep='')
-Input_filename = paste('./',LakeName,'Lake/','Results/',LakeName,'_InputData.csv',sep='')
-DOC_validation_filename = paste('./',LakeName,'Lake/','Results/',LakeName,'_DOCvalidation.csv',sep='')
-DO_validation_filename = paste('./',LakeName,'Lake/','Results/',LakeName,'_DOvalidation.csv',sep='')
-
-write.csv(DOC_df,file = DOC_results_filename,row.names = F,quote = F)
-write.csv(POC_df,file = POC_results_filename,row.names = F,quote = F)
-write.csv(InputData,file = Input_filename,row.names = F,quote = F)
-write.csv(CalibrationOutputDOC,file = DOC_validation_filename,row.names = F,quote = F)
-write.csv(CalibrationOutputDO,file = DO_validation_filename,row.names = F,quote = F)
-
+if (WriteFiles==1){
+  DOC_results_filename = paste('./',LakeName,'Lake/','Results/',LakeName,'_DOC_Results.csv',sep='')
+  POC_results_filename = paste('./',LakeName,'Lake/','Results/',LakeName,'_POC_Results.csv',sep='')
+  Input_filename = paste('./',LakeName,'Lake/','Results/',LakeName,'_InputData.csv',sep='')
+  DOC_validation_filename = paste('./',LakeName,'Lake/','Results/',LakeName,'_DOCvalidation.csv',sep='')
+  DO_validation_filename = paste('./',LakeName,'Lake/','Results/',LakeName,'_DOvalidation.csv',sep='')
+  
+  write.csv(DOC_df,file = DOC_results_filename,row.names = F,quote = F)
+  write.csv(POC_df,file = POC_results_filename,row.names = F,quote = F)
+  write.csv(InputData,file = Input_filename,row.names = F,quote = F)
+  write.csv(CalibrationOutputDOC,file = DOC_validation_filename,row.names = F,quote = F)
+  write.csv(CalibrationOutputDO,file = DO_validation_filename,row.names = F,quote = F)
+}
 
