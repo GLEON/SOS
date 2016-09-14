@@ -1,13 +1,13 @@
 setwd('C:/Users/hdugan/Documents/Rpackages/SOS/')
 #CarbonFluxModel <- function(LakeName,PlotFlag,ValidationFlag){
 #Flags 1 for yes, else no.
-LakeName = 'Monona'
-OptimizationFlag = 0
+LakeName = 'Harp'
+OptimizationFlag = 1
 PlotFlag = 0
 ValidationFlag = 1
 WriteFiles = 0
 timestampFormat =	'%m/%d/%Y'
-timestampFormat =	'%Y-%m-%d'
+#timestampFormat =	'%Y-%m-%d'
 ##### INPUT FILE NAMES ################
 TimeSeriesFile <- paste('./',LakeName,'Lake/',LakeName,'TS.csv',sep='')
 RainFile <- paste('./',LakeName,'Lake/',LakeName,'Rain.csv',sep='')
@@ -165,7 +165,8 @@ if (OptimizationFlag==1){
     return(NLL)
   }
   ## Test call ##
-  min.calcModelNLL(par = c(0.000596,0.06258,0.792,0.270,-0.011,0.01),ValidationDataDOC = ValidationDataDOC,
+  min.calcModelNLL(par = c(DOCR_RespParam,DOCL_RespParam,R_auto,BurialFactor_R,BurialFactor_L,POC_lc),
+                   ValidationDataDOC = ValidationDataDOC,
                    ValidationDataDO = ValidationDataDO,ValidationDataMAROC = ValidationDataMAROC)
   # # 
   
@@ -203,7 +204,7 @@ if (OptimizationFlag==1){
 # Vanern2: c(0.00146343281 0.01426637001 0.92157986978 0.42846889871 0.00008978815 0.00781871285) #NLL 4.37
 # Mendota2: c(0.0014666541  0.4081472578  0.6001340076 -0.0289949672 -0.0000245212 -0.0004031551) #NLL 555
 # Harp2: c(0.001945615 -0.267369996  0.985575162  0.208813556  0.444911813  0.010922284) #NLL 135
-# Trout2: c(0.0010642196  0.0728945862  0.6861702029  0.1883407073 -0.0004104246  0.0368199462) #NLL 59
+# Trout2: c(0.0007891784 0.1206761437 0.7792985859 0.2160982340 0.0007159844 0.0091884239) #NLL 215
 
 for (i in 1:(steps)) {
   if (R_auto > 1){R_auto = 1}
