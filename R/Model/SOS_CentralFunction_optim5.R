@@ -1,8 +1,8 @@
-setwd('C:/Users/hdugan/Documents/Rpackages/SOS/')
+#setwd('C:/Users/hdugan/Documents/Rpackages/SOS/')
 #CarbonFluxModel <- function(LakeName,PlotFlag,ValidationFlag){
 #Flags 1 for yes, else no.
-LakeName = 'Harp'
-OptimizationFlag = 1
+LakeName = 'Vanern'
+OptimizationFlag = 0
 PlotFlag = 0
 ValidationFlag = 1
 WriteFiles = 0
@@ -395,6 +395,11 @@ if (PlotFlag==1){
   lines(ValidationDataDOC$datetime,ValidationDataDOC$DOC,col='red3')
   
 }
+
+################## Calc goodness of fit #################
+
+RMSE_DOC <- sqrt((1/length(CalibrationOutputDOC[,1]))*sum((CalibrationOutputDOC[,2]-CalibrationOutputDOC[,4])^2)) #mg^2/L^2
+RMSE_DO <- sqrt((1/length(CalibrationOutputDO[,1]))*sum((CalibrationOutputDO[,2]-CalibrationOutputDO[,3])^2)) #mg^2/L^2
 
 ################## Write results files ##################
 if (WriteFiles==1){
