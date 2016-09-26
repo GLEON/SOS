@@ -46,6 +46,14 @@ RainData$datetime <- as.POSIXct(strptime(RainData$datetime,'%m/%d/%Y',tz='GMT'))
 
 InputData$Rain <- RainData$Rain[RainData$datetime %in% InputData$datetime] #Plug daily rain data into InputData file to integrate with original code.
 
+# IAN TESTING GROUNDS
+# Set SW_DOC to 0 for ice-on periods for Toolik Inlet, based on historical data: 
+# http://toolik.alaska.edu/edc/journal/annual_summaries.php?summary=inlet
+# Used average ice on/off dates from 2006-2010 for 2001-2005 (no data available those years)
+#InputData = read.csv('ToolikIceFree_SWDOC_TEST.csv')
+#str(InputData)
+#InputData$datetime = as.POSIXct(strptime(InputData$datetime,"%m/%d/%Y"),tz="GMT") #Convert time to POSIX
+
 ##### READ PARAMETER FILE ##################
 parameters <- read.table(file = ParameterFile,header=TRUE,comment.char="#",stringsAsFactors = F)
 for (i in 1:nrow(parameters)){ # assign parameters
@@ -213,4 +221,25 @@ write.csv(DOC_df,file = DOC_results_filename)
 write.csv(POC_df,file = POC_results_filename)
 write.csv(SOS,file = SOS_results_filename)
 
+#### Testing whether setting SW_DOC during ice period helped
+
+# read in original/unadulterated model results
+#old_results_DOC = read.csv(DOC_results_filename)
+#old_results_DOC$Date = DOC_df$Date #shortcut for making date an actual date; was messing up with posix
+
+# read in DOC validation data
+#ValidationDOC = read.csv(ValidationFileDOC)
+#str(ValidationDOC)
+#ValidationDOC$datetime <- as.POSIXct(strptime(ValidationDOC$datetime,"%m/%d/%Y %H:%M"),tz="GMT") #Convert time to POSIX
+
+#plot(DOC_df$DOC_conc_gm3~DOC_df$Date, type='l', xlab='Date',ylab='DOC_conc_gm3', 
+#     main='Toolik: effect of ice season SW_DOC?', ylim=c(0,13))
+#lines(old_results_DOC$DOC_conc_gm3~old_results_DOC$Date, type='l', col='dodgerblue')
+#lines(ValidationDOC$DOC~ValidationDOC$datetime, type='l',col='red')
+#legend('topright',c('Ice-off only','Original model','Observed'),col=c('black','dodgerblue','red'), lwd=2)
+
+#rval = round(cor(DOC_df$DOC_conc_gm3, old_results_DOC$DOC_conc_gm3),2)
+#MAE = abs(DOC_df$DOC_conc_gm3 - old_results_DOC$DOC_conc_gm3)
+#MAE = round(mean(MAE),2)
+#mtext(side=3, paste0('New/old model: ','r = ',rval,' , ', 'MAE = ', MAE, 'gm3'))
 
