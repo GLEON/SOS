@@ -1,13 +1,13 @@
 setwd('C:/Users/hdugan/Documents/Rpackages/SOS/')
 #CarbonFluxModel <- function(LakeName,PlotFlag,ValidationFlag){
 #Flags 1 for yes, else no.
-LakeName = 'aMendota'
+LakeName = 'Vanern'
 OptimizationFlag = 1
 PlotFlag = 0
 ValidationFlag = 1
 WriteFiles = 0
 timestampFormat =	'%m/%d/%Y'
-timestampFormat =	'%Y-%m-%d'
+#timestampFormat =	'%Y-%m-%d'
 ##### INPUT FILE NAMES ################
 TimeSeriesFile <- paste('./',LakeName,'Lake/',LakeName,'TS.csv',sep='')
 RainFile <- paste('./',LakeName,'Lake/',LakeName,'Rain.csv',sep='')
@@ -405,6 +405,50 @@ if (PlotFlag==1){
   lines(ValidationDataDOC$datetime,ValidationDataDOC$DOC,col='red3')
   
 }
+################## Calc goodness of fit #################
+
+RMSE_DOC <- sqrt((1/length(CalibrationOutputDOC[,1]))*sum((CalibrationOutputDOC[,2]-CalibrationOutputDOC[,4])^2)) #mg^2/L^2
+RMSE_DO <- sqrt((1/length(CalibrationOutputDO[,1]))*sum((CalibrationOutputDO[,2]-CalibrationOutputDO[,3])^2)) #mg^2/L^2
+print(paste0('RMSE DOC ',RMSE_DOC))
+print(paste0('RMSE DO ',RMSE_DO))
+
+################## Bootstrapping of Residuals #################
+if (bootstrap==1){
+  resids <- CalibrationOutputDOC[,4]-CalibrationOutputDOC[,2]
+  set.seed(001) # just to make it reproducible
+  sample(V)
+  pseudoObs = matrix(replicate(100,sample(resids) + CalibrationOutputDOC$Measured),ncol = length(resids)) # matrix of psuedo observations 
+  
+  # Check randomization in plot 
+  # plot(CalibrationOutputDOC$Measured,col='red',type='o',ylim=c(2,8))
+  # for (i in 1:20){
+  #   lines(psuedoObs[i,])
+  # }
+  
+  bootParams = data.frame(DOCR_RespParam=NA,DOCL_RespParam=NA,R_auto=NA,BurialFactor_R=NA,
+                          BurialFactor_L=NA,POC_lcR=NA,POC_lcL=NA)
+  for (b in 1:100) {
+    pseudoDOC = data.frame(datetime = CalibrationOutputDOC$datetime, DOC = pseudoObs[b,], DOCwc = pseudoObs[b,])
+    
+    min.calcModelNLL(par = c(DOCR_RespParam,DOCL_RespParam,R_auto,BurialFactor_R,BurialFactor_L,POC_lcR,POC_lcL),
+                     ValidationDataDOC = pseudoDOC,
+                     ValidationDataDO = ValidationDataDO,ValidationDataMAROC = ValidationDataMAROC)
+ 
+    optimOut = optim(par = c(DOCR_RespParam,DOCL_RespParam,R_auto,BurialFactor_R,BurialFactor_L,POC_lcR,POC_lcL), 
+                     min.calcModelNLL,ValidationDataDOC = ValidationDataDOC,
+                     ValidationDataDO = ValidationDataDO,ValidationDataMAROC = ValidationDataMAROC, 
+                     control = list(maxit = 100)) #setting maximum number of attempts for now
+    
+    print(paste0('b = ',b,', Parameter estimates (burial, Rhet, Raut...'))
+    print(round(optimOut$par,3))
+    ## New parameters from optimization output
+  
+    bootParams[b,1:7] <- optimOut$par
+    bootParams$NLL[b] <- optimOut$value
+  }
+  
+}
+
 
 ################## Write results files ##################
 if (WriteFiles==1){
