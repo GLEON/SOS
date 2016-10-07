@@ -414,19 +414,23 @@ print(paste0('RMSE DO ',RMSE_DO))
 
 ################## Bootstrapping of Residuals #################
 if (bootstrap==1){
+  save.image(file = "R/Model/lake.RData")
+  
   resids <- CalibrationOutputDOC[,4]-CalibrationOutputDOC[,2]
   set.seed(001) # just to make it reproducible
-  sample(V)
   pseudoObs = matrix(replicate(100,sample(resids) + CalibrationOutputDOC$Measured),ncol = length(resids)) # matrix of psuedo observations 
   
-  # Check randomization in plot 
-  # plot(CalibrationOutputDOC$Measured,col='red',type='o',ylim=c(2,8))
-  # for (i in 1:20){
-  #   lines(psuedoObs[i,])
-  # }
+  library(parallel)
+  detectCores() # Calculate the number of cores
+  cl <- makeCluster(7) # Initiate cluster
   
   bootParams = data.frame(DOCR_RespParam=NA,DOCL_RespParam=NA,R_auto=NA,BurialFactor_R=NA,
                           BurialFactor_L=NA,POC_lcR=NA,POC_lcL=NA)
+  
+  source('~/Documents/SOS/R/Model/bootstrapDOC.R')
+  bootOut = parApply(cl = cl,MARGIN = 1,X = pseudoObs, FUN = bootstrapDOC,
+                     datetime = CalibrationOutputDOC$datetime, LakeName = 'Vanern')
+  #parApply(cl = cl,MARGIN = 1,X = pseudoObs, FUN = mean)
   for (b in 1:100) {
     pseudoDOC = data.frame(datetime = CalibrationOutputDOC$datetime, DOC = pseudoObs[b,], DOCwc = pseudoObs[b,])
     
@@ -445,8 +449,7 @@ if (bootstrap==1){
   
     bootParams[b,1:7] <- optimOut$par
     bootParams$NLL[b] <- optimOut$value
-  }
-  
+  } # Loop instead? 
 }
 
 
