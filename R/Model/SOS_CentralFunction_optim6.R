@@ -1,7 +1,7 @@
 setwd('C:/Users/hdugan/Documents/Rpackages/SOS/')
 #CarbonFluxModel <- function(LakeName,PlotFlag,ValidationFlag){
 #Flags 1 for yes, else no.
-LakeName = 'Vanern'
+LakeName = 'Toolik'
 OptimizationFlag = 1
 PlotFlag = 0
 ValidationFlag = 1
@@ -210,6 +210,7 @@ if (OptimizationFlag==1){
 # Vanern6: 0.001399777 0.007491947 0.492280939 0.484148905 0.319265033 0.126942579 0.058335812 #NLL = -3.8
 # Harp6:  0.001610717  0.002218104  1.030734931  0.325708982 -0.040864624  0.192268378  0.100561021 #NLL= 120
 # Trout6: 0.0010790416  0.0009477849  0.9203089237  0.1055202226  0.1075471302 -0.0034742360  0.0177154412 #NLL 201
+# Toolik6: 0.009217922 -0.181475814  0.621733535  0.237056611  0.034073382 -0.200121215  0.238469810
 
 # POC_lcR = 0.01
 # POC_lcL = 0.01
