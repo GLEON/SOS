@@ -6,7 +6,7 @@ OptimizationFlag = 1
 PlotFlag = 0
 ValidationFlag = 1
 WriteFiles = 0
-timestampFormat =	'%m/%d/%Y' 
+timestampFormat =	'%m/%d/%Y'
 #timestampFormat =	'%Y-%m-%d'
 ##### INPUT FILE NAMES ################
 TimeSeriesFile <- paste('./',LakeName,'Lake/',LakeName,'TS.csv',sep='')
@@ -54,75 +54,6 @@ RainData$datetime <- as.POSIXct(strptime(RainData$datetime,timestampFormat,tz='G
 
 InputData$Rain <- RainData$Rain[RainData$datetime %in% InputData$datetime] #Plug daily rain data into InputData file to integrate with original code.
 
-#### For TOOLIK ONLY #### (dealing with ice season)
-if (LakeName=='Toolik'){
-# Set FlowIn to 0 for ice-on periods for Toolik Inlet, based on historical data: 
-# http://toolik.alaska.edu/edc/journal/annual_summaries.php?summary=inlet
-# Used average ice on/off dates from 2006-2010 for 2001-2005 (no data available those years)
-
-icepath = paste0(LakeName,'Lake','/','ToolikInlet_IceOn_IceOff.csv')
-IceOnOff = read.csv(icepath)
-IceOnOff$IceOff = as.POSIXct(strptime(IceOnOff$IceOff,"%m/%d/%Y %H:%M"),tz="GMT") #Convert time to POSIX
-IceOnOff$IceOn = as.POSIXct(strptime(IceOnOff$IceOn,"%m/%d/%Y %H:%M"),tz="GMT") #Convert time to POSIX
-str(IceOnOff)
-
-ice_func <- function(year,off,on, dataframe){
-  ## ARGUMENTS ##
-  # year: 4 digits, in quotes as character ('2002')
-  # off: month-day in quotes ('05-09') = May 9th
-  # on: same structure as off
-  # dataframe = name of dataframe of interest
-  
-  day1 = paste0(year,'-01-01')
-  year_num = as.numeric(year)
-  year_before = as.character(year_num - 1)
-  day1 = paste0(year_before, '-12-31') # there was a bug; R thought >= Jan 1 meant Jan 2 (must be something internal with date structure)
-  day365 = paste0(year, '-12-31')
-  iceoff = paste0(year,'-',off)
-  iceon = paste0(year,'-',on)
-  # create annual subset for specific year
-  annual_subset = dataframe[dataframe$datetime > day1 & dataframe$datetime <= day365,]
-  
-  # extract data for that year before ice off
-  pre_thaw = annual_subset[annual_subset$datetime < iceoff,]
-  pre_thaw$FlowIn = rep(0,length(pre_thaw$FlowIn)) # set FlowIn = 0 during ice time
-  pre_thaw$FlowOut = pre_thaw$FlowIn # we assume flow out = flow in
-  
-  # extract data for that year for between ice off and ice on (ice free season)
-  ice_free_season = annual_subset[annual_subset$datetime >= iceoff & annual_subset$datetime < iceon,]
-  
-  # extract data for that year for after fall ice on
-  post_freeze = annual_subset[annual_subset$datetime >= iceon,]
-  post_freeze$FlowIn = rep(0,length(post_freeze$FlowIn))
-  post_freeze$FlowOut = post_freeze$FlowIn
-  
-  # combine 3 annual subsets (pre thaw, ice free season, post freeze)
-  annual_corrected = rbind.data.frame(pre_thaw,ice_free_season,post_freeze)
-  return(annual_corrected)
-}
-
-years = as.character(IceOnOff$Year)
-iceoff_dates = IceOnOff$IceOff
-iceoff_dates = format(iceoff_dates, format='%m-%d')
-iceon_dates = IceOnOff$IceOn
-iceon_dates = format(iceon_dates, format='%m-%d')
-
-for (i in 1:length(years)){
-  for (j in 1:length(iceoff_dates)) {
-    for (k in 1:length(iceon_dates)) {
-      x = ice_func(year = years[i], off = iceoff_dates[j], on = iceon_dates[k], dataframe = InputData)
-      assign(paste0(LakeName,years[i]),x)
-      x = NULL #get rid of extra output with unassigned name
-    }
-  }
-}
-
-## Combine annual data frames into single for lake
-# I know this isn't the most dynamic code, but I was having trouble making the above loop output a single DF
-InputData = rbind(Toolik2001,Toolik2002,Toolik2003,Toolik2004,Toolik2005,Toolik2006,
-                         Toolik2007,Toolik2008,Toolik2009,Toolik2010)
-
-}
 ###### Run Period and Time Step Setup #####
 TimeStep <- as.numeric(InputData$datetime[2]-InputData$datetime[1]) #days
 steps <- nrow(InputData)
@@ -279,6 +210,7 @@ if (OptimizationFlag==1){
 # Vanern6: 0.001399777 0.007491947 0.492280939 0.484148905 0.319265033 0.126942579 0.058335812 #NLL = -3.8
 # Harp6:  0.001610717  0.002218104  1.030734931  0.325708982 -0.040864624  0.192268378  0.100561021 #NLL= 120
 # Trout6: 0.0010790416  0.0009477849  0.9203089237  0.1055202226  0.1075471302 -0.0034742360  0.0177154412 #NLL 201
+# Toolik6: 0.009217922 -0.181475814  0.621733535  0.237056611  0.034073382 -0.200121215  0.238469810
 
 # POC_lcR = 0.01
 # POC_lcL = 0.01
@@ -474,6 +406,53 @@ if (PlotFlag==1){
   lines(ValidationDataDOC$datetime,ValidationDataDOC$DOC,col='red3')
   
 }
+################## Calc goodness of fit #################
+
+RMSE_DOC <- sqrt((1/length(CalibrationOutputDOC[,1]))*sum((CalibrationOutputDOC[,2]-CalibrationOutputDOC[,4])^2)) #mg^2/L^2
+RMSE_DO <- sqrt((1/length(CalibrationOutputDO[,1]))*sum((CalibrationOutputDO[,2]-CalibrationOutputDO[,3])^2)) #mg^2/L^2
+print(paste0('RMSE DOC ',RMSE_DOC))
+print(paste0('RMSE DO ',RMSE_DO))
+
+################## Bootstrapping of Residuals #################
+if (bootstrap==1){
+  save.image(file = "R/Model/lake.RData")
+  
+  resids <- CalibrationOutputDOC[,4]-CalibrationOutputDOC[,2]
+  set.seed(001) # just to make it reproducible
+  pseudoObs = matrix(replicate(100,sample(resids) + CalibrationOutputDOC$Measured),ncol = length(resids)) # matrix of psuedo observations 
+  
+  library(parallel)
+  detectCores() # Calculate the number of cores
+  cl <- makeCluster(7) # Initiate cluster
+  
+  bootParams = data.frame(DOCR_RespParam=NA,DOCL_RespParam=NA,R_auto=NA,BurialFactor_R=NA,
+                          BurialFactor_L=NA,POC_lcR=NA,POC_lcL=NA)
+  
+  source('~/Documents/SOS/R/Model/bootstrapDOC.R')
+  bootOut = parApply(cl = cl,MARGIN = 1,X = pseudoObs, FUN = bootstrapDOC,
+                     datetime = CalibrationOutputDOC$datetime, LakeName = 'Vanern')
+  #parApply(cl = cl,MARGIN = 1,X = pseudoObs, FUN = mean)
+  for (b in 1:100) {
+    pseudoDOC = data.frame(datetime = CalibrationOutputDOC$datetime, DOC = pseudoObs[b,], DOCwc = pseudoObs[b,])
+    
+    min.calcModelNLL(par = c(DOCR_RespParam,DOCL_RespParam,R_auto,BurialFactor_R,BurialFactor_L,POC_lcR,POC_lcL),
+                     ValidationDataDOC = pseudoDOC,
+                     ValidationDataDO = ValidationDataDO,ValidationDataMAROC = ValidationDataMAROC)
+ 
+    optimOut = optim(par = c(DOCR_RespParam,DOCL_RespParam,R_auto,BurialFactor_R,BurialFactor_L,POC_lcR,POC_lcL), 
+                     min.calcModelNLL,ValidationDataDOC = ValidationDataDOC,
+                     ValidationDataDO = ValidationDataDO,ValidationDataMAROC = ValidationDataMAROC, 
+                     control = list(maxit = 100)) #setting maximum number of attempts for now
+    
+    print(paste0('b = ',b,', Parameter estimates (burial, Rhet, Raut...'))
+    print(round(optimOut$par,3))
+    ## New parameters from optimization output
+  
+    bootParams[b,1:7] <- optimOut$par
+    bootParams$NLL[b] <- optimOut$value
+  } # Loop instead? 
+}
+
 
 ################## Write results files ##################
 if (WriteFiles==1){
