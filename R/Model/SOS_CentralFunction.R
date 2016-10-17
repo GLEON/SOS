@@ -4,7 +4,7 @@
 #Configuration file should contain parameters generated from calibration routine "SOS_CentralFunction_optim4.R"
 
 #User input lake name
-LakeName = 'Mendota'
+LakeName = 'Toolik'
 
 ##### INPUT FILE NAMES ################
 TimeSeriesFile <- paste('./',LakeName,'Lake/',LakeName,'TS.csv',sep='')
@@ -50,9 +50,75 @@ InputData$Rain <- RainData$Rain[RainData$datetime %in% InputData$datetime] #Plug
 # Set SW_DOC to 0 for ice-on periods for Toolik Inlet, based on historical data: 
 # http://toolik.alaska.edu/edc/journal/annual_summaries.php?summary=inlet
 # Used average ice on/off dates from 2006-2010 for 2001-2005 (no data available those years)
-#InputData = read.csv('ToolikIceFree_SWDOC_TEST.csv')
-#str(InputData)
-#InputData$datetime = as.POSIXct(strptime(InputData$datetime,"%m/%d/%Y"),tz="GMT") #Convert time to POSIX
+
+icepath = paste0(LakeName,'Lake','/','ToolikInlet_IceOn_IceOff.csv')
+IceOnOff = read.csv(icepath)
+IceOnOff$IceOff = as.POSIXct(strptime(IceOnOff$IceOff,"%m/%d/%Y %H:%M"),tz="GMT") #Convert time to POSIX
+IceOnOff$IceOn = as.POSIXct(strptime(IceOnOff$IceOn,"%m/%d/%Y %H:%M"),tz="GMT") #Convert time to POSIX
+str(IceOnOff)
+
+ice_func <- function(year,off,on, dataframe){
+  ## ARGUMENTS ##
+  # year: 4 digits, in quotes as character ('2002')
+  # off: month-day in quotes ('05-09') = May 9th
+  # on: same structure as off
+  # dataframe = name of dataframe of interest
+  
+  day1 = paste0(year,'-01-01')
+  year_num = as.numeric(year)
+  year_before = as.character(year_num - 1)
+  day1 = paste0(year_before, '-12-31') # there was a bug; R thought >= Jan 1 meant Jan 2 (must be something internal with date structure)
+  day365 = paste0(year, '-12-31')
+  iceoff = paste0(year,'-',off)
+  iceon = paste0(year,'-',on)
+  # create annual subset for specific year
+  annual_subset = dataframe[dataframe$datetime > day1 & dataframe$datetime <= day365,]
+  
+  # extract data for that year before ice off
+  pre_thaw = annual_subset[annual_subset$datetime < iceoff,]
+  pre_thaw$FlowIn = rep(0,length(pre_thaw$FlowIn)) # set FlowIn = 0 during ice time
+  pre_thaw$FlowOut = pre_thaw$FlowIn # we assume flow out = flow in
+  
+  # extract data for that year for between ice off and ice on (ice free season)
+  ice_free_season = annual_subset[annual_subset$datetime >= iceoff & annual_subset$datetime < iceon,]
+  
+  # extract data for that year for after fall ice on
+  post_freeze = annual_subset[annual_subset$datetime >= iceon,]
+  post_freeze$FlowIn = rep(0,length(post_freeze$FlowIn))
+  post_freeze$FlowOut = post_freeze$FlowIn
+  
+  # combine 3 annual subsets (pre thaw, ice free season, post freeze)
+  annual_corrected = rbind.data.frame(pre_thaw,ice_free_season,post_freeze)
+  return(annual_corrected)
+  }
+
+# test function
+#year = '2001'
+#off = "05-14"
+#on = "10-02"
+#testy = ice_func(off = off, on = on, year = year, dataframe = InputData)
+
+years = as.character(IceOnOff$Year)
+iceoff_dates = IceOnOff$IceOff
+iceoff_dates = format(iceoff_dates, format='%m-%d')
+iceon_dates = IceOnOff$IceOn
+iceon_dates = format(iceon_dates, format='%m-%d')
+
+for (i in 1:length(years)){
+  for (j in 1:length(iceoff_dates)) {
+    for (k in 1:length(iceon_dates)) {
+      x = ice_func(year = years[i], off = iceoff_dates[j], on = iceon_dates[k], dataframe = InputData)
+      assign(paste0(LakeName,years[i]),x)
+      x = NULL #get rid of extra output with unassigned name
+    }
+  }
+}
+
+## Combine annual data frames into single for lake
+dfs = Filter(function(x) is(x, "data.frame"), mget(ls()))
+dfs[which(names(dfs) %in% c("ts_new","RawData","IceOnOff","InputData","RainData","moose"))] = NULL # remove other data frames without name Toolik; OK to have extra names that aren't in R environment
+good_data = rbind_all(dfs)
+InputData = good_data
 
 ##### READ PARAMETER FILE ##################
 parameters <- read.table(file = ParameterFile,header=TRUE,comment.char="#",stringsAsFactors = F)
@@ -224,22 +290,22 @@ write.csv(SOS,file = SOS_results_filename)
 #### Testing whether setting SW_DOC during ice period helped
 
 # read in original/unadulterated model results
-#old_results_DOC = read.csv(DOC_results_filename)
-#old_results_DOC$Date = DOC_df$Date #shortcut for making date an actual date; was messing up with posix
+old_results_DOC = read.csv(DOC_results_filename)
+old_results_DOC$Date = DOC_df$Date #shortcut for making date an actual date; was messing up with posix
 
 # read in DOC validation data
-#ValidationDOC = read.csv(ValidationFileDOC)
-#str(ValidationDOC)
-#ValidationDOC$datetime <- as.POSIXct(strptime(ValidationDOC$datetime,"%m/%d/%Y %H:%M"),tz="GMT") #Convert time to POSIX
+ValidationDOC = read.csv(ValidationFileDOC)
+str(ValidationDOC)
+ValidationDOC$datetime <- as.POSIXct(strptime(ValidationDOC$datetime,"%m/%d/%Y %H:%M"),tz="GMT") #Convert time to POSIX
 
-#plot(DOC_df$DOC_conc_gm3~DOC_df$Date, type='l', xlab='Date',ylab='DOC_conc_gm3', 
-#     main='Toolik: effect of ice season SW_DOC?', ylim=c(0,13))
-#lines(old_results_DOC$DOC_conc_gm3~old_results_DOC$Date, type='l', col='dodgerblue')
-#lines(ValidationDOC$DOC~ValidationDOC$datetime, type='l',col='red')
-#legend('topright',c('Ice-off only','Original model','Observed'),col=c('black','dodgerblue','red'), lwd=2)
+plot(DOC_df$DOC_conc_gm3~DOC_df$Date, type='l', xlab='Date',ylab='DOC_conc_gm3', 
+     main='Toolik: effect of discharge = 0 in ice season?', ylim=c(0,13))
+lines(old_results_DOC$DOC_conc_gm3~old_results_DOC$Date, type='l', col='dodgerblue')
+lines(ValidationDOC$DOC~ValidationDOC$datetime, type='l',col='red')
+legend('topright',c('Ice-off only','Original model','Observed'),col=c('black','dodgerblue','red'), lwd=2)
 
-#rval = round(cor(DOC_df$DOC_conc_gm3, old_results_DOC$DOC_conc_gm3),2)
-#MAE = abs(DOC_df$DOC_conc_gm3 - old_results_DOC$DOC_conc_gm3)
-#MAE = round(mean(MAE),2)
-#mtext(side=3, paste0('New/old model: ','r = ',rval,' , ', 'MAE = ', MAE, 'gm3'))
+rval = round(cor(DOC_df$DOC_conc_gm3, old_results_DOC$DOC_conc_gm3),2)
+MAE = abs(DOC_df$DOC_conc_gm3 - old_results_DOC$DOC_conc_gm3)
+MAE = round(mean(MAE),2)
+mtext(side=3, paste0('New/old model: ','r = ',rval,' , ', 'MAE = ', MAE, 'gm3'))
 
