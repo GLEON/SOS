@@ -96,13 +96,13 @@ bootstrapDOC <- function(newObs,datetime,LakeName,timestampFormat = '%m/%d/%Y') 
   ####################### Validation Output Setup ######################################
   
   #DOC Validation Output Setup
-  ValidationDataDOC <- read.csv(ValidationFileDOC,header=T)
-  ValidationDataDOC$datetime <- as.Date(as.POSIXct(strptime(ValidationDataDOC$datetime,timestampFormat),tz="GMT")) #Convert time to POSIX
-  ValidationDataDOC = ValidationDataDOC[complete.cases(ValidationDataDOC),]
-  outlier.limit = (mean(ValidationDataDOC$DOC) + 3*(sd(ValidationDataDOC$DOC))) # Calculate mean + 3 SD of DOC column
-  ValidationDataDOC = ValidationDataDOC[ValidationDataDOC$DOC <= outlier.limit,] # Remove rows where DOC > outlier.limit
-  ValidationDataDOC = ddply(ValidationDataDOC,'datetime',summarize,DOC=mean(DOC),DOCwc=mean(DOCwc))
-  
+  # ValidationDataDOC <- read.csv(ValidationFileDOC,header=T)
+  # ValidationDataDOC$datetime <- as.Date(as.POSIXct(strptime(ValidationDataDOC$datetime,timestampFormat),tz="GMT")) #Convert time to POSIX
+  # ValidationDataDOC = ValidationDataDOC[complete.cases(ValidationDataDOC),]
+  # outlier.limit = (mean(ValidationDataDOC$DOC) + 3*(sd(ValidationDataDOC$DOC))) # Calculate mean + 3 SD of DOC column
+  # ValidationDataDOC = ValidationDataDOC[ValidationDataDOC$DOC <= outlier.limit,] # Remove rows where DOC > outlier.limit
+  # ValidationDataDOC = ddply(ValidationDataDOC,'datetime',summarize,DOC=mean(DOC),DOCwc=mean(DOCwc))
+  # 
   #DO Validation Output Setup
   ValidationDataDO <- read.csv(ValidationFileDO,header=T)
   ValidationDataDO$datetime <- as.Date(as.POSIXct(strptime(ValidationDataDO$datetime,timestampFormat),tz="GMT")) #Convert time to POSIX
@@ -256,9 +256,9 @@ bootstrapDOC <- function(newObs,datetime,LakeName,timestampFormat = '%m/%d/%Y') 
                    ValidationDataDO = ValidationDataDO,ValidationDataMAROC = ValidationDataMAROC)
   
   optimOut = optim(par = c(DOCR_RespParam,DOCL_RespParam,R_auto,BurialFactor_R,BurialFactor_L,POC_lcR,POC_lcL), 
-                   min.calcModelNLL,ValidationDataDOC = ValidationDataDOC,
+                   min.calcModelNLL,ValidationDataDOC = pseudoDOC,
                    ValidationDataDO = ValidationDataDO,ValidationDataMAROC = ValidationDataMAROC, 
-                   control = list(maxit = 200)) #setting maximum number of attempts for now
+                   control = list(maxit = 100)) #setting maximum number of attempts for now
   
   ## New parameters from optimization output
   outV <- c(optimOut$par, optimOut$value, optimOut$convergence)

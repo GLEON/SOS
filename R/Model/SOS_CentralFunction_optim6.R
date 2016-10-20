@@ -1,11 +1,12 @@
 setwd('C:/Users/hdugan/Documents/Rpackages/SOS/')
 #CarbonFluxModel <- function(LakeName,PlotFlag,ValidationFlag){
 #Flags 1 for yes, else no.
-LakeName = 'Toolik'
-OptimizationFlag = 1
+LakeName = 'Vanern'
+OptimizationFlag = 0
 PlotFlag = 0
 ValidationFlag = 1
 WriteFiles = 0
+BootstrapFlag = 1
 timestampFormat =	'%m/%d/%Y'
 #timestampFormat =	'%Y-%m-%d'
 ##### INPUT FILE NAMES ################
@@ -429,10 +430,10 @@ if (bootstrap==1){
                           BurialFactor_L=NA,POC_lcR=NA,POC_lcL=NA)
   
   source('~/Documents/SOS/R/Model/bootstrapDOC.R')
-  bootOut = parApply(cl = cl,MARGIN = 1,X = pseudoObs, FUN = bootstrapDOC,
+  bootOut = parApply(cl = cl,MARGIN = 1,X = pseudoObs[1:5,], FUN = bootstrapDOC,
                      datetime = CalibrationOutputDOC$datetime, LakeName = 'Vanern')
   #parApply(cl = cl,MARGIN = 1,X = pseudoObs, FUN = mean)
-  for (b in 1:100) {
+  for (b in 1:7) {
     pseudoDOC = data.frame(datetime = CalibrationOutputDOC$datetime, DOC = pseudoObs[b,], DOCwc = pseudoObs[b,])
     
     min.calcModelNLL(par = c(DOCR_RespParam,DOCL_RespParam,R_auto,BurialFactor_R,BurialFactor_L,POC_lcR,POC_lcL),
