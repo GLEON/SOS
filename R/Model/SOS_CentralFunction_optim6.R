@@ -1,7 +1,8 @@
 setwd('C:/Users/hdugan/Documents/Rpackages/SOS/')
+setwd("~/Documents/SOS")
 #CarbonFluxModel <- function(LakeName,PlotFlag,ValidationFlag){
 #Flags 1 for yes, else no.
-LakeName = 'Vanern'
+LakeName = 'Monona'
 OptimizationFlag = 0
 PlotFlag = 0
 ValidationFlag = 1
@@ -486,7 +487,7 @@ print(paste0('RMSE DO ',RMSE_DO))
 
 ################## Bootstrapping of Residuals #################
 if (bootstrap==1){
-  save.image(file = "R/Model/lake.RData")
+  #save.image(file = "R/Model/lake.RData")
   
   resids <- CalibrationOutputDOC[,4]-CalibrationOutputDOC[,2]
   set.seed(001) # just to make it reproducible
@@ -494,34 +495,36 @@ if (bootstrap==1){
   
   library(parallel)
   detectCores() # Calculate the number of cores
-  cl <- makeCluster(7) # Initiate cluster
+  cl <- makeCluster(12) # Initiate cluster
   
   bootParams = data.frame(DOCR_RespParam=NA,DOCL_RespParam=NA,R_auto=NA,BurialFactor_R=NA,
                           BurialFactor_L=NA,POC_lcR=NA,POC_lcL=NA)
   
   source('~/Documents/SOS/R/Model/bootstrapDOC.R')
+  # This applies the bootstrap function across multiple cores, works for Mac. 
+  # This code be written as a loop instead. 
   bootOut = parApply(cl = cl,MARGIN = 1,X = pseudoObs, FUN = bootstrapDOC,
                      datetime = CalibrationOutputDOC$datetime, LakeName = 'Vanern')
-  #parApply(cl = cl,MARGIN = 1,X = pseudoObs, FUN = mean)
-  for (b in 1:7) {
-    pseudoDOC = data.frame(datetime = CalibrationOutputDOC$datetime, DOC = pseudoObs[b,], DOCwc = pseudoObs[b,])
-    
-    min.calcModelNLL(par = c(DOCR_RespParam,DOCL_RespParam,R_auto,BurialFactor_R,BurialFactor_L,POC_lcR,POC_lcL),
-                     ValidationDataDOC = pseudoDOC,
-                     ValidationDataDO = ValidationDataDO,ValidationDataMAROC = ValidationDataMAROC)
- 
-    optimOut = optim(par = c(DOCR_RespParam,DOCL_RespParam,R_auto,BurialFactor_R,BurialFactor_L,POC_lcR,POC_lcL), 
-                     min.calcModelNLL,ValidationDataDOC = ValidationDataDOC,
-                     ValidationDataDO = ValidationDataDO,ValidationDataMAROC = ValidationDataMAROC, 
-                     control = list(maxit = 100)) #setting maximum number of attempts for now
-    
-    print(paste0('b = ',b,', Parameter estimates (burial, Rhet, Raut...'))
-    print(round(optimOut$par,3))
-    ## New parameters from optimization output
-  
-    bootParams[b,1:7] <- optimOut$par
-    bootParams$NLL[b] <- optimOut$value
-  } # Loop instead? 
+
+  # for (b in 1:7) {
+  #   pseudoDOC = data.frame(datetime = CalibrationOutputDOC$datetime, DOC = pseudoObs[b,], DOCwc = pseudoObs[b,])
+  #   
+  #   min.calcModelNLL(par = c(DOCR_RespParam,DOCL_RespParam,R_auto,BurialFactor_R,BurialFactor_L,POC_lcR,POC_lcL),
+  #                    ValidationDataDOC = pseudoDOC,
+  #                    ValidationDataDO = ValidationDataDO,ValidationDataMAROC = ValidationDataMAROC)
+  # 
+  #   optimOut = optim(par = c(DOCR_RespParam,DOCL_RespParam,R_auto,BurialFactor_R,BurialFactor_L,POC_lcR,POC_lcL), 
+  #                    min.calcModelNLL,ValidationDataDOC = ValidationDataDOC,
+  #                    ValidationDataDO = ValidationDataDO,ValidationDataMAROC = ValidationDataMAROC, 
+  #                    control = list(maxit = 100)) #setting maximum number of attempts for now
+  #   
+  #   print(paste0('b = ',b,', Parameter estimates (burial, Rhet, Raut...'))
+  #   print(round(optimOut$par,3))
+  #   ## New parameters from optimization output
+  # 
+  #   bootParams[b,1:7] <- optimOut$par
+  #   bootParams$NLL[b] <- optimOut$value
+  # } # Loop instead? 
 }
 
 
