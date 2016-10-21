@@ -500,32 +500,23 @@ if (bootstrap==1){
   source('~/Documents/SOS/R/Model/bootstrapDOC.R')
   # This applies the bootstrap function across multiple cores, works for Mac. 
   bootOut = parApply(cl = cl,MARGIN = 1,X = pseudoObs, FUN = bootstrapDOC,
-                     datetime = CalibrationOutputDOC$datetime, LakeName = 'Vanern')
+                     datetime = CalibrationOutputDOC$datetime, LakeName = LakeName,
+                     timestampFormat = timestampFormat)
   # Output results
   write.csv(bootOut,paste0('./',LakeName,'Lake/','Results/',LakeName,'_boostrapResults.csv'),row.names = F,quote=F)
   
-  # This code be written as a loop instead. 
-  # bootParams = data.frame(DOCR_RespParam=NA,DOCL_RespParam=NA,R_auto=NA,BurialFactor_R=NA,
-  #                         BurialFactor_L=NA,POC_lcR=NA,POC_lcL=NA)
-  # for (b in 1:7) {
-  #   pseudoDOC = data.frame(datetime = CalibrationOutputDOC$datetime, DOC = pseudoObs[b,], DOCwc = pseudoObs[b,])
-  #   
-  #   min.calcModelNLL(par = c(DOCR_RespParam,DOCL_RespParam,R_auto,BurialFactor_R,BurialFactor_L,POC_lcR,POC_lcL),
-  #                    ValidationDataDOC = pseudoDOC,
-  #                    ValidationDataDO = ValidationDataDO,ValidationDataMAROC = ValidationDataMAROC)
-  # 
-  #   optimOut = optim(par = c(DOCR_RespParam,DOCL_RespParam,R_auto,BurialFactor_R,BurialFactor_L,POC_lcR,POC_lcL), 
-  #                    min.calcModelNLL,ValidationDataDOC = ValidationDataDOC,
-  #                    ValidationDataDO = ValidationDataDO,ValidationDataMAROC = ValidationDataMAROC, 
-  #                    control = list(maxit = 100)) #setting maximum number of attempts for now
-  #   
-  #   print(paste0('b = ',b,', Parameter estimates (burial, Rhet, Raut...'))
-  #   print(round(optimOut$par,3))
-  #   ## New parameters from optimization output
-  # 
-  #   bootParams[b,1:7] <- optimOut$par
-  #   bootParams$NLL[b] <- optimOut$value
-  # } # Loop instead? 
+  ###### This code be written as a loop instead. 
+  bootParams = data.frame(DOCR_RespParam=NA,DOCL_RespParam=NA,R_auto=NA,BurialFactor_R=NA,
+                          BurialFactor_L=NA,POC_lcR=NA,POC_lcL=NA)
+  for (b in 1:100) {
+    pseudoDOC = data.frame(datetime = CalibrationOutputDOC$datetime, DOC = pseudoObs[b,], DOCwc = pseudoObs[b,])
+
+    loopOut = bootstrapDOC(pseudoObs[1,],datetime = CalibrationOutputDOC$datetime, LakeName = LakeName,
+                 timestampFormat = timestampFormat)
+    ## New parameters from optimization output
+    bootParams[b,1:7] <- loopOut$par
+    bootParams$NLL[b] <- loopOut$value
+  } # Loop instead?
 }
 
 

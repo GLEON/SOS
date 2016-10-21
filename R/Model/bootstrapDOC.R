@@ -108,7 +108,7 @@ bootstrapDOC <- function(newObs,datetime,LakeName,timestampFormat = '%m/%d/%Y') 
   ValidationDataDO$datetime <- as.Date(as.POSIXct(strptime(ValidationDataDO$datetime,timestampFormat),tz="GMT")) #Convert time to POSIX
   ValidationDataDO = ValidationDataDO[complete.cases(ValidationDataDO),]
   #Only compare to DO data during "production season."
-  ValidationDataDO = ValidationDataDO[yday(ValidationDataDO$datetime)>ProdStartDay & yday(ValidationDataDO$datetime)<ProdEndDay,]
+  # ValidationDataDO = ValidationDataDO[yday(ValidationDataDO$datetime)>rtartDay & yday(ValidationDataDO$datetime)<ProdEndDay,]
   #ValidationDataDO = ValidationDataDO[ValidationDataDO$wtr >= 10,]
   
   
