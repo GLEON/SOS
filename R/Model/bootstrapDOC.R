@@ -258,7 +258,7 @@ bootstrapDOC <- function(newObs,datetime,LakeName,timestampFormat = '%m/%d/%Y') 
   optimOut = optim(par = c(DOCR_RespParam,DOCL_RespParam,R_auto,BurialFactor_R,BurialFactor_L,POC_lcR,POC_lcL), 
                    min.calcModelNLL,ValidationDataDOC = pseudoDOC,
                    ValidationDataDO = ValidationDataDO,ValidationDataMAROC = ValidationDataMAROC, 
-                   control = list(maxit = 100)) #setting maximum number of attempts for now
+                   control = list(maxit = 150)) #setting maximum number of attempts for now
   
   ## New parameters from optimization output
   outV <- c(optimOut$par, optimOut$value, optimOut$convergence)

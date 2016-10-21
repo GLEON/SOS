@@ -500,7 +500,7 @@ if (bootstrap==1){
                           BurialFactor_L=NA,POC_lcR=NA,POC_lcL=NA)
   
   source('~/Documents/SOS/R/Model/bootstrapDOC.R')
-  bootOut = parApply(cl = cl,MARGIN = 1,X = pseudoObs[1:5,], FUN = bootstrapDOC,
+  bootOut = parApply(cl = cl,MARGIN = 1,X = pseudoObs, FUN = bootstrapDOC,
                      datetime = CalibrationOutputDOC$datetime, LakeName = 'Vanern')
   #parApply(cl = cl,MARGIN = 1,X = pseudoObs, FUN = mean)
   for (b in 1:7) {
