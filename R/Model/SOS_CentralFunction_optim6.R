@@ -495,17 +495,18 @@ if (bootstrap==1){
   
   library(parallel)
   detectCores() # Calculate the number of cores
-  cl <- makeCluster(12) # Initiate cluster
-  
-  bootParams = data.frame(DOCR_RespParam=NA,DOCL_RespParam=NA,R_auto=NA,BurialFactor_R=NA,
-                          BurialFactor_L=NA,POC_lcR=NA,POC_lcL=NA)
+  cl <- makeCluster(8) # SET THIS NUMBER EQUAL TO OR LESS THAN THE CORES YOU HAVE
   
   source('~/Documents/SOS/R/Model/bootstrapDOC.R')
   # This applies the bootstrap function across multiple cores, works for Mac. 
-  # This code be written as a loop instead. 
   bootOut = parApply(cl = cl,MARGIN = 1,X = pseudoObs, FUN = bootstrapDOC,
                      datetime = CalibrationOutputDOC$datetime, LakeName = 'Vanern')
-
+  # Output results
+  write.csv(bootOut,paste0('./',LakeName,'Lake/','Results/',LakeName,'_boostrapResults.csv'),row.names = F,quote=F)
+  
+  # This code be written as a loop instead. 
+  # bootParams = data.frame(DOCR_RespParam=NA,DOCL_RespParam=NA,R_auto=NA,BurialFactor_R=NA,
+  #                         BurialFactor_L=NA,POC_lcR=NA,POC_lcL=NA)
   # for (b in 1:7) {
   #   pseudoDOC = data.frame(datetime = CalibrationOutputDOC$datetime, DOC = pseudoObs[b,], DOCwc = pseudoObs[b,])
   #   
