@@ -2,7 +2,7 @@ setwd('C:/Users/hdugan/Documents/Rpackages/SOS/')
 setwd("~/Documents/SOS")
 #CarbonFluxModel <- function(LakeName,PlotFlag,ValidationFlag){
 #Flags 1 for yes, else no.
-LakeName = 'Toolik'
+LakeName = 'Trout'
 OptimizationFlag = 0
 PlotFlag = 1
 ValidationFlag = 1
@@ -22,8 +22,8 @@ library(signal)
 library(zoo)
 library(lubridate)
 library(LakeMetabolizer)
-library(dplyr)
 library(plyr)
+library(dplyr)
 
 ##### LOAD FUNCTIONS #######################
 source("./R/Model/SOS_Sedimentation.R")
@@ -495,7 +495,7 @@ if (BootstrapFlag==1){
   
   library(parallel)
   detectCores() # Calculate the number of cores
-  cl <- makeCluster(1) # SET THIS NUMBER EQUAL TO OR LESS THAN THE CORES YOU HAVE
+  cl <- makeCluster(4) # SET THIS NUMBER EQUAL TO OR LESS THAN THE CORES YOU HAVE
   
   source('R/Model/bootstrapDOC.R')
   # This applies the bootstrap function across multiple cores, works for Mac. 
