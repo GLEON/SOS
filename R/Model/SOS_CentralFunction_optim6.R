@@ -2,11 +2,11 @@ setwd('C:/Users/hdugan/Documents/Rpackages/SOS/')
 setwd("~/Documents/SOS")
 #CarbonFluxModel <- function(LakeName,PlotFlag,ValidationFlag){
 #Flags 1 for yes, else no.
-LakeName = 'Monona'
+LakeName = 'Trout'
 OptimizationFlag = 0
-PlotFlag = 0
+PlotFlag = 1
 ValidationFlag = 1
-WriteFiles = 0
+WriteFiles = 1
 BootstrapFlag = 1
 timestampFormat =	'%m/%d/%Y'
 #timestampFormat =	'%Y-%m-%d'
@@ -22,8 +22,8 @@ library(signal)
 library(zoo)
 library(lubridate)
 library(LakeMetabolizer)
-library(dplyr)
 library(plyr)
+library(dplyr)
 
 ##### LOAD FUNCTIONS #######################
 source("./R/Model/SOS_Sedimentation.R")
@@ -486,7 +486,7 @@ print(paste0('RMSE DOC ',RMSE_DOC))
 print(paste0('RMSE DO ',RMSE_DO))
 
 ################## Bootstrapping of Residuals #################
-if (bootstrap==1){
+if (BootstrapFlag==1){
   #save.image(file = "R/Model/lake.RData")
   
   resids <- CalibrationOutputDOC[,4]-CalibrationOutputDOC[,2]
@@ -495,9 +495,9 @@ if (bootstrap==1){
   
   library(parallel)
   detectCores() # Calculate the number of cores
-  cl <- makeCluster(8) # SET THIS NUMBER EQUAL TO OR LESS THAN THE CORES YOU HAVE
+  cl <- makeCluster(4) # SET THIS NUMBER EQUAL TO OR LESS THAN THE CORES YOU HAVE
   
-  source('~/Documents/SOS/R/Model/bootstrapDOC.R')
+  source('R/Model/bootstrapDOC.R')
   # This applies the bootstrap function across multiple cores, works for Mac. 
   bootOut = parApply(cl = cl,MARGIN = 1,X = pseudoObs, FUN = bootstrapDOC,
                      datetime = CalibrationOutputDOC$datetime, LakeName = LakeName,

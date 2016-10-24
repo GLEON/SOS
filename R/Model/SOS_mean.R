@@ -1,7 +1,7 @@
 ##This program is to calculate the long-term mean allochthony, autochthony, R, S, units in g
 
 #User input lakename
-LakeName = 'Toolik'
+LakeName = 'Annie'
 
 #Read in results data from SOS Carbon Flux Model
 DOC_results_filename = paste('./',LakeName,'Lake/','Results/',LakeName,'_DOC_Results.csv',sep='')
@@ -19,14 +19,17 @@ area = ParameterFile[ParameterFile$Parameter == 'LakeArea',]$Value
 alloch<-POC_df$POC_in_alloch_g+DOC_df$DOC_in_alloch_g
 autoch<-POC_df$POC_in_autoch_g+DOC_df$DOC_in_autoch_g
 
-R<-DOC_df$respOut_gm2y*area/365
+R<-DOC_df$respOut_gm2y
 
-S<-SOS$Sink
+S<-POC_df$sedOut_gm2y
 
-fOut<-(POC_df$leachOut_gm2y*area/365 + POC_df$FlowOut_gm2y*area/365 + DOC_df$DOC_out_g - DOC_df$respOut_gm2y*area/365)
+fOut<-(POC_df$leachOut_gm2y + POC_df$FlowOut_gm2y+ DOC_df$FlowOut_gm2y)
 
-alloch<-mean(alloch,na.rm=T)
-autoch<-mean(autoch,na.rm=T)
+alloch<-DOC_df$FlowIn_gm2y+DOC_df$leachIn_gm2y+POC_df$FlowIn_gm2y
+autoch<-POC_df$NPPin_gm2y+DOC_df$NPPin_gm2y
+
+alloch<-mean(alloch,rm=T)
+autoch<-mean(autoch,rm=T)
 R<-mean(R,na.rm=T)
 S<-mean(S,na.rm=T)
 fOut<-mean(fOut,na.rm=T)
