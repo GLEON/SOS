@@ -3,6 +3,7 @@ setwd('C:/Users/hdugan/Documents/Rpackages/SOS/')
 
 ##### LOAD PACKAGES ########################
 library(readr)
+library(dplyr)
 plotResiduals('aMendota',T)
 plotResiduals('Monona',T)
 plotResiduals('Harp',T)
