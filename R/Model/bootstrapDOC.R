@@ -49,69 +49,56 @@ bootstrapDOC <- function(newObs,datetime,LakeName,timestampFormat = '%m/%d/%Y') 
   TimeStep <- as.numeric(InputData$datetime[2]-InputData$datetime[1]) #days
   steps <- nrow(InputData)
   
-  ##### Declare Output Data Storage ##########
-  POC_df = data.frame(Date = InputData$datetime, POCtotal_conc_gm3 = NA,
-                      POCR_conc_gm3 = NA, POCL_conc_gm3 = NA,
-                      NPPin_gm2y=NA,FlowIn_gm2y=NA,FlowOut_gm2y=NA,sedOut_gm2y=NA,leachOut_gm2y=NA,
-                      POC_flowOut_gm2y = NA, POC_sedOut_gm2y = NA,
-                      POCload_g = NA, POCalloch_g = NA, POCautoch_g = NA,
-                      POCout_g = NA)
-  DOC_df = data.frame(Date = InputData$datetime,DOCtotal_conc_gm3 = NA,
-                      DOCR_conc_gm3 = NA, DOCL_conc_gm3 = NA,
-                      NPPin_gm2y=NA,FlowIn_gm2y=NA,FlowOut_gm2y=NA,respOut_gm2y=NA,leachIn_gm2y=NA,
-                      DOC_flowOut_gm2y = NA, DOC_respOut_gm2y = NA,
-                      DOCload_g = NA, DOCalloch_g = NA, DOCautoch_g = NA,
-                      DOCout_g = NA)
-  
-  ##### Declare Data Storage - Sed ###########
-  SedData <- data.frame(Date = InputData$datetime,BurialScalingFactor_R=NA,MAR_oc_R=NA,POC_burial_R=NA,
-                        BurialScalingFactor_L=NA,MAR_oc_L=NA,POC_burial_L=NA,
-                        MAR_oc_total=NA,POC_burial_total=NA)
-  
-  ##### Declare Data Storage - NPP ###########
-  PPdata <- data.frame(Date = InputData$datetime,GPP_DOCL_rate=NA,GPP_POCL_rate=NA,NPP_DOCL_mass=NA,NPP_POCL_mass=NA, DOCL_massRespired=NA)
-  Metabolism <- data.frame(Date = InputData$datetime,NEP=NA,Oxygen=NA)
-  
-  ##### Declare Data Storage - SW/GW #########
-  SWGWData <- data.frame(Date = InputData$datetime,POCR_Aerial=NA, POCR_SW=NA, DOCR_Wetland=NA, 
-                         DOCR_gw=NA, DOCR_SW=NA, DailyRain=NA, DOCR_precip=NA, Load_DOCR=NA, Load_POCR=NA,
-                         POCR_massIn_g = NA, DOCR_massIn_g = NA, 
-                         POCR_outflow = NA, DOCR_outflow = NA, POCL_outflow = NA, DOCL_outflow = NA)
-  
-  #### Declare Data Storage - POC to DOC Leaching ####
-  LeachData <- data.frame(Date = InputData$datetime,POCR_leachOut = NA,DOCR_leachIn = NA,
-                          POCL_leachOut = NA,DOCL_leachIn = NA)
-  
-  ##### Declare Data Storage - Source of Sink? #
-  SOS <- data.frame(Date = InputData$datetime,Source=NA,Sink=NA,Pipe=NA,Net=NA)
-  
-  ##### Carbon Concentration Initialization ################
-  POC_df$POCtotal_conc_gm3[1] <- POC_init # #Initialize POC concentration as baseline average
-  DOC_df$DOCtotal_conc_gm3[1] <- DOC_init #Initialize DOC concentration g/m3
-  DOC_df$DOCR_conc_gm3[1] <- DOC_init*0.8 #Initialize DOC concentration g/m3
-  DOC_df$DOCL_conc_gm3[1] <- DOC_init*0.2 #Initialize DOC concentration g/m3
-  POC_df$POCR_conc_gm3[1] <- POC_init*0.8 #Initialize POC concentration g/m3
-  POC_df$POCL_conc_gm3[1] <- POC_init*0.2 #Initialize POC concentration g/m3
+  # ##### Declare Output Data Storage ##########
+  # POC_df = data.frame(Date = InputData$datetime, POCtotal_conc_gm3 = NA,
+  #                     POCR_conc_gm3 = NA, POCL_conc_gm3 = NA,
+  #                     NPPin_gm2y=NA,FlowIn_gm2y=NA,FlowOut_gm2y=NA,sedOut_gm2y=NA,leachOut_gm2y=NA,
+  #                     POC_flowOut_gm2y = NA, POC_sedOut_gm2y = NA,
+  #                     POCload_g = NA, POCalloch_g = NA, POCautoch_g = NA,
+  #                     POCout_g = NA)
+  # DOC_df = data.frame(Date = InputData$datetime,DOCtotal_conc_gm3 = NA,
+  #                     DOCR_conc_gm3 = NA, DOCL_conc_gm3 = NA,
+  #                     NPPin_gm2y=NA,FlowIn_gm2y=NA,FlowOut_gm2y=NA,respOut_gm2y=NA,leachIn_gm2y=NA,
+  #                     DOC_flowOut_gm2y = NA, DOC_respOut_gm2y = NA,
+  #                     DOCload_g = NA, DOCalloch_g = NA, DOCautoch_g = NA,
+  #                     DOCout_g = NA)
+  # 
+  # ##### Declare Data Storage - Sed ###########
+  # SedData <- data.frame(Date = InputData$datetime,BurialScalingFactor_R=NA,MAR_oc_R=NA,POC_burial_R=NA,
+  #                       BurialScalingFactor_L=NA,MAR_oc_L=NA,POC_burial_L=NA,
+  #                       MAR_oc_total=NA,POC_burial_total=NA)
+  # 
+  # ##### Declare Data Storage - NPP ###########
+  # PPdata <- data.frame(Date = InputData$datetime,GPP_DOCL_rate=NA,GPP_POCL_rate=NA,NPP_DOCL_mass=NA,NPP_POCL_mass=NA, DOCL_massRespired=NA)
+  # Metabolism <- data.frame(Date = InputData$datetime,NEP=NA,Oxygen=NA)
+  # 
+  # ##### Declare Data Storage - SW/GW #########
+  # SWGWData <- data.frame(Date = InputData$datetime,POCR_Aerial=NA, POCR_SW=NA, DOCR_Wetland=NA, 
+  #                        DOCR_gw=NA, DOCR_SW=NA, DailyRain=NA, DOCR_precip=NA, Load_DOCR=NA, Load_POCR=NA,
+  #                        POCR_massIn_g = NA, DOCR_massIn_g = NA, 
+  #                        POCR_outflow = NA, DOCR_outflow = NA, POCL_outflow = NA, DOCL_outflow = NA)
+  # 
+  # #### Declare Data Storage - POC to DOC Leaching ####
+  # LeachData <- data.frame(Date = InputData$datetime,POCR_leachOut = NA,DOCR_leachIn = NA,
+  #                         POCL_leachOut = NA,DOCL_leachIn = NA)
+  # 
+  # ##### Declare Data Storage - Source of Sink? #
+  # SOS <- data.frame(Date = InputData$datetime,Source=NA,Sink=NA,Pipe=NA,Net=NA)
+  # 
+  # ##### Carbon Concentration Initialization ################
+  # POC_df$POCtotal_conc_gm3[1] <- POC_init # #Initialize POC concentration as baseline average
+  # DOC_df$DOCtotal_conc_gm3[1] <- DOC_init #Initialize DOC concentration g/m3
+  # DOC_df$DOCR_conc_gm3[1] <- DOC_init*0.8 #Initialize DOC concentration g/m3
+  # DOC_df$DOCL_conc_gm3[1] <- DOC_init*0.2 #Initialize DOC concentration g/m3
+  # POC_df$POCR_conc_gm3[1] <- POC_init*0.8 #Initialize POC concentration g/m3
+  # POC_df$POCL_conc_gm3[1] <- POC_init*0.2 #Initialize POC concentration g/m3
   
   ####################### Validation Output Setup ######################################
-  
-  #DOC Validation Output Setup
-  # ValidationDataDOC <- read.csv(ValidationFileDOC,header=T)
-  # ValidationDataDOC$datetime <- as.Date(as.POSIXct(strptime(ValidationDataDOC$datetime,timestampFormat),tz="GMT")) #Convert time to POSIX
-  # ValidationDataDOC = ValidationDataDOC[complete.cases(ValidationDataDOC),]
-  # outlier.limit = (mean(ValidationDataDOC$DOC) + 3*(sd(ValidationDataDOC$DOC))) # Calculate mean + 3 SD of DOC column
-  # ValidationDataDOC = ValidationDataDOC[ValidationDataDOC$DOC <= outlier.limit,] # Remove rows where DOC > outlier.limit
-  # ValidationDataDOC = ddply(ValidationDataDOC,'datetime',summarize,DOC=mean(DOC),DOCwc=mean(DOCwc))
-  # 
   #DO Validation Output Setup
   ValidationDataDO <- read.csv(ValidationFileDO,header=T)
   ValidationDataDO$datetime <- as.Date(as.POSIXct(strptime(ValidationDataDO$datetime,timestampFormat),tz="GMT")) #Convert time to POSIX
   ValidationDataDO = ValidationDataDO[complete.cases(ValidationDataDO),]
-  #Only compare to DO data during "production season."
-  # ValidationDataDO = ValidationDataDO[yday(ValidationDataDO$datetime)>rtartDay & yday(ValidationDataDO$datetime)<ProdEndDay,]
-  #ValidationDataDO = ValidationDataDO[ValidationDataDO$wtr >= 10,]
-  
-  
+
   k <- 0.5 #m/d
   PhoticDepth <- data.frame(datetime = InputData$datetime,PhoticDepth = log(100)/(1.7/InputData$Secchi))
   IndxVal = ValidationDataDO$datetime %in% as.Date(PhoticDepth$datetime)
@@ -155,101 +142,102 @@ bootstrapDOC <- function(newObs,datetime,LakeName,timestampFormat = '%m/%d/%Y') 
     return(NLL)
   }
 
-  modelDOC <- function (RespParamR_init,RespParamL_init,R_auto_init,BurialFactorR_init,BurialFactorL_init,
-                        POC_lcR_init,POC_lcL_init) {
-
+  modelDOC <- function (DOCR_RespParam,DOCL_RespParam,R_auto,BurialFactor_R,BurialFactor_L,
+                        POC_lcR,POC_lcL) {
+    
+    POC_out = data.frame(POCL_conc_gm3 = rep(NA,steps), POCR_conc_gm3 = rep(NA,steps), POCtotal_conc_gm3 = rep(NA,steps))
+    DOC_out = data.frame(DOCL_conc_gm3 = rep(NA,steps), DOCR_conc_gm3 = rep(NA,steps), DOCtotal_conc_gm3 = rep(NA,steps))
+    
+    POC_out[1,] = c(POC_init*0.2, POC_init*0.8, POC_init)
+    DOC_out[1,] = c(DOC_init*0.2, DOC_init*0.8, DOC_init)
+    Metabolism_out = NA
+    Sed_out = NA
+    
     for (i in 1:(steps)){
-      #Prevent negative parameter guesses from blowing model up
-      # if (BurialFactor_init<=0){BurialFactor_init<-10^-5}
-      # if (RespParam_init<=0){RespParam_init<-10^-5}
-      # if (R_auto_init<=0){R_auto_init<-10^-5}
-      if (R_auto_init > 1){R_auto_init = 1}
-
+      if (R_auto > 1){R_auto = 1}
+      
       Q_sw <- InputData$FlowIn[i] #m3/s surface water flowrate at i
       Q_gw <- Q_sw/(1-PropGW) - Q_sw #m3/s; as a function of proportion of inflow that is GW
       Q_out <- InputData$FlowOut[i] #m3/s: total outflow. Assume steady state pending dynamic output
       Rainfall <- InputData$Rain[i]/TimeStep #mm/day
-
+      
       #Call GPP function
       PhoticDepth <- log(100)/(1.7/InputData$Secchi[i]) #Calc photic depth as function of Secchi depth
       if (PhoticDepth>LakeDepth){PhoticDepth<-LakeDepth} #QC - If photic depth calc'ed as greater than lake depth, photic depth = lake depth
-      GPPrates <- GPP(InputData$Chla[i],InputData$TP[i],PhoticDepth,InputData$EpiTemp[i],yday(InputData$datetime[i])) #mg C/m^2/d
-      PPdata$GPP_DOCL_rate[i] = 0 #mg C/m2/d
-      PPdata$GPP_POCL_rate[i] = GPPrates$GPP_POC_rate + GPPrates$GPP_DOC_rate #mg C/m2/d
-      PPdata$NPP_DOCL_mass[i] <- PPdata$GPP_DOCL_rate[i]*(1-R_auto_init)*LakeArea*TimeStep/1000 #g
-      PPdata$NPP_POCL_mass[i] <- PPdata$GPP_POCL_rate[i]*(1-R_auto_init)*LakeArea*TimeStep/1000 #g
-
+      
+      ######## Got rid of GPP function ##########
+      #Scale areal value to volume
+      CHL <- InputData$Chla[i]*PhoticDepth #KF: need to include conversion from L to m3 for this (i.e., *0.001)
+      if (InputData$EpiTemp[i]>=4) {
+        GPP_rate <- 10^(1.18+(0.92*log10(CHL))+(0.014*InputData$EpiTemp[i])) #mg C/m2/d
+      } else {
+        GPP_rate = 0 
+      }
+      
+      GPP_Percent_DOC <- 71.4*CHL^(-0.22) #GPP as DOC, estimated as equal to 
+      GPP_DOC_rate <- GPP_rate*(GPP_Percent_DOC/100)  #mg C/m2/d
+      GPP_POC_rate <- GPP_rate*(1-(GPP_Percent_DOC/100))  #mg C/m2/d
+      
+      ############################
+      PPdata_NPP_DOCL_mass <- 0*(1-R_auto)*LakeArea*TimeStep/1000 #g
+      PPdata_NPP_POCL_mass <- (GPP_POC_rate + GPP_DOC_rate)*(1-R_auto)*LakeArea*TimeStep/1000 #g
+      
       #Call heterotrophic respiration function for recalitrant DOC pool (DOCR) and labile DOC pool (DOCL)
-      DOCR_resp_rate <- Resp(DOC_df$DOCR_conc_gm3[i],InputData$EpiTemp[i],RespParamR_init) #g C/m3/d
-      DOCL_resp_rate <- Resp(DOC_df$DOCL_conc_gm3[i],InputData$EpiTemp[i],RespParamL_init) #g C/m3/d ##CHANGE TO AVERAGE OR LAYER TEMP WHEN AVAILABLE IN TIME SERIES
-
-      PPdata$DOCR_massRespired[i] = DOCR_resp_rate*LakeVolume*TimeStep #g C
-      PPdata$DOCL_massRespired[i] = DOCL_resp_rate*LakeVolume*TimeStep #g C
-
+      DOCR_resp_rate <- Resp(DOC_out$DOCR_conc_gm3[i],InputData$EpiTemp[i],DOCR_RespParam) #g C/m3/d
+      DOCL_resp_rate <- Resp(DOC_out$DOCL_conc_gm3[i],InputData$EpiTemp[i],DOCL_RespParam) #g C/m3/d ##CHANGE TO AVERAGE OR LAYER TEMP WHEN AVAILABLE IN TIME SERIES
+      
+      PPdata_DOCR_massRespired = DOCR_resp_rate*LakeVolume*TimeStep #g C
+      PPdata_DOCL_massRespired = DOCL_resp_rate*LakeVolume*TimeStep #g C
+      
       #Calc metabolism (DO) estimates for PP validation
-      # Metabolism$NEP[i] <- (PPdata$NPP_DOCL_mass[i] + PPdata$NPP_POCL_mass[i] - PPdata$DOCR_massRespired[i]*(PhoticDepth/LakeDepth) - PPdata$DOCL_massRespired[i]*(PhoticDepth/LakeDepth))/
-      #   (LakeVolume*PhoticDepth/LakeDepth)/TimeStep #g/m3/d #volume of photic zone
-      Metabolism$NEP[i] <- (PPdata$NPP_DOCL_mass[i] + PPdata$NPP_POCL_mass[i] - PPdata$DOCR_massRespired[i] - PPdata$DOCL_massRespired[i])/
-        (LakeVolume*PhoticDepth/LakeDepth)/TimeStep #g/m3/d #volume of photic zone
-      Metabolism$Oxygen[i] <- (Metabolism$NEP[i])*(32/12) #g/m3/d Molar conversion of C flux to O2 flux (lake metabolism)
-
+      Metabolism_out[i] <- (32/12) *(PPdata_NPP_DOCL_mass + PPdata_NPP_POCL_mass - PPdata_DOCR_massRespired - PPdata_DOCL_massRespired)/
+        (LakeVolume*PhoticDepth/LakeDepth)/TimeStep #g/m3/d Molar conversion of C flux to O2 flux (lake metabolism)
+      
       #Call SWGW Function (Surface Water/GroundWater)
-      SWGW <- SWGWFunction(Q_sw,Q_gw,Rainfall,AerialLoad, PropCanopy, LakePerimeter, WetlandLoad, PropWetlands, DOC_gw,
+      SWGW <- SWGWFunction(Q_sw,Q_gw,Rainfall,AerialLoad, PropCanopy, LakePerimeter, WetlandLoad, PropWetlands, DOC_gw, 
                            InputData$SW_DOC[i], DOC_precip, LakeArea) # All in g/day, except DailyRain in m3/day
-      #change these inputs to iterative [i] values when inputs are dynamic
-      SWGWData[i,2:10] <- SWGW
-      #LOAD DOC (g/d) = DOC_Wetland + DOC_GW + DOC_SW +DOC_Precip # g/d DOC
-      #LOAD POC (g/d) = POC_Aerial + POC_SW # g/d POC roughly estimated as (0.1 * DOC)
-
+      
       #Call Sedimentation Function
-      POCR_mass <- POC_df$POCR_conc_gm3[i]*LakeVolume
-      POCL_mass <- POC_df$POCL_conc_gm3[i]*LakeVolume
-      SedOutput_R <- SedimentationFunction(BurialFactorR_init,TimeStep,POCR_mass,LakeArea)
-      SedOutput_L <- SedimentationFunction(BurialFactorL_init,TimeStep,POCL_mass,LakeArea)
-      SedData[i,2:4] = SedOutput_R
-      SedData[i,5:7] = SedOutput_L
-      SedData[i,8:9] = (SedOutput_L + SedOutput_R) [2:3]
-
-
+      POCR_mass <- POC_out$POCR_conc_gm3[i]*LakeVolume
+      POCL_mass <- POC_out$POCL_conc_gm3[i]*LakeVolume
+      
+      #Burial Recalitrant
+      MAR_Roc <- POCR_mass*BurialFactor_R*365/LakeArea #g OC/(m^2 * yr)
+      SedR_POC_burial <- MAR_Roc*(TimeStep/365)*LakeArea #g/d; Timestep with conversion from years to timestep units - days
+      #Burial Labile
+      MAR_Loc <- POCL_mass*BurialFactor_L*365/LakeArea #g OC/(m^2 * yr)
+      SedL_POC_burial <- MAR_Loc*(TimeStep/365)*LakeArea #g/d; Timestep with conversion from years to timestep units - days
+      Sed_out[i] = MAR_Loc + MAR_Roc
+      
       #Calc outflow subtractions (assuming outflow concentrations = mixed lake concentrations)
-      SWGWData$POCR_outflow[i] <- POC_df$POCR_conc_gm3[i]*Q_out*60*60*24*TimeStep #g
-      SWGWData$POCL_outflow[i] <- POC_df$POCL_conc_gm3[i]*Q_out*60*60*24*TimeStep #g
-      SWGWData$DOCR_outflow[i] <- DOC_df$DOCR_conc_gm3[i]*Q_out*60*60*24*TimeStep #g
-      SWGWData$DOCL_outflow[i] <- DOC_df$DOCL_conc_gm3[i]*Q_out*60*60*24*TimeStep #g
-      #Calculate load from SWGW_in
-      SWGWData$DOCR_massIn_g[i] <- SWGWData$Load_DOCR[i]*TimeStep #g
-      SWGWData$POCR_massIn_g[i] <- SWGWData$Load_POCR[i]*TimeStep #g
+      SWGW_POCR_outflow <- POC_out$POCR_conc_gm3[i]*Q_out*60*60*24*TimeStep #g
+      SWGW_POCL_outflow <- POC_out$POCL_conc_gm3[i]*Q_out*60*60*24*TimeStep #g
+      SWGW_DOCR_outflow <- DOC_out$DOCR_conc_gm3[i]*Q_out*60*60*24*TimeStep #g
+      SWGW_DOCL_outflow <- DOC_out$DOCL_conc_gm3[i]*Q_out*60*60*24*TimeStep #g
+      
       #Calc POC-to-DOC leaching
-      LeachData$POCR_leachOut[i] <- POC_df$POCR_conc_gm3[i]*POC_lcR_init*LakeVolume*TimeStep #g - POC concentration times leaching parameter
-      LeachData$DOCR_leachIn[i] <- LeachData$POCR_leachOut[i]
-      LeachData$POCL_leachOut[i] <- POC_df$POCL_conc_gm3[i]*POC_lcL_init*LakeVolume*TimeStep #g - POC concentration times leaching parameter
-      LeachData$DOCL_leachIn[i] <- LeachData$POCL_leachOut[i]
+      POCR_leachOut <- POC_out$POCR_conc_gm3[i]*POC_lcR*LakeVolume*TimeStep #g - POC concentration times leaching parameter
+      POCL_leachOut <- POC_out$POCL_conc_gm3[i]*POC_lcL*LakeVolume*TimeStep #g - POC concentration times leaching parameter
+      
       if (i < steps) { #don't calculate for last time step
         #Update POC and DOC concentration values (g/m3) for whole lake
-
-        POC_df$POCL_conc_gm3[i+1] <-  POC_df$POCL_conc_gm3[i] + ((PPdata$NPP_POCL_mass[i] - LeachData$POCL_leachOut[i] - SWGWData$POCL_outflow[i] - SedData$POC_burial_L[i])/LakeVolume) #g/m3
-        POC_df$POCR_conc_gm3[i+1] <-  POC_df$POCR_conc_gm3[i] + ((SWGWData$POCR_massIn_g[i] - LeachData$POCR_leachOut[i] - SWGWData$POCR_outflow[i] - SedData$POC_burial_R[i])/LakeVolume)
-        POC_df$POCtotal_conc_gm3[i+1] = POC_df$POCR_conc_gm3[i+1] + POC_df$POCL_conc_gm3[i+1]
-
-        DOC_df$DOCL_conc_gm3[i+1] <- DOC_df$DOCL_conc_gm3[i] + ((PPdata$NPP_DOCL_mass[i] + LeachData$DOCL_leachIn[i] - SWGWData$DOCL_outflow[i] - PPdata$DOCL_massRespired[i])/LakeVolume) #g/m3
-        DOC_df$DOCR_conc_gm3[i+1] <- DOC_df$DOCR_conc_gm3[i] + ((SWGWData$DOCR_massIn_g[i] + LeachData$DOCR_leachIn[i] - SWGWData$DOCR_outflow[i] - PPdata$DOCR_massRespired[i])/LakeVolume) #g/m3
-        DOC_df$DOCtotal_conc_gm3[i+1] = DOC_df$DOCR_conc_gm3[i+1] + DOC_df$DOCL_conc_gm3[i+1]
-
-        #Make calibration terrible if concentrations go to negative
-        if (POC_df$POCtotal_conc_gm3[i+1]<=0) {
-          POC_df$POCtotal_conc_gm3[i+1] = 0
-        }
-        if (DOC_df$DOCtotal_conc_gm3[i+1]<=0) {
-          DOC_df$DOCtotal_conc_gm3[i+1] = 0
-        }
+        
+        POC_out$POCL_conc_gm3[i+1] <-  POC_out$POCL_conc_gm3[i] + ((PPdata_NPP_POCL_mass - POCL_leachOut - SWGW_POCL_outflow - SedL_POC_burial)/LakeVolume) #g/m3
+        POC_out$POCR_conc_gm3[i+1] <-  POC_out$POCR_conc_gm3[i] + ((SWGW$Load_POC - POCR_leachOut - SWGW_POCR_outflow - SedR_POC_burial)/LakeVolume)
+        POC_out$POCtotal_conc_gm3[i+1] = POC_out$POCR_conc_gm3[i+1] + POC_out$POCL_conc_gm3[i+1]
+        
+        DOC_out$DOCL_conc_gm3[i+1] <- DOC_out$DOCL_conc_gm3[i] + ((PPdata_NPP_DOCL_mass + POCL_leachOut - SWGW_DOCL_outflow - PPdata_DOCL_massRespired)/LakeVolume) #g/m3
+        DOC_out$DOCR_conc_gm3[i+1] <- DOC_out$DOCR_conc_gm3[i] + ((SWGW$Load_DOC + POCR_leachOut - SWGW_DOCR_outflow - PPdata_DOCR_massRespired)/LakeVolume) #g/m3
+        DOC_out$DOCtotal_conc_gm3[i+1] = DOC_out$DOCR_conc_gm3[i+1] + DOC_out$DOCL_conc_gm3[i+1]
       }
     }
-
+    
     # Final output
-    return(data.frame('datetime' = as.Date(InputData$datetime), 'DOC_conc' = DOC_df$DOCtotal_conc_gm3,
-                      'POC_conc' = POC_df$POCtotal_conc_gm3,
-                      'MetabOxygen' = Metabolism$Oxygen,'SedData_MAR' = SedData$MAR_oc_total))
+    return(data.frame('datetime' = as.Date(InputData$datetime), 'DOC_conc' = DOC_out$DOCtotal_conc_gm3,
+                      'POC_conc' = POC_out$POCtotal_conc_gm3,
+                      'MetabOxygen' = Metabolism_out,'SedData_MAR' = Sed_out))
   }
+  
   
   min.calcModelNLL(par = c(DOCR_RespParam,DOCL_RespParam,R_auto,BurialFactor_R,BurialFactor_L,POC_lcR,POC_lcL),
                    ValidationDataDOC = pseudoDOC,

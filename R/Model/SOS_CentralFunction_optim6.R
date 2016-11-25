@@ -2,14 +2,14 @@ setwd('C:/Users/hdugan/Documents/Rpackages/SOS/')
 setwd("~/Documents/SOS")
 #CarbonFluxModel <- function(LakeName,PlotFlag,ValidationFlag){
 #Flags 1 for yes, else no.
-LakeName = 'Trout'
+LakeName = 'Monona'
 OptimizationFlag = 0
 PlotFlag = 1
 ValidationFlag = 1
 WriteFiles = 1
 BootstrapFlag = 1
 timestampFormat =	'%m/%d/%Y'
-#timestampFormat =	'%Y-%m-%d'
+timestampFormat =	'%Y-%m-%d'
 ##### INPUT FILE NAMES ################
 TimeSeriesFile <- paste('./',LakeName,'Lake/',LakeName,'TS.csv',sep='')
 RainFile <- paste('./',LakeName,'Lake/',LakeName,'Rain.csv',sep='')
@@ -30,7 +30,7 @@ source("./R/Model/SOS_Sedimentation.R")
 source("./R/Model/SOS_SWGW.R")
 source("./R/Model/SOS_GPP.R")
 source("./R/Model/SOS_Resp.R")
-source("./R/Model/modelDOC_6.R")
+source("./R/Model/modelDOC_7.R")
 
 ##### READ PARAMETER FILE ##################
 parameters <- read.table(file = ParameterFile,header=TRUE,comment.char="#",stringsAsFactors = F)
@@ -237,9 +237,9 @@ if (OptimizationFlag==1){
     return(NLL)
   }
   ## Test call ##
-  min.calcModelNLL(par = c(DOCR_RespParam,DOCL_RespParam,R_auto,BurialFactor_R,BurialFactor_L,POC_lcR,POC_lcL),ValidationDataDOC = ValidationDataDOC,
-                   ValidationDataDO = ValidationDataDO,ValidationDataMAROC = ValidationDataMAROC)
-  # # 
+  # min.calcModelNLL(par = c(DOCR_RespParam,DOCL_RespParam,R_auto,BurialFactor_R,BurialFactor_L,POC_lcR,POC_lcL),ValidationDataDOC = ValidationDataDOC,
+  #                  ValidationDataDO = ValidationDataDO,ValidationDataMAROC = ValidationDataMAROC)
+  # # # 
   
   optimOut = optim(par = c(DOCR_RespParam,DOCL_RespParam,R_auto,BurialFactor_R,BurialFactor_L,POC_lcR,POC_lcL), 
                    min.calcModelNLL,ValidationDataDOC = ValidationDataDOC,
@@ -288,6 +288,7 @@ if (OptimizationFlag==1){
 # POC_lcL = 0.01
 # BurialFactor_R = 0.05
 # R_auto = 0.75
+
 
 for (i in 1:(steps)) {
   if (R_auto > 1){R_auto = 1}
@@ -474,8 +475,8 @@ if (ValidationFlag==1){
 if (PlotFlag==1){
   #POC and DOC concentration in time (g/m3)
   par(mar=c(2.5,3,1,1),mgp=c(1.5,0.3,0),tck=-0.02,cex=0.8)
-  plot(OutputTimeSeries,DOC_df$DOC_conc_gm3,xlab='Date',ylab="DOC Conc (g/m3)",type="l")
-  lines(ValidationDataDOC$datetime,ValidationDataDOC$DOC,col='red3')
+  plot(OutputTimeSeries,DOC_df$DOCtotal_conc_gm3,xlab='Date',ylab="DOC Conc (g/m3)",type="l")
+  lines(ValidationDataDOC$datetime,ValidationDataDOC$DOC,col='red3',type='o')
   
 }
 ################## Calc goodness of fit #################
@@ -491,7 +492,7 @@ if (BootstrapFlag==1){
   
   resids <- CalibrationOutputDOC[,4]-CalibrationOutputDOC[,2]
   set.seed(001) # just to make it reproducible
-  pseudoObs = matrix(replicate(100,sample(resids) + CalibrationOutputDOC$Measured),ncol = length(resids)) # matrix of psuedo observations 
+  pseudoObs = matrix(replicate(4,sample(resids) + CalibrationOutputDOC$Measured),ncol = length(resids)) # matrix of psuedo observations 
   
   library(parallel)
   detectCores() # Calculate the number of cores
