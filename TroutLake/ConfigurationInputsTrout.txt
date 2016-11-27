@@ -8,8 +8,8 @@ DOC_init	2.9	g/m^3
 POC_init	0.29	g/m^3
 #Sedimentation Parameters		
 BurialFactor	0.01	1/days
-BurialFactor_R	0.001469608	1/days
-BurialFactor_L	0.000837644	1/days
+BurialFactor_R	-0.100051582	1/days
+BurialFactor_L	0.001707739	1/days
 #SWGW Parameters		
 PropCanopy	0.77	unitless
 PropWetlands	0.011	unitless
@@ -21,12 +21,12 @@ DOC_precip	2	g/m3
 		
 #Leach/Resp Parameters		
 POC_lc	0.01	1/days
-POC_lcR	0.175786091	1/days
-POC_lcL	0.009598088	1/days
+POC_lcR	0.248310240	1/days
+POC_lcL	0.008767737	1/days
 RespParam	0.001	unitless
-DOCR_RespParam	0.000996346	unitless
-DOCL_RespParam	0.122937874	unitless
-R_auto	0.787089561	unitless
+DOCR_RespParam	0.001068377	unitless
+DOCL_RespParam	0.135237458	unitless
+R_auto	0.771854190	unitless
 		
 #Sedimentation		
 ObservedMAR_oc	27	g/m2/yr
