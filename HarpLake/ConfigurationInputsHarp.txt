@@ -6,8 +6,11 @@ LakeArea	713800	m^2
 LakeVolume	8320000	m^3	
 DOC_init	3.7	g/m^3	
 POC_init	0.37	g/m^3	
+
 #Sedimentation Parameters			
 BurialFactor	0.07086	1/days
+BurialFactor_R	0.325708982	1/days
+BurialFactor_L	-0.040864624	1/day	
 BurialFactor_R	0.3498708	1/days
 BurialFactor_L	0.05477459	1/day	
 
@@ -23,16 +26,18 @@ DOC_precip	2	g/m3
 
 #Leach/Resp Parameters			
 POC_lc	0.01	1/days	
-POC_lcR	-0.2034457	1/days
-POC_lcL	0.2611251	1/days
+POC_lcR	0.192268378	1/days
+POC_lcL	0.100561021	1/days
 
 RespParam	0.0021639	unitless
-DOCR_RespParam	0.0008392057	unitless
+DOCR_RespParam	0.001610717	unitless
 DOCL_RespParam	-0.146647	unitless	
-R_auto	1.08435	unitless
-				
+R_auto	1.08435	unitless				
+
 #Sedimentation			
 ObservedMAR_oc	78	g/m2/yr				
+POC_lcR	-0.2034457	1/days
+POC_lcL	0.2611251	1/days			
 
 #ProductionPeriod
 ProdStartDay	90	JulianDay	

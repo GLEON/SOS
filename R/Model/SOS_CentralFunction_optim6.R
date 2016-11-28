@@ -7,7 +7,7 @@ OptimizationFlag = 0
 PlotFlag = 1
 ValidationFlag = 1
 WriteFiles = 1
-BootstrapFlag = 1
+BootstrapFlag = 0
 timestampFormat =	'%m/%d/%Y'
 timestampFormat =	'%Y-%m-%d'
 ##### INPUT FILE NAMES ################
@@ -243,7 +243,7 @@ if (OptimizationFlag==1){
   
   optimOut = optim(par = c(DOCR_RespParam,DOCL_RespParam,R_auto,BurialFactor_R,BurialFactor_L,POC_lcR,POC_lcL), 
                    min.calcModelNLL,ValidationDataDOC = ValidationDataDOC,
-                   ValidationDataDO = ValidationDataDO,ValidationDataMAROC = ValidationDataMAROC), 
+                   ValidationDataDO = ValidationDataDO,ValidationDataMAROC = ValidationDataMAROC, 
                     control = list(maxit = 200)) #setting maximum number of attempts for now
   #method = 'L-BFGS-B',lower=c(0,0,0) #To constrain
   
@@ -275,8 +275,9 @@ if (OptimizationFlag==1){
 # Monona6: 0.0004087905  0.0041632723  0.8289424909  0.0709289391  0.1154835122 -0.0124340428  0.0293172223 #NLL 292
 # Vanern6: 0.001399777 0.007491947 0.492280939 0.484148905 0.319265033 0.126942579 0.058335812 #NLL = -3.8
 # Harp6:  0.001610717  0.002218104  1.030734931  0.325708982 -0.040864624  0.192268378  0.100561021 #NLL= 120
-# Trout6: 0.0010790416  0.0009477849  0.9203089237  0.1055202226  0.1075471302 -0.0034742360  0.0177154412 #NLL 201
+# Trout6: 0.00102419776 -0.00007575118  0.92565651166  0.53870717997  0.17129011981 -0.10455469123  0.00408925218 #NLL 202
 # Toolik6: 0.009217922 -0.181475814  0.621733535  0.237056611  0.034073382 -0.200121215  0.238469810
+
 
 # POC_lcR = 0.01
 # POC_lcL = 0.01
@@ -390,7 +391,7 @@ POC_df$POCout_g = SWGWData$POCR_outflow + SWGWData$POCL_outflow + SedData$POC_bu
 
 DOC_df$DOCload_g <- PPdata$NPP_DOCL_mass + SWGWData$DOCR_massIn_g + LeachData$DOCR_leachIn + LeachData$DOCL_leachIn #g
 DOC_df$DOCalloch_g <- SWGWData$DOCR_massIn_g
-DOC_df$DOCautoch_g <- PPdata$NPP_DOCL_mass
+DOC_df$DOCautoch_g <- LeachData$POCL_leachOut
 DOC_df$DOCout_g <- SWGWData$DOCR_outflow + SWGWData$DOCL_outflow + PPdata$DOCR_massRespired + PPdata$DOCL_massRespired #g
 
 #OC mass sourced/sank at each time step
