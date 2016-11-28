@@ -243,8 +243,8 @@ if (OptimizationFlag==1){
   
   optimOut = optim(par = c(DOCR_RespParam,DOCL_RespParam,R_auto,BurialFactor_R,BurialFactor_L,POC_lcR,POC_lcL), 
                    min.calcModelNLL,ValidationDataDOC = ValidationDataDOC,
-                   ValidationDataDO = ValidationDataDO,ValidationDataMAROC = ValidationDataMAROC, 
-                   control = list(maxit = 200)) #setting maximum number of attempts for now
+                   ValidationDataDO = ValidationDataDO,ValidationDataMAROC = ValidationDataMAROC), 
+                    control = list(maxit = 200)) #setting maximum number of attempts for now
   #method = 'L-BFGS-B',lower=c(0,0,0) #To constrain
   
   print('Parameter estimates (burial, Rhet, Raut...')
@@ -266,12 +266,6 @@ if (OptimizationFlag==1){
 # 
 # ####################### END OPTIMIZATION ROUTINE #################################
 # ####################### MAIN PROGRAM #############################################
-# Monona c(0.00059606,0.062588791,0.792906357,0.270671129,-0.011526258) 
-# Harp: c(0.002230285,0.002745391,0.995244529,0.333380628,-0.009177321) #NLL 87
-# Trout:  c( 0.0011254525  0.1520756581  0.7253578540  0.1120424232 -0.0003273584) #NLL: 225
-# Mendota: c(0.0008463344,0.3467401103,0.5110130504,0.0986506182,0.0024431470)
-# Vanern: c(0.001512181,0.030140450,0.758617333,0.328194576,-0.008648217) #NLL = 7.6
-
 # Monona5: c(0.001760347 0.000825484 0.900335669 0.382236083 0.010878626 0.016376368) #NLL 287
 # Vanern5: c(0.00146343281 0.01426637001 0.92157986978 0.42846889871 0.00008978815 0.00781871285) #NLL 4.37
 # Mendota5: c(0.0014666541  0.4081472578  0.6001340076 -0.0289949672 -0.0000245212 -0.0004031551) #NLL 555
