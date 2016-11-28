@@ -3,14 +3,14 @@ setwd('C:/Users/hdugan/Documents/Rpackages/SOS/')
 
 ##### LOAD PACKAGES ########################
 library(readr)
-lakeNames = c('aMendota','Monona','Harp','Trout','Vanern')
+lakeNames = c('Monona','Harp','Trout','Vanern','Toolik')
 plotFile  = T
 
 
-par(mfrow=c(3,2),mar=c(2,3,2,1),mgp=c(1.3,0.3,0),tck=-0.02)
+par(mfrow=c(2,3),mar=c(2,3,2,1),mgp=c(1.3,0.3,0),tck=-0.02)
 if (plotFile == T){
-  png(paste0('R/ResultsViz/Figures/ModelDOCfit.png'),units = 'in',width = 6,height = 5, res = 300)
-  par(mfrow=c(3,2),mar=c(2,3,2,1),mgp=c(1.3,0.3,0),tck=-0.02)
+  png(paste0('R/ResultsViz/Figures/ModelDOCfit.png'),units = 'in',width = 8,height = 5, res = 300)
+  par(mfrow=c(2,3),mar=c(2,3,2,1),mgp=c(1.3,0.3,0),tck=-0.02)
 }
 for (l in lakeNames){
   LakeName = l
