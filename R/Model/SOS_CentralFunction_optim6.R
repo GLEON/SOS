@@ -2,12 +2,12 @@ setwd('C:/Users/hdugan/Documents/Rpackages/SOS/')
 setwd("~/Documents/Rpackages/SOS")
 #CarbonFluxModel <- function(LakeName,PlotFlag,ValidationFlag){
 #Flags 1 for yes, else no.
-LakeName = 'Monona'
+LakeName = 'Harp'
 OptimizationFlag = 0
 PlotFlag = 1
 ValidationFlag = 1
 WriteFiles = 1
-BootstrapFlag = 1
+BootstrapFlag = 0
 timestampFormat =	'%m/%d/%Y'
 timestampFormat =	'%Y-%m-%d'
 ##### INPUT FILE NAMES ################
@@ -244,7 +244,7 @@ if (OptimizationFlag==1){
   optimOut = optim(par = c(DOCR_RespParam,DOCL_RespParam,R_auto,BurialFactor_R,BurialFactor_L,POC_lcR,POC_lcL), 
                    min.calcModelNLL,ValidationDataDOC = ValidationDataDOC,
                    ValidationDataDO = ValidationDataDO,ValidationDataMAROC = ValidationDataMAROC, 
-                   control = list(maxit = 200)) #setting maximum number of attempts for now
+                    control = list(maxit = 200)) #setting maximum number of attempts for now
   #method = 'L-BFGS-B',lower=c(0,0,0) #To constrain
   
   print('Parameter estimates (burial, Rhet, Raut...')
@@ -266,12 +266,6 @@ if (OptimizationFlag==1){
 # 
 # ####################### END OPTIMIZATION ROUTINE #################################
 # ####################### MAIN PROGRAM #############################################
-# Monona c(0.00059606,0.062588791,0.792906357,0.270671129,-0.011526258) 
-# Harp: c(0.002230285,0.002745391,0.995244529,0.333380628,-0.009177321) #NLL 87
-# Trout:  c( 0.0011254525  0.1520756581  0.7253578540  0.1120424232 -0.0003273584) #NLL: 225
-# Mendota: c(0.0008463344,0.3467401103,0.5110130504,0.0986506182,0.0024431470)
-# Vanern: c(0.001512181,0.030140450,0.758617333,0.328194576,-0.008648217) #NLL = 7.6
-
 # Monona5: c(0.001760347 0.000825484 0.900335669 0.382236083 0.010878626 0.016376368) #NLL 287
 # Vanern5: c(0.00146343281 0.01426637001 0.92157986978 0.42846889871 0.00008978815 0.00781871285) #NLL 4.37
 # Mendota5: c(0.0014666541  0.4081472578  0.6001340076 -0.0289949672 -0.0000245212 -0.0004031551) #NLL 555
@@ -280,9 +274,10 @@ if (OptimizationFlag==1){
 
 # Monona6: 0.0004087905  0.0041632723  0.8289424909  0.0709289391  0.1154835122 -0.0124340428  0.0293172223 #NLL 292
 # Vanern6: 0.001399777 0.007491947 0.492280939 0.484148905 0.319265033 0.126942579 0.058335812 #NLL = -3.8
-# Harp6:  0.001610717  0.002218104  1.030734931  0.325708982 -0.040864624  0.192268378  0.100561021 #NLL= 120
-# Trout6: 0.0010790416  0.0009477849  0.9203089237  0.1055202226  0.1075471302 -0.0034742360  0.0177154412 #NLL 201
+# Harp6:  0.0021818011 -0.0001816167  0.9560355106  0.4332813107  0.1408809234 -0.0704930469  0.1447935844 #NLL= 102
+# Trout6: 0.00102419776 -0.00007575118  0.92565651166  0.53870717997  0.17129011981 -0.10455469123  0.00408925218 #NLL 202
 # Toolik6: 0.009217922 -0.181475814  0.621733535  0.237056611  0.034073382 -0.200121215  0.238469810
+
 
 # POC_lcR = 0.01
 # POC_lcL = 0.01
@@ -396,7 +391,7 @@ POC_df$POCout_g = SWGWData$POCR_outflow + SWGWData$POCL_outflow + SedData$POC_bu
 
 DOC_df$DOCload_g <- PPdata$NPP_DOCL_mass + SWGWData$DOCR_massIn_g + LeachData$DOCR_leachIn + LeachData$DOCL_leachIn #g
 DOC_df$DOCalloch_g <- SWGWData$DOCR_massIn_g
-DOC_df$DOCautoch_g <- PPdata$NPP_DOCL_mass
+DOC_df$DOCautoch_g <- LeachData$POCL_leachOut
 DOC_df$DOCout_g <- SWGWData$DOCR_outflow + SWGWData$DOCL_outflow + PPdata$DOCR_massRespired + PPdata$DOCL_massRespired #g
 
 #OC mass sourced/sank at each time step
