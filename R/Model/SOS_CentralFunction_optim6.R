@@ -1,5 +1,5 @@
 setwd('C:/Users/hdugan/Documents/Rpackages/SOS/')
-setwd("~/Documents/SOS")
+setwd("~/Documents/Rpackages/SOS")
 #CarbonFluxModel <- function(LakeName,PlotFlag,ValidationFlag){
 #Flags 1 for yes, else no.
 LakeName = 'Monona'
@@ -508,15 +508,14 @@ if (BootstrapFlag==1){
   
   ###### This code be written as a loop instead. 
   bootParams = data.frame(DOCR_RespParam=NA,DOCL_RespParam=NA,R_auto=NA,BurialFactor_R=NA,
-                          BurialFactor_L=NA,POC_lcR=NA,POC_lcL=NA)
+                          BurialFactor_L=NA,POC_lcR=NA,POC_lcL=NA,NLL = NA, Convergence = NA)
   for (b in 1:100) {
     pseudoDOC = data.frame(datetime = CalibrationOutputDOC$datetime, DOC = pseudoObs[b,], DOCwc = pseudoObs[b,])
 
     loopOut = bootstrapDOC(pseudoObs[1,],datetime = CalibrationOutputDOC$datetime, LakeName = LakeName,
                  timestampFormat = timestampFormat)
     ## New parameters from optimization output
-    bootParams[b,1:7] <- loopOut$par
-    bootParams$NLL[b] <- loopOut$value
+    bootParams[b,] <- loopOut
   } # Loop instead?
 }
 
