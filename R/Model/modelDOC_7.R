@@ -60,9 +60,11 @@ modelDOC <- function (DOCR_RespParam,DOCL_RespParam,R_auto,BurialFactor_R,Burial
     POCL_mass <- POC_out$POCL_conc_gm3[i]*LakeVolume
 
     #Burial Recalitrant
+    if (BurialFactor_R < 0 ){ BurialFactor_R = 0}
     MAR_Roc <- POCR_mass*BurialFactor_R*365/LakeArea #g OC/(m^2 * yr)
     SedR_POC_burial <- MAR_Roc*(TimeStep/365)*LakeArea #g/d; Timestep with conversion from years to timestep units - days
     #Burial Labile
+    if (BurialFactor_L < 0 ){ BurialFactor_L = 0}
     MAR_Loc <- POCL_mass*BurialFactor_L*365/LakeArea #g OC/(m^2 * yr)
     SedL_POC_burial <- MAR_Loc*(TimeStep/365)*LakeArea #g/d; Timestep with conversion from years to timestep units - days
     Sed_out[i] = MAR_Loc + MAR_Roc
