@@ -4,6 +4,7 @@ setwd("~/Documents/Rpackages/SOS")
 #Flags 1 for yes, else no.
 LakeName = 'Harp'
 OptimizationFlag = 0
+updateParameters = 0
 PlotFlag = 1
 ValidationFlag = 1
 WriteFiles = 1
@@ -263,6 +264,17 @@ if (OptimizationFlag==1){
   POC_lcR <- optimOut$par[6]
   POC_lcL <- optimOut$par[7]
 }
+if (updateParameters == 1){
+  parameters[parameters$Parameter == 'DOCR_RespParam',2] = DOCR_RespParam
+  parameters[parameters$Parameter == 'DOCL_RespParam',2] = DOCL_RespParam
+  parameters[parameters$Parameter == 'R_auto',2] = R_auto
+  parameters[parameters$Parameter == 'BurialFactor_R',2] = BurialFactor_R
+  parameters[parameters$Parameter == 'BurialFactor_L',2] = BurialFactor_L
+  parameters[parameters$Parameter == 'POC_lcR',2] = POC_lcR
+  parameters[parameters$Parameter == 'POC_lcL',2] = POC_lcL
+  write.table(parameters,file = ParameterFile,quote = F,row.names = F)
+}
+
 # 
 # ####################### END OPTIMIZATION ROUTINE #################################
 # ####################### MAIN PROGRAM #############################################
@@ -274,7 +286,7 @@ if (OptimizationFlag==1){
 
 # Monona6: 0.0004087905  0.0041632723  0.8289424909  0.0709289391  0.1154835122 -0.0124340428  0.0293172223 #NLL 292
 # Vanern6: 0.001399777 0.007491947 0.492280939 0.484148905 0.319265033 0.126942579 0.058335812 #NLL = -3.8
-# Harp6:  0.0021818011 -0.0001816167  0.9560355106  0.4332813107  0.1408809234 -0.0704930469  0.1447935844 #NLL= 102
+# Harp6:  0.0008141741 -0.4383581148  1.4847726880  0.5484400278 -0.2768842246 -0.3236315757  0.5386921457 #NLL= 68
 # Trout6: 0.00102419776 -0.00007575118  0.92565651166  0.53870717997  0.17129011981 -0.10455469123  0.00408925218 #NLL 202
 # Toolik6: 0.009217922 -0.181475814  0.621733535  0.237056611  0.034073382 -0.200121215  0.238469810
 
@@ -522,11 +534,15 @@ if (WriteFiles==1){
   Input_filename = paste('./',LakeName,'Lake/','Results/',LakeName,'_InputData.csv',sep='')
   DOC_validation_filename = paste('./',LakeName,'Lake/','Results/',LakeName,'_DOCvalidation.csv',sep='')
   DO_validation_filename = paste('./',LakeName,'Lake/','Results/',LakeName,'_DOvalidation.csv',sep='')
+  DO_results_filename = paste('./',LakeName,'Lake/','Results/',LakeName,'_DO_Results.csv',sep='')
   
   write.csv(DOC_df,file = DOC_results_filename,row.names = F,quote = F)
   write.csv(POC_df,file = POC_results_filename,row.names = F,quote = F)
   write.csv(InputData,file = Input_filename,row.names = F,quote = F)
   write.csv(CalibrationOutputDOC,file = DOC_validation_filename,row.names = F,quote = F)
   write.csv(CalibrationOutputDO,file = DO_validation_filename,row.names = F,quote = F)
+  
+  Metabolism$Oxygen_Area = Metabolism$Oxygen * PhoticDepth$PhoticDepth
+  write.csv(Metabolism,file = DO_results_filename,row.names = F,quote = F)
 }
 
