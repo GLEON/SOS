@@ -3,8 +3,7 @@ setwd("~/Documents/Rpackages/SOS")
 #CarbonFluxModel <- function(LakeName,PlotFlag,ValidationFlag){
 #Flags 1 for yes, else no.
 LakeName = 'Trout'
-OptimizationFlag = 1
-updateParameters = 1
+OptimizationFlag = 0
 PlotFlag = 1
 ValidationFlag = 1
 WriteFiles = 1
@@ -275,7 +274,6 @@ if (updateParameters == 1){
   parameters[parameters$Parameter == 'POC_lcL',2] = POC_lcL
   write.table(parameters,file = ParameterFile,quote = F,row.names = F)
 }
-
 # 
 # ####################### END OPTIMIZATION ROUTINE #################################
 # ####################### MAIN PROGRAM #############################################
@@ -287,7 +285,7 @@ if (updateParameters == 1){
 
 # Monona6: 0.0004087905  0.0041632723  0.8289424909  0.0709289391  0.1154835122 -0.0124340428  0.0293172223 #NLL 292
 # Vanern6: 0.001399777 0.007491947 0.492280939 0.484148905 0.319265033 0.126942579 0.058335812 #NLL = -3.8
-# Harp6:  0.0008141741 -0.4383581148  1.4847726880  0.5484400278 -0.2768842246 -0.3236315757  0.5386921457 #NLL= 68
+# Harp6:  0.0021818011 -0.0001816167  0.9560355106  0.4332813107  0.1408809234 -0.0704930469  0.1447935844 #NLL= 102
 # Trout6: 0.00102419776 -0.00007575118  0.92565651166  0.53870717997  0.17129011981 -0.10455469123  0.00408925218 #NLL 202
 # Toolik6: 0.009217922 -0.181475814  0.621733535  0.237056611  0.034073382 -0.200121215  0.238469810
 
@@ -545,5 +543,6 @@ if (WriteFiles==1){
   
   Metabolism$Oxygen_Area = Metabolism$Oxygen * PhoticDepth$PhoticDepth
   write.csv(Metabolism,file = DO_results_filename,row.names = F,quote = F)
+  
 }
 

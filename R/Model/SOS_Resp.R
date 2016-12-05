@@ -17,11 +17,14 @@ Resp <- function(DOC,temp,RespParam){
   
   TempCorr <- 1.08^(temp-20) #Temperature correction factor for DOC-respiration relationship (Paul Hanson, personal correspondence)
   
-  if (RespParam > 0) {
+  # if (RespParam > 0) {
     R <- DOC*RespParam*TempCorr #g/m3
-  } else {
-    R <- 0
-  }
+  # } else {
+  #   R <- 0
+  # }
   
   return(R)  
 }
+
+
+

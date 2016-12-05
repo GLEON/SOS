@@ -56,11 +56,11 @@ png(paste0('R/ResultsViz/Figures/compareDO.png'),width = 7,height = 10,units = '
   par(mfrow=c(5,1))
   par(mar=c(1.5,3,2,1),mgp=c(1.5,0.5,0),tck=-0.03,cex=0.8)
   # run over the lakes
-  Vanern = doComp('Vanern',ylim=c(-1.5,1.5))
-  Toolik = doComp('Toolik')
-  Trout = doComp('Trout',ylim=c(2,3.5))
-  Monona = doComp('Monona',timestamp = '%Y-%m-%d',ylim=c(0,3))
-  Harp = doComp('Harp',ylim=c(-2.5,2))
+  Vanern = doComp('Vanern',ylim=c(-3,3))
+  Toolik = doComp('Toolik',ylim=c(-3,3))
+  Trout = doComp('Trout',timestamp = '%Y-%m-%d',ylim=c(-3,3))
+  Monona = doComp('Monona',timestamp = '%Y-%m-%d',ylim=c(-3,3))
+  Harp = doComp('Harp',ylim=c(-3,3))
 dev.off()
 
 
