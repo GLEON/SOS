@@ -3,7 +3,8 @@ setwd("~/Documents/Rpackages/SOS")
 #CarbonFluxModel <- function(LakeName,PlotFlag,ValidationFlag){
 #Flags 1 for yes, else no.
 LakeName = 'Trout'
-OptimizationFlag = 0
+OptimizationFlag = 1
+updateParameters = 1
 PlotFlag = 1
 ValidationFlag = 1
 WriteFiles = 1
