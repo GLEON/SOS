@@ -1,35 +1,27 @@
-Parameter	Value	Units
-#General Parameters		
-LakePerimeter	25900	m
-LakeDepth	14.6	m
-LakeArea	16079000	m^2
-LakeVolume	234753400	m^3
-DOC_init	2.9	g/m^3
-POC_init	0.29	g/m^3
-#Sedimentation Parameters		
-BurialFactor	0.01	1/days
-BurialFactor_R	-0.094589245	1/days
-BurialFactor_L	0.001460763	1/days
-#SWGW Parameters		
-PropCanopy	0.77	unitless
-PropWetlands	0.011	unitless
-AerialLoad	1	gPOC/m/d
-WetlandLoad	1	gDOC/m/d
-DOC_gw	10	g/m3
-PropGW	0.19	unitless
-DOC_precip	2	g/m3
-		
-#Leach/Resp Parameters		
-POC_lc	0.01	1/days
-POC_lcR	0.174563180	1/days
-POC_lcL	0.009277747	1/days
-RespParam	0.001	unitless
-DOCR_RespParam	0.001153364	unitless
-DOCL_RespParam	0.146611913	unitless
-R_auto	0.761112864	unitless
-		
-#Sedimentation		
-ObservedMAR_oc	27	g/m2/yr
-#ProductionPeriod		
-ProdStartDay	105	JulianDay
-ProdEndDay	330	JulianDay
+Parameter Value Units
+LakePerimeter 25900 m
+LakeDepth 14.6 m
+LakeArea 16079000 m^2
+LakeVolume 234753400 m^3
+DOC_init 2.9 g/m^3
+POC_init 0.29 g/m^3
+BurialFactor 0.01 1/days
+BurialFactor_R -0.094101641107584 1/days
+BurialFactor_L 0.00145748706077121 1/days
+PropCanopy 0.77 unitless
+PropWetlands 0.011 unitless
+AerialLoad 1 gPOC/m/d
+WetlandLoad 1 gDOC/m/d
+DOC_gw 10 g/m3
+PropGW 0.19 unitless
+DOC_precip 2 g/m3
+POC_lc 0.01 1/days
+POC_lcR 0.173534498667879 1/days
+POC_lcL 0.0092549508720495 1/days
+RespParam 0.001 unitless
+DOCR_RespParam 0.00115385805517967 unitless
+DOCL_RespParam 0.146643336817504 unitless
+R_auto 0.760366955409344 unitless
+ObservedMAR_oc 27 g/m2/yr
+ProdStartDay 105 JulianDay
+ProdEndDay 330 JulianDay

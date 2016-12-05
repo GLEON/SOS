@@ -17,4 +17,6 @@ getParameters <- function(lakenames) {
   return(df)
 }
 
-getParameters(c('Monona','Trout','Harp','Vanern','Toolik'))
+gP = getParameters(c('Monona','Trout','Harp','Vanern','Toolik'))
+
+write.table(gP, "clipboard", sep="\t", row.names=FALSE, col.names=FALSE)

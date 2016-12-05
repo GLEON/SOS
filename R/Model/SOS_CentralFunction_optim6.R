@@ -2,9 +2,9 @@ setwd('C:/Users/hdugan/Documents/Rpackages/SOS/')
 setwd("~/Documents/Rpackages/SOS")
 #CarbonFluxModel <- function(LakeName,PlotFlag,ValidationFlag){
 #Flags 1 for yes, else no.
-LakeName = 'Harp'
-OptimizationFlag = 0
-updateParameters = 0
+LakeName = 'Trout'
+OptimizationFlag = 1
+updateParameters = 1
 PlotFlag = 1
 ValidationFlag = 1
 WriteFiles = 1
@@ -264,6 +264,7 @@ if (OptimizationFlag==1){
   POC_lcR <- optimOut$par[6]
   POC_lcL <- optimOut$par[7]
 }
+
 if (updateParameters == 1){
   parameters[parameters$Parameter == 'DOCR_RespParam',2] = DOCR_RespParam
   parameters[parameters$Parameter == 'DOCL_RespParam',2] = DOCL_RespParam
