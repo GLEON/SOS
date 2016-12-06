@@ -2,7 +2,7 @@ setwd('C:/Users/hdugan/Documents/Rpackages/SOS/')
 setwd("~/Documents/Rpackages/SOS")
 #CarbonFluxModel <- function(LakeName,PlotFlag,ValidationFlag){
 #Flags 1 for yes, else no.
-LakeName = 'Trout'
+LakeName = 'Harp'
 OptimizationFlag = 1
 updateParameters = 1
 PlotFlag = 1
@@ -193,7 +193,6 @@ ValidationDataDO = ValidationDataDO[complete.cases(ValidationDataDO),]
 ValidationDataDO = ValidationDataDO[yday(ValidationDataDO$datetime)>ProdStartDay & yday(ValidationDataDO$datetime)<ProdEndDay,]
 #ValidationDataDO = ValidationDataDO[ValidationDataDO$wtr >= 10,]
 
-
 k <- 0.5 #m/d
 PhoticDepth <- data.frame(datetime = InputData$datetime,PhoticDepth = log(100)/(1.7/InputData$Secchi))
 IndxVal = ValidationDataDO$datetime %in% as.Date(PhoticDepth$datetime)
@@ -201,41 +200,62 @@ IndxPhotic = as.Date(PhoticDepth$datetime) %in% ValidationDataDO$datetime
 
 ValidationDataDO = ValidationDataDO[IndxVal,]
 ValidationDataDO$DO_sat <- o2.at.sat(ValidationDataDO[,1:2])[,2]  
-ValidationDataDO$Flux <- k*(ValidationDataDO$DO_con - ValidationDataDO$DO_sat)/PhoticDepth$PhoticDepth[IndxPhotic] #g/m3/d
+ValidationDataDO$Flux <- k*(ValidationDataDO$DO_con - ValidationDataDO$DO_sat)/(PhoticDepth$PhoticDepth[IndxPhotic]) #g/m3/d
 #SedData MAR OC 
 ValidationDataMAROC <- ObservedMAR_oc #g/m2
 
 #################### OPTIMIZATION ROUTINE ############################################
-if (OptimizationFlag==1){
+if (OptimizationFlag==1) {
   min.calcModelNLL <- function(pars,ValidationDataDOC,ValidationDataDO,ValidationDataMAROC){
     modeled = modelDOC(pars[1],pars[2],pars[3],pars[4],pars[5],pars[6],pars[7])
     
+    #modeled = modelDOC(optimOut$par[1],optimOut$par[2],optimOut$par[3],optimOut$par[4],optimOut$par[5],optimOut$par[6],optimOut$par[7])
+    # DOC
     obsIndx = ValidationDataDOC$datetime %in% modeled$datetime
     modIndx = modeled$datetime %in% ValidationDataDOC$datetime
     CalibrationOutputDOC <- data.frame(datetime = ValidationDataDOC[obsIndx,]$datetime,
                                        Measured = ValidationDataDOC[obsIndx,]$DOC, Modelled = modeled[modIndx,]$DOC_conc)
-    #resDOC = scale(CalibrationOutputDOC$Measured - CalibrationOutputDOC$Modelled,center = F)
     resDOC = (CalibrationOutputDOC$Measured - CalibrationOutputDOC$Modelled)
+    resMDOC = CalibrationOutputDOC$Measured - mean(CalibrationOutputDOC$Modelled)
+    
+    # Dissolved oxygen 
     obsIndx = ValidationDataDO$datetime %in% modeled$datetime
     modIndx = modeled$datetime %in% ValidationDataDO$datetime
     CalibrationOutputDO <- data.frame(datetime = ValidationDataDO[obsIndx,]$datetime,
                                       Measured = ValidationDataDO[obsIndx,]$Flux, Modelled = modeled[modIndx,]$MetabOxygen)
     
-    #resDO = scale(CalibrationOutputDO$Measured - CalibrationOutputDO$Modelled,center = F)
+    # Scale residuals
     DOScale = 5
     resDO = (CalibrationOutputDO$Measured - CalibrationOutputDO$Modelled) * DOScale
-    sedScale = 0.001
-    resSedData = (mean(modeled$SedData_MAR,na.rm = T) - ValidationDataMAROC) * sedScale #not scaled because it is 1 value
+    resMDO = (CalibrationOutputDO$Measured - mean(CalibrationOutputDO$Modelled)) * DOScale
+    #sedScale = 0.001
+    #resSedData = (mean(modeled$SedData_MAR,na.rm = T) - ValidationDataMAROC) * sedScale #not scaled because it is 1 value
     
-    res = c(resDOC,resDO,rep(resSedData,length(resDOC)))
+    if (length(resDO) > length(resDOC)){
+      resExtras = sample(x = resDOC,size = length(resDO)-length(resDOC),replace = T)
+      resMExtras = sample(x = resMDOC,size = length(resDO)-length(resDOC),replace = T)
+      res = c(resDOC,resExtras,resDO) # residual string
+      resM = c(resMDOC,resMExtras,resMDO)
+    } else {
+      res = c(resDOC,resDO) # residual string
+      resM = c(resMDOC,resMDO)
+    }
+
     
-    nRes 	= length(res)
-    SSE 	= sum(res^2)
-    sigma2 	= SSE/nRes
-    NLL 	= 0.5*((SSE/sigma2) + nRes*log(2*pi*sigma2))
-    print(paste('NLL: ',NLL,sep=''))
+    MSRE = sqrt((1/length(res))*sum((res)^2)) # mean square root error 
+    print(paste('MSRE: ',MSRE,sep=''))
+    
+    NashSutcliffe = 1 - (sum(res^2)/sum(resM^2))
+    print(paste('NashSutcliffe: ',NashSutcliffe,sep=''))
+
+    # 
+    # nRes 	= length(res)
+    # SSE 	= sum(res^2)
+    # sigma2 	= SSE/nRes
+    # NLL 	= 0.5*((SSE/sigma2) + nRes*log(2*pi*sigma2))
+    # print(paste('NLL: ',NLL,sep=''))
     print(paste('parameters: ',pars,sep=''))
-    return(NLL)
+    return(NashSutcliffe)
   }
   ## Test call ##
   # min.calcModelNLL(par = c(DOCR_RespParam,DOCL_RespParam,R_auto,BurialFactor_R,BurialFactor_L,POC_lcR,POC_lcL),ValidationDataDOC = ValidationDataDOC,
@@ -245,8 +265,9 @@ if (OptimizationFlag==1){
   optimOut = optim(par = c(DOCR_RespParam,DOCL_RespParam,R_auto,BurialFactor_R,BurialFactor_L,POC_lcR,POC_lcL), 
                    min.calcModelNLL,ValidationDataDOC = ValidationDataDOC,
                    ValidationDataDO = ValidationDataDO,ValidationDataMAROC = ValidationDataMAROC, 
-                    control = list(maxit = 200)) #setting maximum number of attempts for now
-  #method = 'L-BFGS-B',lower=c(0,0,0) #To constrain
+                    control = list(maxit = 300,fnscale = -1)) #setting maximum number of attempts for now 
+  # To maximize, set control(fnscale = -1) # Use this for Nash Sutcliffe Efficiency
+  # method = 'L-BFGS-B',lower=c(0,0,0) #To constrain
   
   print('Parameter estimates (burial, Rhet, Raut...')
   print(optimOut$par)
@@ -254,7 +275,6 @@ if (OptimizationFlag==1){
   
   conv <- optimOut$convergence  #did model converge or not (0=yes, 1=no)
   NLL <- optimOut$value #value of nll
-  
   
   DOCR_RespParam <- optimOut$par[1]
   DOCL_RespParam <- optimOut$par[2]
@@ -279,16 +299,10 @@ if (updateParameters == 1){
 # 
 # ####################### END OPTIMIZATION ROUTINE #################################
 # ####################### MAIN PROGRAM #############################################
-# Monona5: c(0.001760347 0.000825484 0.900335669 0.382236083 0.010878626 0.016376368) #NLL 287
-# Vanern5: c(0.00146343281 0.01426637001 0.92157986978 0.42846889871 0.00008978815 0.00781871285) #NLL 4.37
-# Mendota5: c(0.0014666541  0.4081472578  0.6001340076 -0.0289949672 -0.0000245212 -0.0004031551) #NLL 555
-# Harp5: c(0.001945615 -0.267369996  0.985575162  0.208813556  0.444911813  0.010922284) #NLL 135
-# Trout5: c(0.0010642196  0.0728945862  0.6861702029  0.1883407073 -0.0004104246  0.0368199462) #NLL 59
-
 # Monona6: 0.0004087905  0.0041632723  0.8289424909  0.0709289391  0.1154835122 -0.0124340428  0.0293172223 #NLL 292
 # Vanern6: 0.001399777 0.007491947 0.492280939 0.484148905 0.319265033 0.126942579 0.058335812 #NLL = -3.8
-# Harp6:  0.0021818011 -0.0001816167  0.9560355106  0.4332813107  0.1408809234 -0.0704930469  0.1447935844 #NLL= 102
-# Trout6: 0.00156697791  0.00227176138  0.96748143350  0.22976519097 -0.04631793841 -0.00003191966  0.19119569597
+# Harp6:  -0.00005377866  0.00015187846  2.97312382825  0.46387303198 -0.70564290443 -0.35680253025  0.75210297092 
+# Trout6: 0.022287511  0.004949596  0.707380976  0.479660939 -0.022603197 -0.309983554  0.480108134
 # Toolik6: 0.009217922 -0.181475814  0.621733535  0.237056611  0.034073382 -0.200121215  0.238469810
 
 
@@ -323,7 +337,7 @@ for (i in 1:(steps)) {
   PPdata$DOCL_massRespired[i] = DOCL_resp_rate*LakeVolume*TimeStep #g C
   
   #Calc metabolism (DO) estimates for PP validation
-  Metabolism$NEP[i] <- (PPdata$NPP_DOCL_mass[i] + PPdata$NPP_POCL_mass[i] - PPdata$DOCR_massRespired[i]*(PhoticDepth/LakeDepth) - PPdata$DOCL_massRespired[i]*(PhoticDepth/LakeDepth))/
+  Metabolism$NEP[i] <- (PPdata$NPP_DOCL_mass[i] + PPdata$NPP_POCL_mass[i] - PPdata$DOCR_massRespired[i] - PPdata$DOCL_massRespired[i])/
     (LakeVolume*PhoticDepth/LakeDepth)/TimeStep #g/m3/d #volume of photic zone
   # Metabolism$NEP[i] <- (PPdata$NPP_DOCL_mass[i] + PPdata$NPP_POCL_mass[i] - PPdata$DOCR_massRespired[i] - PPdata$DOCL_massRespired[i])/
   #   (LakeVolume*PhoticDepth/LakeDepth)/TimeStep #g/m3/d #volume of photic zone
@@ -454,10 +468,11 @@ if (ValidationFlag==1){
                                    Measured = NA, Modelled = NA)
   
   PhoticDepth <- data.frame(datetime = InputData$datetime,PhoticDepth = log(100)/(1.7/InputData$Secchi))
+  PhoticDepth$PhoticDepth[PhoticDepth$PhoticDepth > LakeDepth] = LakeDepth
   DO_sat <- o2.at.sat(ValidationDataDO_match[,1:2])  
   IndxPhotic = as.Date(PhoticDepth$datetime) %in% ValidationDataDO_match$datetime
   
-  CalibrationOutputDO$Measured <- k*(ValidationDataDO_match$DO_con-DO_sat$do.sat)/PhoticDepth$PhoticDepth[IndxPhotic]
+  CalibrationOutputDO$Measured <- k*(ValidationDataDO_match$DO_con-DO_sat$do.sat) /(PhoticDepth$PhoticDepth[IndxPhotic]) #mg/m2
   CalibrationOutputDO$Modelled <- Metabolism$Oxygen[modIndx]
   
   #Plot Calibration DOC
@@ -485,7 +500,6 @@ if (PlotFlag==1){
   par(mar=c(2.5,3,1,1),mgp=c(1.5,0.3,0),tck=-0.02,cex=0.8)
   plot(OutputTimeSeries,DOC_df$DOCtotal_conc_gm3,xlab='Date',ylab="DOC Conc (g/m3)",type="l")
   lines(ValidationDataDOC$datetime,ValidationDataDOC$DOC,col='red3',type='o')
-  
 }
 ################## Calc goodness of fit #################
 
