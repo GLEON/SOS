@@ -51,16 +51,5 @@ doComp = function(lakename,timestamp = "%m/%d/%Y",ylim=NULL) {
   abline(v = as.Date(paste0(unique(year(DO$Date)),'-01-01')),lty=2,col='grey50') #lines at Jan 1
   abline(v = as.Date(paste0(unique(year(DO$Date)),'-06-01')),lty=3,col='grey80') #lines at Jul 1
 }
-
-png(paste0('R/ResultsViz/Figures/compareDO.png'),width = 7,height = 10,units = 'in',res=300)
-  par(mfrow=c(5,1))
-  par(mar=c(1.5,3,2,1),mgp=c(1.5,0.5,0),tck=-0.03,cex=0.8)
-  # run over the lakes
-  Vanern = doComp('Vanern',ylim=c(-3,3))
-  Toolik = doComp('Toolik',ylim=c(-3,3))
-  Trout = doComp('Trout',timestamp = '%Y-%m-%d',ylim=c(-3,3))
-  Monona = doComp('Monona',timestamp = '%Y-%m-%d',ylim=c(-3,3))
-  Harp = doComp('Harp',ylim=c(-3,3))
-dev.off()
-
+ 
 
