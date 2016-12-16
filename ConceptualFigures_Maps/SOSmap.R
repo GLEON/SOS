@@ -5,14 +5,14 @@ library(mapproj)
 setwd("~/Documents/Rpackages/SOS/R/ResultsViz")
 
 #Members
-annie = c(27.990419, -81.607692)
+#annie = c(27.990419, -81.607692)
 harp = c(45.378941, -79.136019)
 mendota = c(43.110658, -89.423043)
 toolik = c(68.632333, -149.610966)
 trout = c(46.030534, -89.679898)
 vanern = c(58.952994, 13.512845)
 
-lakes = rbind(annie,harp,mendota,toolik,trout,vanern)
+lakes = rbind(harp,mendota,toolik,trout,vanern)#,annie)
 
 cols1 = rgb(169,16,16,200,max=255)
 cols2 = rgb(51,53,94,200,max=255)
