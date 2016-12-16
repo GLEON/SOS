@@ -1,3 +1,11 @@
+# Updated 12-16-16 by Ian McC
+# Note from Ian: some of the various input files still seem to have inconsistent date formatting,
+# which was causing some lakes to return errors. I created some fixes based on current data/date
+# structure
+
+library(LakeMetabolizer)
+
+
 #### Compare DOC observations vs. model ####
 docComp = function(lakename,timestamp = "%m/%d/%Y",ylim=NULL) {
   #read in results csv files of DOC 
@@ -20,11 +28,11 @@ png(paste0('R/ResultsViz/Figures/compareDOC.png'),width = 7,height = 10,units = 
   par(mfrow=c(5,1))
   par(mar=c(1.5,3,2,1),mgp=c(1.5,0.5,0),tck=-0.03,cex=0.8)
   # run over the lakes
-  Vanern = docComp('Vanern')
+  Vanern = docComp('Vanern', ylim=c(3,5))
   Toolik = docComp('Toolik')
-  Trout = docComp('Trout',ylim=c(2,3.5))
-  Monona = docComp('Monona',timestamp = '%Y-%m-%d',ylim=c(4,6.5))
-  Harp = docComp('Harp')
+  Trout = docComp('Trout',timestamp = '%Y-%m-%d',ylim=c(0.5,3.5))
+  Monona = docComp('Monona',timestamp = '%Y-%m-%d',ylim=c(4.5,7))
+  Harp = docComp('Harp', ylim=c(3,5.5))
 dev.off()
 
 #### Compare DO observations vs. model ####
@@ -37,7 +45,7 @@ doComp = function(lakename,timestamp = "%m/%d/%Y",ylim=NULL) {
   
   ValidationFileDO <- paste('./',lakename,'Lake/',lakename,'ValidationDO.csv',sep='')
   ValidationDataDO <- read.csv(ValidationFileDO,header=T)
-  ValidationDataDO$datetime <- as.Date(as.POSIXct(strptime(ValidationDataDO$datetime,timestamp),tz="GMT")) #Convert time to POSIX
+  ValidationDataDO$datetime <- as.Date(strptime(ValidationDataDO$datetime,timestamp))
   
   DO_sat <- o2.at.sat(ValidationDataDO[,1:2])  
   k = 0.5
@@ -52,4 +60,13 @@ doComp = function(lakename,timestamp = "%m/%d/%Y",ylim=NULL) {
   abline(v = as.Date(paste0(unique(year(DO$Date)),'-06-01')),lty=3,col='grey80') #lines at Jul 1
 }
  
-
+png(paste0('R/ResultsViz/Figures/compareDO.png'),width = 7,height = 10,units = 'in',res=300)
+par(mfrow=c(5,1))
+par(mar=c(1.5,3,2,1),mgp=c(1.5,0.5,0),tck=-0.03,cex=0.8)
+# run over the lakes
+Vanern = doComp('Vanern', ylim=c(-2,2))
+#Toolik = doComp('Toolik')
+Trout = doComp('Trout',timestamp = '%Y-%m-%d',ylim=c(-2,2))
+Monona = doComp('Monona',timestamp = '%Y-%m-%d',ylim=c(-2,2))
+Harp = doComp('Harp', ylim=c(-2,2))
+dev.off()
