@@ -7,7 +7,7 @@
 setwd('H:/Ian_GIS/gleon/SOS')
 nruns = 1000
 runs = paste0(rep('run',nruns),seq(1,nruns,1))
-params = c('DOC_RespParam','DOCL_RespParam','R_auto','BurialFactor_R','BurialFactor_L',
+params = c('DOCR_RespParam','DOCL_RespParam','R_auto','BurialFactor_R','BurialFactor_L',
            'POC_lcR','POC_lcL','ObservedMAR_oc','converge')
 
 ######################## Main program ######################
