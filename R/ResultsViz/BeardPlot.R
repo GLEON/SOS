@@ -1,6 +1,8 @@
 #### The legendary beard plot ####
 # Warning: things could get hairy
 
+library(lubridate)
+
 #### Set your own working directory #####
 #setwd("C:/Users/Ian/Desktop/GLEON/SOS/")
 
@@ -55,12 +57,6 @@ Monona = clean_shave('Monona')
 Harp = clean_shave('Harp')
 #Annie = clean_shave('Annie')
 
-## F***in loop doesn't work...it is probably a simple thing but I am too tired
-#for (i in 1:length(lake_list)) {
-#  x = clean_shave(lake_list[i])
-#  assign(x, lake_list[i])
-#}
-
 # plot
 png(paste0('R/ResultsViz/Figures/beardplot.png'),width = 8,height = 4,units = 'in',res=300)
 par(mfrow=c(1,4))
@@ -107,6 +103,14 @@ dev.off()
 #################### Months ##############################
 library(dplyr)
 library(plotrix)
+
+add.alpha <- function(col, alpha=1){
+  if(missing(col))
+    stop("Please provide a vector of colours.")
+  apply(sapply(col, col2rgb)/255, 2, 
+        function(x) 
+          rgb(x[1], x[2], x[3], alpha=alpha))  
+}
 
 plotEllipse <- function(lakedata) {
 ylab = 'Respiration/Sedimentation'
