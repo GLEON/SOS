@@ -37,17 +37,17 @@ SOS_fate = function(LakeName){
   
   alloch<-DOC_df$FlowIn_gm2y+DOC_df$leachIn_gm2y+POC_df$FlowIn_gm2y
   autoch<-POC_df$NPPin_gm2y+DOC_df$NPPin_gm2y
-  Sink = S
+  #Sink = S
   # this is the landscape ecologist's guess on what SOS is
-  # we long ago agreed sedimentation is the sink
-  # intuitively, source is the OC that exits the lake (outflow + leach)
-  # net is difference between source and sink
-  Source = fOut
-  Net = Source - Sink
+  # intuitively, the budget is inputs + internal processing = outputs (net)
+  # if net exceeds inputs + internal processing, the lake is a source
+  Inputs = alloch
+  InternalProc = autoch - S
+  Net = Inputs - InternalProc
   Date = as.Date(DOC_df$Date)
   summary = data.frame(Date=Date,Alloch_gm2y=alloch,Autoch_gm2y=autoch,
-                       R_gm2y=R,S_gm2y=S,Out_gm2y=fOut,Sink=Sink,Source=Source,
-                       Net=Net)
+                       R_gm2y=R,S_gm2y=S,Out_gm2y=fOut,Inputs=Inputs,
+                       InternalProc=InternalProc,Net=Net)
   return(summary)
 }
 
@@ -61,14 +61,13 @@ Vanern = SOS_fate('Vanern')
 #### plotting ####
 png(paste0('R/ResultsViz/Figures/SOSfates.png'),width = 11,height = 9,units = 'in',res=300)
 par(mar=c(5.1, 5.1, 4.1, 2.1)) #bot, left, top, right, def=c(5.1, 4.1, 4.1, 2.1)
-#par(mar=c(3,3,2,3),mgp=c(1.5,0.5,0))
 #par(mfrow=c(1,1))
 par(mfrow=c(3,2))
 lty = 2
 lwd = 2
 ylab = 'OC (g/m2/yr)'
 xlab = 'Date'
-ylim = c(-200,200)
+ylim = c(-100,500)
 cex.main = 2
 cex.axis = 2
 cex.lab = 2
