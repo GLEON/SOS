@@ -1,7 +1,7 @@
 ################################################################
 # Time series plots of SOS fates 
 # Date: 1-3-17
-# Updated: 1-3-17
+# Updated: 1-4-17
 # Author: Ian McC, adapted from Hilary's SOS_mean.R code (HD makes some mean R code)
 ################################################################
 
@@ -42,8 +42,8 @@ SOS_fate = function(LakeName){
   # intuitively, the budget is inputs + internal processing = outputs (net)
   # if net exceeds inputs + internal processing, the lake is a source
   Inputs = alloch
-  InternalProc = autoch - S
-  Net = Inputs - InternalProc
+  InternalProc = autoch - S #may be negative if S exceeds autoch
+  Net = Inputs + InternalProc
   Date = as.Date(DOC_df$Date)
   summary = data.frame(Date=Date,Alloch_gm2y=alloch,Autoch_gm2y=autoch,
                        R_gm2y=R,S_gm2y=S,Out_gm2y=fOut,Inputs=Inputs,
@@ -67,7 +67,7 @@ lty = 2
 lwd = 2
 ylab = 'OC (g/m2/yr)'
 xlab = 'Date'
-ylim = c(-100,500)
+ylim = c(-100,400)
 cex.main = 2
 cex.axis = 2
 cex.lab = 2
