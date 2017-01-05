@@ -12,7 +12,7 @@
 # PC - proportion of lake perimeter that has tree canopy (unitless)
 # lakePerim - lake perimeter (meters)
 # Woc_day - wetland DOC load (g DOC/m shoreline/d)
-# PW - proportion of lake watershed that has wetlands (unitless)
+# PW - proportion of lake perimeter that has wetlands (unitless)
 # DOC_GW - DOC concentration in groundwater (g/m3) static parameter
 # DOC_SW - DOC concentration in surface water (g/m3) dynamic input from time-series
 # DOC_precip - DOC concentration in rainfall (g/m3) static parameter
