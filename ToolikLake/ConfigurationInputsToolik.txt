@@ -21,7 +21,7 @@ PropGW	0.19	unitless
 DOC_sw	6.64	g/m3		
 DOC_precip	2	g/m3
 
-#Leech/Resp Parameters		
+#Leach/Resp Parameters		
 POC_lc	0.01	1/days
 POC_lcR	-0.107	1/days
 POC_lcL	-0.003	1/days
