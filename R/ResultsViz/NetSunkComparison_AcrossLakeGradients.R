@@ -1,178 +1,451 @@
 ###### SOS Net Sunk Plots #####
 # Date: 3-23-16
-# Last modified: 3-23-16
+# Last modified: 1-5-17
 # Author: Ian McCullough
 
 #### R packages ####
-#library(lubridate)
-library(zoo)
 library(dplyr)
 
 #### Set your own working directory #####
-setwd("C:/Users/Ian/Desktop/GLEON/SOS/")
+setwd("H:/Ian_GIS/GLEON/SOS/")
 
-#### Plot Net Sunk Results for all lakes ####
-
-# read in SOS results files for each lake
-Vanern_SOS = read.csv('VanernLake/Results/Vanern_SOS_Results.csv')
-Toolik_SOS = read.csv('ToolikLake/Results/Toolik_SOS_Results.csv')
-Trout_SOS = read.csv('TroutLake/Results/Trout_SOS_Results.csv')
-Mendota_SOS = read.csv('MendotaLake/Results/Mendota_SOS_Results.csv')
-Harp_SOS = read.csv('HarpLake/Results/Harp_SOS_Results.csv')
-#Annie_SOS = read.csv('AnnieLake/Results/Annie_SOS_Results.csv')
-
-# Date conversions
-Vanern_SOS$Date = as.POSIXct(strptime(Vanern_SOS$Date,"%Y-%m-%d"),tz="GMT")
-Toolik_SOS$Date = as.POSIXct(strptime(Toolik_SOS$Date,"%Y-%m-%d"),tz="GMT")
-Trout_SOS$Date = as.POSIXct(strptime(Trout_SOS$Date,"%Y-%m-%d"),tz="GMT")
-Mendota_SOS$Date = as.POSIXct(strptime(Mendota_SOS$Date,"%Y-%m-%d"),tz="GMT")
-Harp_SOS$Date = as.POSIXct(strptime(Harp_SOS$Date,"%Y-%m-%d"),tz="GMT")
-#Annie_SOS$Date = as.POSIXct(strptime(Annie_SOS$Date,"%Y-%m-%d"),tz="GMT")
-
-# Calculate annual, monthly Net Sunk means
-Vanern_SOS$Month = format(Vanern_SOS$Date,"%m",tz = "GMT")
-Vanern_SOS$Year = format(Vanern_SOS$Date,"%Y",tz = "GMT")
-VanernNetMonth = aggregate(Net ~ Month, Vanern_SOS, mean)
-VanernNetYear = aggregate(Net ~ Year, Vanern_SOS, mean)
-
-Toolik_SOS$Month = format(Toolik_SOS$Date,"%m",tz = "GMT")
-Toolik_SOS$Year = format(Toolik_SOS$Date,"%Y",tz = "GMT")
-ToolikNetMonth = aggregate(Net ~ Month, Toolik_SOS, mean)
-ToolikNetYear = aggregate(Net ~ Year, Toolik_SOS, mean)
-
-Trout_SOS$Month = format(Trout_SOS$Date,"%m",tz = "GMT")
-Trout_SOS$Year = format(Trout_SOS$Date,"%Y",tz = "GMT")
-TroutNetMonth = aggregate(Net ~ Month, Trout_SOS, mean)
-TroutNetYear = aggregate(Net ~ Year, Trout_SOS, mean)
-
-Mendota_SOS$Month = format(Mendota_SOS$Date,"%m",tz = "GMT")
-Mendota_SOS$Year = format(Mendota_SOS$Date,"%Y",tz = "GMT")
-MendotaNetMonth = aggregate(Net ~ Month, Mendota_SOS, mean)
-MendotaNetYear = aggregate(Net ~ Year, Mendota_SOS, mean)
-
-Harp_SOS$Month = format(Harp_SOS$Date,"%m",tz = "GMT")
-Harp_SOS$Year = format(Harp_SOS$Date,"%Y",tz = "GMT")
-HarpNetMonth = aggregate(Net ~ Month, Harp_SOS, mean)
-HarpNetYear = aggregate(Net ~ Year, Harp_SOS, mean)
-
-#Annie_SOS$Month = format(Annie_SOS$Date,"%m",tz = "GMT")
-#Annie_SOS$Year = format(Annie_SOS$Date,"%Y",tz = "GMT")
-#AnnieNetMonth = aggregate(Net ~ Month, Annie_SOS, mean)
-#AnnieNetYear = aggregate(Net ~ Year, Annie_SOS, mean)
-
-# Calculate annual means for each lake (...could be some other summary variable)
-Harp_AM = mean(HarpNetYear$Net)
-Toolik_AM = mean(ToolikNetYear$Net)
-Trout_AM = mean(TroutNetYear$Net)
-Mendota_AM = mean(MendotaNetYear$Net)
-Vanern_AM = mean(VanernNetYear$Net)
-#Annie_AM = mean(AnnieNetYear$Net)
-Annie_AM = NA
-
-
-AM_df = data.frame(Lake=c('Vanern','Toolik','Trout','Mendota','Harp'),
-                   NetSunk = c(Vanern_AM,Toolik_AM,Trout_AM,Mendota_AM,Harp_AM))
-
-# read in lake attribute table for reodering of rows for plotting
+#### Plot mean fate Results for all lakes ####
+SOS_mean = read.csv('SOS_mean.csv')
+colnames(SOS_mean)[1] = 'Lake' #for joining later
 laketable = read.csv('Table1_SOS_Lake_Summary.csv')
-laketable = laketable[-1,] #drop annie, which is first row
-laketable$area_rank = rank(laketable$Area..ha., na.last=T, ties.method = c('first'))
-laketable$depth_rank = rank(laketable$Mean.Depth..m., na.last = T, ties.method = c('first'))
-laketable$restime_rank = rank(laketable$Residence.Time..yrs., na.last = T, ties.method = c('first'))
-laketable$TP_rank = rank(laketable$TP, na.last = T, ties.method = c('first'))
-laketable$volume_rank = rank(laketable$Volume, na.last = T, ties.method = c('first'))
-laketable$Secchi_rank = rank(laketable$Secchi..m., na.last = T, ties.method = c('first'))
-laketable$DOC_rank = rank(laketable$DOC, na.last = T, ties.method = c('first'))
+
+# create rank columns for lake variables for ordering within plots
+laketable$area_rank = rank(laketable$Area_ha, na.last=T, ties.method = c('first'))
+laketable$depth_rank = rank(laketable$MeanDepth_m, na.last = T, ties.method = c('first'))
+laketable$restime_rank = rank(laketable$ResidenceTime_yrs, na.last = T, ties.method = c('first'))
+laketable$TP_rank = rank(laketable$TP_gm3, na.last = T, ties.method = c('first'))
+laketable$volume_rank = rank(laketable$Volume_m3, na.last = T, ties.method = c('first'))
+laketable$Secchi_rank = rank(laketable$Secchi_m, na.last = T, ties.method = c('first'))
+laketable$DOC_rank = rank(laketable$DOC_gm3, na.last = T, ties.method = c('first'))
+laketable$perim_rank = rank(laketable$Perimeter_m, na.last = T, ties.method = c('first'))
 
 # join ranks to variable of interest table
-variable_df = left_join(AM_df, laketable, by='Lake') #vanern consistently outlier...what to do
+variable_df = left_join(SOS_mean, laketable, by='Lake')
+variable_df$LakeAbbr = as.factor(c('H','M','TO','TR','V'))
 
-## Ian: how are we going to deal with Vanern's big values? Some sort of NetSunk ratio?
-#variable_df$NS_areaRatio = variable_df$NetSunk/variable_df$Area..ha.
+######################### make barplot panel ################################
 
-#### make barplot panel ####
+#################### Sedimentation #####################
+## Static plot parameters
 #par(mfrow=c(1,1)) #for single plot per window
-variable = 'NetSunk'
-layout(matrix(c(1,2,3,4,5,6),2,3)) #6 plots with 2 rows x 3 columns
-par(mar=c(3,3,3,0),mgp=c(1.5,0.3,0),tck=-0.03)
-par('cex.axis'= 1.5) 
-par('cex'=1.5)
-par('cex.main'=2)
-## lake area
+png(paste0('R/ResultsViz/Figures/SedAlongLakeGradients.png'),width = 11,height = 9,units = 'in',res=300)
+layout(matrix(c(1,2,3,4,5,6,7,8),2,4)) #8 plots with 2 rows x 4 columns
+par(mar=c(2,3,2,0),mgp=c(1.5,0.3,0),tck=-0.03)
+par('cex.axis'= 1) 
+par('cex'=1)
+par('cex.main'=1)
+ylab = 'Sedimentation (g/m2/yr)'
+col = 'gray'
+ylim = c(0,80)
+
+# for x axis
+endlabel = length(variable_df$LakeAbbr) * 1.2 
+tickedoff = seq(0.7, endlabel, 1.2)
+
 # reorder data frame in ascending order for variable of interest
-Sunk_byLakeArea = variable_df[order(variable_df$area_rank) , ]
-labels = Sunk_byLakeArea$Lake
 
-barplot(Sunk_byLakeArea$NetSunk, xlab='', ylab='OC mass (kg)', xaxt='n', ylim=c(-3e07, 1e07),
-        main='Lake Area', col='dodgerblue')
-#mtext(paste0(variable, ' avg'), side=3)
-endlabel = length(labels) * 1.2 
-tickedoff = seq(0.7, endlabel, 1.2)
-axis(side=1,at=c(tickedoff), labels=labels, las=2)
+## Lake area
+byArea = variable_df[order(variable_df$area_rank) , ]
+labels = byArea$LakeAbbr
 
-## mean lake depth
-Sunk_byMeanDepth = variable_df[order(variable_df$depth_rank) , ]
-labels = Sunk_byMeanDepth$Lake
-
-barplot(Sunk_byMeanDepth$NetSunk, xlab='', ylab='OC mass (kg)', xaxt='n', ylim=c(-3e07, 1e07),
-        main='Mean Depth', col='dodgerblue')
-#mtext(paste0(variable, ' avg'), side=3)
-endlabel = length(labels) * 1.2 
-tickedoff = seq(0.7, endlabel, 1.2)
-axis(side=1,at=c(tickedoff), labels=labels, las=2,cex.axis=1)
-
-## Residence time
-Sunk_byResTime = variable_df[order(variable_df$restime_rank) , ]
-labels = Sunk_byResTime$Lake
-
-barplot(Sunk_byResTime$NetSunk, xlab='', ylab='OC mass (kg)', xaxt='n', ylim=c(-3e07, 1e07),
-        main='Residence Time', col='dodgerblue')
-#mtext(paste0(variable, ' avg'), side=3)
-endlabel = length(labels) * 1.2 
-tickedoff = seq(0.7, endlabel, 1.2)
-axis(side=1,at=c(tickedoff), labels=labels, las=2,cex.axis=1)
-
-## TP
-Sunk_byTP = variable_df[order(variable_df$TP_rank) , ]
-labels = Sunk_byTP$Lake
-
-barplot(Sunk_byTP$NetSunk, xlab='', ylab='OC mass (kg)', xaxt='n', ylim=c(-3e07, 1e07),
-        main='TP', col='dodgerblue')
-#mtext(paste0(variable, ' avg'), side=3)
-endlabel = length(labels) * 1.2 
-tickedoff = seq(0.7, endlabel, 1.2)
+barplot(byArea$S_gm2y, xlab='', ylab=ylab, xaxt='n', ylim=ylim,
+        main='Lake Area', col=col)
 axis(side=1,at=c(tickedoff), labels=labels, las=2,cex.axis=1)
 
 ## Lake volume
-Sunk_byVolume = variable_df[order(variable_df$volume_rank) , ]
-labels = Sunk_byVolume$Lake
+byVolume = variable_df[order(variable_df$volume_rank) , ]
+labels = byVolume$LakeAbbr
 
-barplot(Sunk_byVolume$NetSunk, xlab='', ylab='OC mass (kg)', xaxt='n', ylim=c(-3e07, 1e07),
-        main='Volume', col='dodgerblue')
-#mtext(paste0(variable, ' avg'), side=3)
-endlabel = length(labels) * 1.2 
-tickedoff = seq(0.7, endlabel, 1.2)
+barplot(byVolume$S_gm2y, xlab='', ylab=ylab, xaxt='n', ylim=ylim,
+        main='Volume', col=col)
+axis(side=1,at=c(tickedoff), labels=labels, las=2,cex.axis=1)
+
+## Perimeter
+byPerim = variable_df[order(variable_df$perim_rank) , ]
+labels = byPerim$LakeAbbr
+
+barplot(byPerim$S_gm2y, xlab='', ylab='', xaxt='n', ylim=ylim,
+        main='Perimeter', col=col)
+axis(side=1,at=c(tickedoff), labels=labels, las=2,cex.axis=1)
+
+## res time
+byResTime = variable_df[order(variable_df$restime_rank) , ]
+labels = byResTime$LakeAbbr
+
+barplot(byResTime$S_gm2y, xlab='', ylab='', xaxt='n', ylim=ylim,
+        main='Residence Time', col=col)
+axis(side=1,at=c(tickedoff), labels=labels, las=2)
+
+## mean lake depth
+byMeanDepth = variable_df[order(variable_df$depth_rank) , ]
+labels = byMeanDepth$LakeAbbr
+
+barplot(byMeanDepth$S_gm2y, xlab='', ylab='', xaxt='n', ylim=ylim,
+        main='Mean Depth', col=col)
+axis(side=1,at=c(tickedoff), labels=labels, las=2,cex.axis=1)
+
+## TP
+byTP = variable_df[order(variable_df$TP_rank) , ]
+labels = byTP$LakeAbbr
+
+barplot(byTP$S_gm2y, xlab='', ylab='', xaxt='n', ylim=ylim,
+        main='TP', col=col)
+axis(side=1,at=c(tickedoff), labels=labels, las=2,cex.axis=1)
+
+## Secchi depth
+bySecchi = variable_df[order(variable_df$Secchi_rank) , ]
+labels = bySecchi$LakeAbbr
+
+barplot(bySecchi$S_gm2y, xlab='', ylab='', xaxt='n', ylim=ylim,
+        main='Secchi', col=col)
 axis(side=1,at=c(tickedoff), labels=labels, las=2,cex.axis=1)
 
 ## Lake DOC
-Sunk_byDOC = variable_df[order(variable_df$DOC_rank) , ]
-labels = Sunk_byDOC$Lake
+byDOC = variable_df[order(variable_df$DOC_rank) , ]
+labels = byDOC$LakeAbbr
 
-barplot(Sunk_byDOC$NetSunk, xlab='', ylab='OC mass (kg)', xaxt='n', ylim=c(-3e07, 1e07),
-        main='DOC', col='dodgerblue')
-#mtext(paste0(variable, ' avg'), side=3)
-endlabel = length(labels) * 1.2 
+barplot(byDOC$S_gm2y, xlab='', ylab='', xaxt='n', ylim=ylim,
+        main='DOC', col=col)
+axis(side=1,at=c(tickedoff), labels=labels, las=2,cex.axis=1)
+dev.off()
+
+#################### Respiration #####################
+## Static plot parameters
+#par(mfrow=c(1,1)) #for single plot per window
+png(paste0('R/ResultsViz/Figures/RespAlongLakeGradients.png'),width = 11,height = 9,units = 'in',res=300)
+layout(matrix(c(1,2,3,4,5,6,7,8),2,4)) #8 plots with 2 rows x 4 columns
+par(mar=c(2,3,2,0),mgp=c(1.5,0.3,0),tck=-0.03)
+par('cex.axis'= 1) 
+par('cex'=1)
+par('cex.main'=1)
+ylab = 'Respiration (g/m2/yr)'
+col = 'gray'
+ylim=c(0,80)
+
+# for x axis
+endlabel = length(variable_df$LakeAbbr) * 1.2 
 tickedoff = seq(0.7, endlabel, 1.2)
+
+# reorder data frame in ascending order for variable of interest
+
+## Lake area
+byArea = variable_df[order(variable_df$area_rank) , ]
+labels = byArea$LakeAbbr
+
+barplot(byArea$R_gm2y, xlab='', ylab=ylab, xaxt='n', ylim=ylim,
+        main='Lake Area', col=col)
 axis(side=1,at=c(tickedoff), labels=labels, las=2,cex.axis=1)
 
+## Lake volume
+byVolume = variable_df[order(variable_df$volume_rank) , ]
+labels = byVolume$LakeAbbr
+
+barplot(byVolume$R_gm2y, xlab='', ylab=ylab, xaxt='n', ylim=ylim,
+        main='Volume', col=col)
+axis(side=1,at=c(tickedoff), labels=labels, las=2,cex.axis=1)
+
+## Perimeter
+byPerim = variable_df[order(variable_df$perim_rank) , ]
+labels = byPerim$LakeAbbr
+
+barplot(byPerim$R_gm2y, xlab='', ylab='', xaxt='n', ylim=ylim,
+        main='Perimeter', col=col)
+axis(side=1,at=c(tickedoff), labels=labels, las=2,cex.axis=1)
+
+## res time
+byResTime = variable_df[order(variable_df$restime_rank) , ]
+labels = byResTime$LakeAbbr
+
+barplot(byResTime$R_gm2y, xlab='', ylab='', xaxt='n', ylim=ylim,
+        main='Residence Time', col=col)
+axis(side=1,at=c(tickedoff), labels=labels, las=2)
+
+## mean lake depth
+byMeanDepth = variable_df[order(variable_df$depth_rank) , ]
+labels = byMeanDepth$LakeAbbr
+
+barplot(byMeanDepth$R_gm2y, xlab='', ylab='', xaxt='n', ylim=ylim,
+        main='Mean Depth', col=col)
+axis(side=1,at=c(tickedoff), labels=labels, las=2,cex.axis=1)
+
+## TP
+byTP = variable_df[order(variable_df$TP_rank) , ]
+labels = byTP$LakeAbbr
+
+barplot(byTP$R_gm2y, xlab='', ylab='', xaxt='n', ylim=ylim,
+        main='TP', col=col)
+axis(side=1,at=c(tickedoff), labels=labels, las=2,cex.axis=1)
 
 ## Secchi depth
-Sunk_bySecchi = variable_df[order(variable_df$Secchi_rank) , ]
-labels = Sunk_bySecchi$Lake
+bySecchi = variable_df[order(variable_df$Secchi_rank) , ]
+labels = bySecchi$LakeAbbr
 
-barplot(Sunk_bySecchi$NetSunk, xlab='', ylab='OC mass (kg)', xaxt='n', ylim=c(-3e07, 1e07),
-        main='Secchi', col='dodgerblue')
-#mtext(paste0(variable, ' avg'), side=3)
-endlabel = length(labels) * 1.2 
-tickedoff = seq(0.7, endlabel, 1.2)
+barplot(bySecchi$R_gm2y, xlab='', ylab='', xaxt='n', ylim=ylim,
+        main='Secchi', col=col)
 axis(side=1,at=c(tickedoff), labels=labels, las=2,cex.axis=1)
+
+## Lake DOC
+byDOC = variable_df[order(variable_df$DOC_rank) , ]
+labels = byDOC$LakeAbbr
+
+barplot(byDOC$R_gm2y, xlab='', ylab='', xaxt='n', ylim=ylim,
+        main='DOC', col=col)
+axis(side=1,at=c(tickedoff), labels=labels, las=2,cex.axis=1)
+dev.off()
+
+#################### Allochthonous #####################
+## Static plot parameters
+#par(mfrow=c(1,1)) #for single plot per window
+png(paste0('R/ResultsViz/Figures/AllochAlongLakeGradients.png'),width = 11,height = 9,units = 'in',res=300)
+layout(matrix(c(1,2,3,4,5,6,7,8),2,4)) #8 plots with 2 rows x 4 columns
+par(mar=c(2,3,2,0),mgp=c(1.5,0.3,0),tck=-0.03)
+par('cex.axis'= 1) 
+par('cex'=1)
+par('cex.main'=1)
+ylab = 'Allochthonous (g/m2/yr)'
+col = 'gray'
+ylim=c(0,80)
+
+# for x axis
+endlabel = length(variable_df$LakeAbbr) * 1.2 
+tickedoff = seq(0.7, endlabel, 1.2)
+
+# reorder data frame in ascending order for variable of interest
+
+## Lake area
+byArea = variable_df[order(variable_df$area_rank) , ]
+labels = byArea$LakeAbbr
+
+barplot(byArea$Alloch_gm2y, xlab='', ylab=ylab, xaxt='n', ylim=ylim,
+        main='Lake Area', col=col)
+axis(side=1,at=c(tickedoff), labels=labels, las=2,cex.axis=1)
+
+## Lake volume
+byVolume = variable_df[order(variable_df$volume_rank) , ]
+labels = byVolume$LakeAbbr
+
+barplot(byVolume$Alloch_gm2y, xlab='', ylab=ylab, xaxt='n', ylim=ylim,
+        main='Volume', col=col)
+axis(side=1,at=c(tickedoff), labels=labels, las=2,cex.axis=1)
+
+## Perimeter
+byPerim = variable_df[order(variable_df$perim_rank) , ]
+labels = byPerim$LakeAbbr
+
+barplot(byPerim$Alloch_gm2y, xlab='', ylab='', xaxt='n', ylim=ylim,
+        main='Perimeter', col=col)
+axis(side=1,at=c(tickedoff), labels=labels, las=2,cex.axis=1)
+
+## res time
+byResTime = variable_df[order(variable_df$restime_rank) , ]
+labels = byResTime$LakeAbbr
+
+barplot(byResTime$Alloch_gm2y, xlab='', ylab='', xaxt='n', ylim=ylim,
+        main='Residence Time', col=col)
+axis(side=1,at=c(tickedoff), labels=labels, las=2)
+
+## mean lake depth
+byMeanDepth = variable_df[order(variable_df$depth_rank) , ]
+labels = byMeanDepth$LakeAbbr
+
+barplot(byMeanDepth$Alloch_gm2y, xlab='', ylab='', xaxt='n', ylim=ylim,
+        main='Mean Depth', col=col)
+axis(side=1,at=c(tickedoff), labels=labels, las=2,cex.axis=1)
+
+## TP
+byTP = variable_df[order(variable_df$TP_rank) , ]
+labels = byTP$LakeAbbr
+
+barplot(byTP$Alloch_gm2y, xlab='', ylab='', xaxt='n', ylim=ylim,
+        main='TP', col=col)
+axis(side=1,at=c(tickedoff), labels=labels, las=2,cex.axis=1)
+
+## Secchi depth
+bySecchi = variable_df[order(variable_df$Secchi_rank) , ]
+labels = bySecchi$LakeAbbr
+
+barplot(bySecchi$Alloch_gm2y, xlab='', ylab='', xaxt='n', ylim=ylim,
+        main='Secchi', col=col)
+axis(side=1,at=c(tickedoff), labels=labels, las=2,cex.axis=1)
+
+## Lake DOC
+byDOC = variable_df[order(variable_df$DOC_rank) , ]
+labels = byDOC$LakeAbbr
+
+barplot(byDOC$Alloch_gm2y, xlab='', ylab='', xaxt='n', ylim=ylim,
+        main='DOC', col=col)
+axis(side=1,at=c(tickedoff), labels=labels, las=2,cex.axis=1)
+dev.off()
+
+#################### Autochthonous #####################
+## Static plot parameters
+#par(mfrow=c(1,1)) #for single plot per window
+png(paste0('R/ResultsViz/Figures/AutochAlongLakeGradients.png'),width = 11,height = 9,units = 'in',res=300)
+layout(matrix(c(1,2,3,4,5,6,7,8),2,4)) #8 plots with 2 rows x 4 columns
+par(mar=c(2,3,2,0),mgp=c(1.5,0.3,0),tck=-0.03)
+par('cex.axis'= 1) 
+par('cex'=1)
+par('cex.main'=1)
+ylab = 'Autochthonous (g/m2/yr)'
+col = 'gray'
+ylim=c(0,80)
+
+# for x axis
+endlabel = length(variable_df$LakeAbbr) * 1.2 
+tickedoff = seq(0.7, endlabel, 1.2)
+
+# reorder data frame in ascending order for variable of interest
+
+## Lake area
+byArea = variable_df[order(variable_df$area_rank) , ]
+labels = byArea$LakeAbbr
+
+barplot(byArea$Autoch_gm2y, xlab='', ylab=ylab, xaxt='n', ylim=ylim,
+        main='Lake Area', col=col)
+axis(side=1,at=c(tickedoff), labels=labels, las=2,cex.axis=1)
+
+## Lake volume
+byVolume = variable_df[order(variable_df$volume_rank) , ]
+labels = byVolume$LakeAbbr
+
+barplot(byVolume$Autoch_gm2y, xlab='', ylab=ylab, xaxt='n', ylim=ylim,
+        main='Volume', col=col)
+axis(side=1,at=c(tickedoff), labels=labels, las=2,cex.axis=1)
+
+## Perimeter
+byPerim = variable_df[order(variable_df$perim_rank) , ]
+labels = byPerim$LakeAbbr
+
+barplot(byPerim$Autoch_gm2y, xlab='', ylab='', xaxt='n', ylim=ylim,
+        main='Perimeter', col=col)
+axis(side=1,at=c(tickedoff), labels=labels, las=2,cex.axis=1)
+
+## res time
+byResTime = variable_df[order(variable_df$restime_rank) , ]
+labels = byResTime$LakeAbbr
+
+barplot(byResTime$Autoch_gm2y, xlab='', ylab='', xaxt='n', ylim=ylim,
+        main='Residence Time', col=col)
+axis(side=1,at=c(tickedoff), labels=labels, las=2)
+
+## mean lake depth
+byMeanDepth = variable_df[order(variable_df$depth_rank) , ]
+labels = byMeanDepth$LakeAbbr
+
+barplot(byMeanDepth$Autoch_gm2y, xlab='', ylab='', xaxt='n', ylim=ylim,
+        main='Mean Depth', col=col)
+axis(side=1,at=c(tickedoff), labels=labels, las=2,cex.axis=1)
+
+## TP
+byTP = variable_df[order(variable_df$TP_rank) , ]
+labels = byTP$LakeAbbr
+
+barplot(byTP$Autoch_gm2y, xlab='', ylab='', xaxt='n', ylim=ylim,
+        main='TP', col=col)
+axis(side=1,at=c(tickedoff), labels=labels, las=2,cex.axis=1)
+
+## Secchi depth
+bySecchi = variable_df[order(variable_df$Secchi_rank) , ]
+labels = bySecchi$LakeAbbr
+
+barplot(bySecchi$Autoch_gm2y, xlab='', ylab='', xaxt='n', ylim=ylim,
+        main='Secchi', col=col)
+axis(side=1,at=c(tickedoff), labels=labels, las=2,cex.axis=1)
+
+## Lake DOC
+byDOC = variable_df[order(variable_df$DOC_rank) , ]
+labels = byDOC$LakeAbbr
+
+barplot(byDOC$Autoch_gm2y, xlab='', ylab='', xaxt='n', ylim=ylim,
+        main='DOC', col=col)
+axis(side=1,at=c(tickedoff), labels=labels, las=2,cex.axis=1)
+dev.off()
+
+#################### Outflow #####################
+## Static plot parameters
+#par(mfrow=c(1,1)) #for single plot per window
+png(paste0('R/ResultsViz/Figures/fOutAlongLakeGradients.png'),width = 11,height = 9,units = 'in',res=300)
+layout(matrix(c(1,2,3,4,5,6,7,8),2,4)) #8 plots with 2 rows x 4 columns
+par(mar=c(2,3,2,0),mgp=c(1.5,0.3,0),tck=-0.03)
+par('cex.axis'= 1) 
+par('cex'=1)
+par('cex.main'=1)
+ylab = 'Outflow (g/m2/yr)'
+col = 'gray'
+ylim=c(0,80)
+
+# for x axis
+endlabel = length(variable_df$LakeAbbr) * 1.2 
+tickedoff = seq(0.7, endlabel, 1.2)
+
+# reorder data frame in ascending order for variable of interest
+
+## Lake area
+byArea = variable_df[order(variable_df$area_rank) , ]
+labels = byArea$LakeAbbr
+
+barplot(byArea$Autoch_gm2y, xlab='', ylab=ylab, xaxt='n', ylim=ylim,
+        main='Lake Area', col=col)
+axis(side=1,at=c(tickedoff), labels=labels, las=2,cex.axis=1)
+
+## Lake volume
+byVolume = variable_df[order(variable_df$volume_rank) , ]
+labels = byVolume$LakeAbbr
+
+barplot(byVolume$Autoch_gm2y, xlab='', ylab=ylab, xaxt='n', ylim=ylim,
+        main='Volume', col=col)
+axis(side=1,at=c(tickedoff), labels=labels, las=2,cex.axis=1)
+
+## Perimeter
+byPerim = variable_df[order(variable_df$perim_rank) , ]
+labels = byPerim$LakeAbbr
+
+barplot(byPerim$Autoch_gm2y, xlab='', ylab='', xaxt='n', ylim=ylim,
+        main='Perimeter', col=col)
+axis(side=1,at=c(tickedoff), labels=labels, las=2,cex.axis=1)
+
+## res time
+byResTime = variable_df[order(variable_df$restime_rank) , ]
+labels = byResTime$LakeAbbr
+
+barplot(byResTime$Autoch_gm2y, xlab='', ylab='', xaxt='n', ylim=ylim,
+        main='Residence Time', col=col)
+axis(side=1,at=c(tickedoff), labels=labels, las=2)
+
+## mean lake depth
+byMeanDepth = variable_df[order(variable_df$depth_rank) , ]
+labels = byMeanDepth$LakeAbbr
+
+barplot(byMeanDepth$Autoch_gm2y, xlab='', ylab='', xaxt='n', ylim=ylim,
+        main='Mean Depth', col=col)
+axis(side=1,at=c(tickedoff), labels=labels, las=2,cex.axis=1)
+
+## TP
+byTP = variable_df[order(variable_df$TP_rank) , ]
+labels = byTP$LakeAbbr
+
+barplot(byTP$Autoch_gm2y, xlab='', ylab='', xaxt='n', ylim=ylim,
+        main='TP', col=col)
+axis(side=1,at=c(tickedoff), labels=labels, las=2,cex.axis=1)
+
+## Secchi depth
+bySecchi = variable_df[order(variable_df$Secchi_rank) , ]
+labels = bySecchi$LakeAbbr
+
+barplot(bySecchi$Autoch_gm2y, xlab='', ylab='', xaxt='n', ylim=ylim,
+        main='Secchi', col=col)
+axis(side=1,at=c(tickedoff), labels=labels, las=2,cex.axis=1)
+
+## Lake DOC
+byDOC = variable_df[order(variable_df$DOC_rank) , ]
+labels = byDOC$LakeAbbr
+
+barplot(byDOC$Autoch_gm2y, xlab='', ylab='', xaxt='n', ylim=ylim,
+        main='DOC', col=col)
+axis(side=1,at=c(tickedoff), labels=labels, las=2,cex.axis=1)
+dev.off()
