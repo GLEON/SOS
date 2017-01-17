@@ -216,7 +216,7 @@ if (OptimizationFlag==1) {
     CalibrationOutputDOC <- data.frame(datetime = ValidationDataDOC[obsIndx,]$datetime,
                                        Measured = ValidationDataDOC[obsIndx,]$DOC, Modelled = modeled[modIndx,]$DOC_conc)
     resDOC = (CalibrationOutputDOC$Measured - CalibrationOutputDOC$Modelled)
-    resMDOC = CalibrationOutputDOC$Measured - mean(CalibrationOutputDOC$Modelled)
+    resMDOC = CalibrationOutputDOC$Measured - mean(CalibrationOutputDOC$Measured)
     
     # Dissolved oxygen 
     obsIndx = ValidationDataDO$datetime %in% modeled$datetime
@@ -227,7 +227,7 @@ if (OptimizationFlag==1) {
     # Scale residuals
     DOScale = 5
     resDO = (CalibrationOutputDO$Measured - CalibrationOutputDO$Modelled) * DOScale
-    resMDO = (CalibrationOutputDO$Measured - mean(CalibrationOutputDO$Modelled)) * DOScale
+    resMDO = (CalibrationOutputDO$Measured - mean(CalibrationOutputDO$Measured)) * DOScale
     #sedScale = 0.001
     #resSedData = (mean(modeled$SedData_MAR,na.rm = T) - ValidationDataMAROC) * sedScale #not scaled because it is 1 value
     
