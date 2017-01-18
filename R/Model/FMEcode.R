@@ -21,31 +21,21 @@ lines(joinMod$datetime,joinMod$DOCwc,type='o',col='grey50')
 lines(joinMod$datetime,joinMod$DOC_conc,type='o',col='red3')
 #Goodness of fit
 library(hydroGOF)
-rmse(joinMod$DOC_conc, joinMod$DOC) #0.43
-NSE(joinMod$DOC_conc, joinMod$DOC) #0.09
+rmse(joinMod$DOC_conc, joinMod$DOC) #Harp 0.43 Trout 0.427
+NSE(joinMod$DOC_conc, joinMod$DOC) #Harp 0.09 Trtou -0.015
 
-
-
-# Test1: Nelder-Mead
-parStart = c(0.0022,0.0027,0.9,0.33,0.1,0.05,0.05)
+# Test1: BFGS
+# parStart = c(0.0022,0.0027,0.9,0.33,0.1,0.05,0.05) #Harp
+# parStart = c(0.022288,0.00495,0.707381,0.479661,0.01,0.01,0.480108) #Trout
+parStart = c(0.022288,0.00495,0.707381,0.479661,0.01,0.01,0.480108)
 names(parStart) = c('DOCR_RespParam','DOCL_RespParam','R_auto','BurialFactor_R','BurialFactor_L','POC_lcR','POC_lcL')
-Fit1 <- modFit(f = DOCdiff, p=parStart,method = 'Marq',
-               lower= c(0,0,0.5,0,0,0,0),
-               upper= c(0.01,0.2,1,1,1,0.3,0.3))
-
-pars1 = Fit1$par
-summary(Fit1)
-# DOCR_RespParam DOCL_RespParam         R_auto BurialFactor_R BurialFactor_L        POC_lcR        POC_lcL 
-# 2.308337e-03   7.680111e-09   9.771564e-01   9.999419e-01   1.539747e-06   9.173109e-08   2.999994e-01 
-
-
-# Test1: Nelder-Mead
-parStart = c(0.0022,0.0027,0.9,0.33,0.1,0.05,0.05)
 Fit2 <- modFit(f = DOCdiff, p=parStart,method = 'BFGS',
                lower= c(0,0,0.5,0,0,0,0),
-               upper= c(0.01,0.2,1,1,1,0.3,0.3))
+               upper= c(0.03,0.2,1,1,1,0.3,0.5))
 
-#0.0021797,0.0004051,0.9746785,0.9668259,0.0107793,0.0042922,0.2927224
+#0.0021797,0.0004051,0.9746785,0.9668259,0.0107793,0.0042922,0.2927224 #HARP
+#0.005345,0.00267,0.8558,0.904096,0.010085,0.008615,0.483261 #Trout
+
 summary(Fit2)
 pars1 = Fit2$par
 names(pars1) = c('DOCR_RespParam','DOCL_RespParam','R_auto','BurialFactor_R','BurialFactor_L','POC_lcR','POC_lcL')
@@ -64,12 +54,12 @@ plot(collin(sF), log="y")
 ##   Sensitivity range
 ##------------------------------------------------------------------------------
 lower= c(0,0,0.5,0,0,0,0)
-upper= c(0.01,0.2,1,1,1,0.3,0.3)
+upper= c(0.03,0.2,1,1,1,0.3,0.5)
 pRange <- data.frame(min = lower, max = upper)
 rownames(pRange) = c('DOCR_RespParam','DOCL_RespParam','R_auto','BurialFactor_R','BurialFactor_L','POC_lcR','POC_lcL')
 ## 2. Calculate sensitivity: model is solved 10 times, uniform parameter distribution (default)
 DOCsens <- function(p){
-  pars = c(0.0021797,0.0004051,0.9746785,0.9668259,0.0107793,0.0042922,0.2927224)
+  pars = c(0.005345,0.00267,0.8558,0.904096,0.010085,0.008615,0.483261)
   names(pars) = c('DOCR_RespParam','DOCL_RespParam','R_auto','BurialFactor_R','BurialFactor_L','POC_lcR','POC_lcL')
   
   pars[names(pars) %in% names(p)] = p
@@ -97,20 +87,22 @@ pars = startPars
 modeled = modelDOC(pars[1],pars[2],pars[3],pars[4],pars[5],pars[6],pars[7])
 joinMod = inner_join(ValidationDataDOC,modeled,by='datetime')
 
-par(mar = c(3,3,1,1),mgp=c(1.5,0.5,0),mfrow=c(4,2))
-# PLOTTING
-plot(joinMod$datetime,joinMod$DOC,type='o',ylab='DOC',xlab='Date',pch=16,cex=0.7,ylim=c(2,6))
-# lines(joinMod$datetime,joinMod$DOCwc,type='o',col='grey50')
-lines(joinMod$datetime,joinMod$DOC_conc,type='o',col='red3',pch=16,cex=0.7)
-legend('topleft',legend = c('Observed','Modeled'),fill=c('black','red3'),bty='n')
-for (i in 1:7){
-  # png(paste0('Figures/Sensitivity_',names(startPars)[i],'.png'),width = 7,height = 7,units = 'in',res=300)
-  plot.sensRange.HD(Sens[[i]],Select = 2,ylabs = "DOC",ylims = c(2,6),
-                    main=paste(names(startPars)[i],' ',pRange[i,1],'-',pRange[i,2],sep=''))
-  lines(as.POSIXlt(ValidationDataDOC$datetime),ValidationDataDOC$DOC,lty=2,pch=16,cex=0.7,type='o')
-  # dev.off()
-}
-
+png(paste0('R/ResultsViz/SensitivityAnalyses/par',LakeName,'.png'),height = 8,width = 7,units = 'in',res=300)
+  par(mar = c(3,3,1,1),mgp=c(1.5,0.5,0),mfrow=c(4,2))
+  # PLOTTING
+  plot(joinMod$datetime,joinMod$DOC,type='o',ylab='DOC',xlab='Date',pch=16,cex=0.7,ylim=c(2,6))
+  # lines(joinMod$datetime,joinMod$DOCwc,type='o',col='grey50')
+  lines(joinMod$datetime,joinMod$DOC_conc,type='o',col='red3',pch=16,cex=0.7)
+  legend('topleft',legend = c('Observed','Modeled'),fill=c('black','red3'),bty='n')
+  for (i in 1:7){
+    # png(paste0('Figures/Sensitivity_',names(startPars)[i],'.png'),width = 7,height = 7,units = 'in',res=300)
+    plot.sensRange.HD(Sens[[i]],Select = 2,ylabs = "DOC",ylims = c(2,6),
+                      main=paste(names(startPars)[i],' ',pRange[i,1],'-',pRange[i,2],sep=''))
+    lines(as.POSIXlt(ValidationDataDOC$datetime),ValidationDataDOC$DOC,lty=2,pch=16,cex=0.7,type='o')
+    # dev.off()
+  }
+dev.off()
+  
 
   DOCR_RespParam <- optimOut$par[1]
   DOCL_RespParam <- optimOut$par[2]

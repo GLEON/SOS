@@ -2,7 +2,7 @@ setwd('C:/Users/hdugan/Documents/Rpackages/SOS/')
 setwd("~/Documents/Rpackages/SOS")
 #CarbonFluxModel <- function(LakeName,PlotFlag,ValidationFlag){
 #Flags 1 for yes, else no.
-LakeName = 'Harp'
+LakeName = 'Cannonsville'
 OptimizationFlag = 1
 updateParameters = 1
 PlotFlag = 1
@@ -51,6 +51,7 @@ InputData <- merge(RawData,ts_new,all=T)
 for (col in 2:ncol(InputData)){
   InputData[,col] <- na.approx(InputData[,col],na.rm = T)}
 InputData$Chla[InputData$Chla == 0] = 0.0001
+
 ##### READ RAIN FILE #######################
 RainData <- read.csv(RainFile,header=T,stringsAsFactors = F) #Read daily rain file (units=mm) Read separately and added back to main file to avoid issues of linear interpolation with rain data in length units
 RainData$datetime <- as.POSIXct(strptime(RainData$datetime,timestampFormat,tz='GMT'))
