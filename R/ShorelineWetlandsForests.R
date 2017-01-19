@@ -1,7 +1,8 @@
 ### Calculate percent wetland, forest shoreline cover for lakes ###
 
 # Essentially perform standard GIS procedures in uncomfortable R environment
-# Date: 11-19-15 
+# Date: 11-19-15
+# Updated: 1-19-17
 # Author: Ian McCullough, immccull@gmail.com
 
 #install.packages(c('raster','rgdal','rgeos'))
@@ -11,13 +12,19 @@ library(rgdal)
 library(rgeos)
 
 # Set working directory
-setwd("H:/Ian_GIS/gleon/SOS/GIS/Mendota")
+#setwd("H:/Ian_GIS/gleon/cannonsville_GIS") #local to Ian (large files; didn't push)
+setwd("H:/Ian_GIS/gleon/SOS/GIS")
 
 # Load basic GIS layers
 #Wisconsin = shapefile('WI_state_outline.shp')
-wetlands = shapefile('WI_Wetlands_Southern_HARN_Clip.shp')
-lakes = shapefile('Madison_lakes.shp')
-landcover = raster('wi_lc_msn')
+#wetlands = shapefile('cannonsville_NWI_UTM18N.shp')
+#lakes = shapefile('cannonsville_UTM18N.shp')
+#landcover = raster('H:/Ian_GIS/gleon/cannonsville_GIS/NLCD_UTM18N.tif')
+wetlands = shapefile('TroutLake/WI_Wetlands_NTL_HARN_Clip.shp')
+#lakes = shapefile('TroutLake/NTL_lakes.shp')
+lakes = shapefile('Mendota/Madison_lakes.shp')
+#landcover = raster('TroutLake/wi_lc_ntl')
+landcover = raster('Mendota/wi_lc_msn') #includes mendota and monona
 
 # Create map of study area lakes (comment out if too large/slow)
 plot(lakes, col='dodgerblue', main='Lakes and Wetlands')
@@ -25,11 +32,11 @@ plot(lakes, col='dodgerblue', main='Lakes and Wetlands')
 plot(wetlands, add=T, col='purple')
 
 # add optional labels; polygonsLabels optimizes label locations (ie centroid)
-labels = lakes$WATERBODY_
+labels = lakes$WATERBODY_ #may be WATERBODY_ (attribute name of lake name)
 polygonsLabel(lakes,labels=labels, method=c('centroid'), cex=1)
 
 # Create buffer around lakes based on specified distance
-lakebuffer = buffer(lakes, width=30, dissolve=F) #meters (mapping unit of input lake layer)
+lakebuffer = buffer(lakes, width=30, dissolve=F) #meters (mapping unit of input lake layer) #default=30m
 buffer_ring = symdif(lakebuffer,lakes) # symmetrical difference vector operation
 #plot(buffer_ring)
 
@@ -78,7 +85,7 @@ for(i in 1:nrow(lakebuffer)) {
 }
 
 length = cell_size*x #multiply num of cells by cell length specified above
-shoreline = data.frame(lake=lakes$WATERBODY_, perim_m=gLength(lakes),wetland_m=length)
+shoreline = data.frame(lake=lakes$WATERBODY_, perim_m=gLength(lakes, byid=T),wetland_m=length)
 shoreline$area = gArea(lakes)
 shoreline$non_wetland_m = shoreline$perim_m - shoreline$wetland_m
 shoreline$pct_wetland = (shoreline$wetland_m/shoreline$perim_m) *100
@@ -115,10 +122,11 @@ polygonsLabel(lakes,labels=labels, method=c('centroid'), cex=1)
 # first value = to
 # second value = from
 # third value = new value
-# ex) 0,150,1: in English: make values 0-150 as NA
-forest_values = c(0,150,NA, 161,190,1, 200,220,NA, 223,234,1, 240,255,NA)
+# ex) 0,150,1: in English: make values 0-150 as 1
+forest_values = c(0,150,NA, 161,190,1, 200,220,NA, 223,234,1, 240,255,NA) #wisconsin DNR
+#forest_values = c(11,40,NA, 41,43,1, 44,95,NA) #NLCD 2011: 41=deciduous, 42=conifer, 43=mixed; NLCD min/max=11,95
 classy = matrix(forest_values, ncol=3, byrow=T)
-near_landcover2 = reclassify(near_landcover, classy)
+near_landcover2 = reclassify(near_landcover, classy, right=NA)#right=NA: special case; right and left intervals are open/included in reclas
 plot(near_landcover2, main='Shoreline Land cover')
 plot(lakes, add=T, col='dodgerblue')
 labels = lakes$WATERBODY_
