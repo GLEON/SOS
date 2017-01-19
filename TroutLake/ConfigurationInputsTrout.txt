@@ -8,7 +8,7 @@ POC_init 0.29 g/m^3
 BurialFactor 0.01 1/days
 BurialFactor_R 0.479660938904269 1/days
 BurialFactor_L -0.0226031965087865 1/days
-PropCanopy 0.77 unitless
+PropCanopy 0.78 unitless
 PropWetlands 0.011 unitless
 AerialLoad 1 gPOC/m/d
 WetlandLoad 1 gDOC/m/d
