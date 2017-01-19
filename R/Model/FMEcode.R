@@ -21,13 +21,14 @@ lines(joinMod$datetime,joinMod$DOCwc,type='o',col='grey50')
 lines(joinMod$datetime,joinMod$DOC_conc,type='o',col='red3')
 #Goodness of fit
 library(hydroGOF)
-rmse(joinMod$DOC_conc, joinMod$DOC) #Harp 0.43 Trout 0.427
-NSE(joinMod$DOC_conc, joinMod$DOC) #Harp 0.09 Trtou -0.015
+rmse(joinMod$DOC_conc, joinMod$DOC) #Harp 0.43 Trout 0.427 Monona 0.62
+NSE(joinMod$DOC_conc, joinMod$DOC) #Harp 0.09 Trtou -0.015 Monona 0.279
 
 # Test1: BFGS
 # parStart = c(0.0022,0.0027,0.9,0.33,0.1,0.05,0.05) #Harp
 # parStart = c(0.022288,0.00495,0.707381,0.479661,0.01,0.01,0.480108) #Trout
-parStart = c(0.022288,0.00495,0.707381,0.479661,0.01,0.01,0.480108)
+parStart = c(0.022288,0.00495,0.707381,0.479661,0.01,0.01,0.480108) # Cannonsville
+parStart = c(0.00079,0.00223,0.815567,0.195992,0.13656,0.01,0.043347) # Monona
 names(parStart) = c('DOCR_RespParam','DOCL_RespParam','R_auto','BurialFactor_R','BurialFactor_L','POC_lcR','POC_lcL')
 Fit2 <- modFit(f = DOCdiff, p=parStart,method = 'BFGS',
                lower= c(0,0,0.5,0,0,0,0),
@@ -35,6 +36,9 @@ Fit2 <- modFit(f = DOCdiff, p=parStart,method = 'BFGS',
 
 #0.0021797,0.0004051,0.9746785,0.9668259,0.0107793,0.0042922,0.2927224 #HARP
 #0.005345,0.00267,0.8558,0.904096,0.010085,0.008615,0.483261 #Trout
+#0.029849,0.199514,0.999971,0.000507,0.012573,0.046772,0.469137 #Cannonsville
+#0.001572,0.001184,0.514193,0.892303,0.973353,0.009416,0.121458 #Monona
+
 
 summary(Fit2)
 pars1 = Fit2$par
@@ -59,7 +63,7 @@ pRange <- data.frame(min = lower, max = upper)
 rownames(pRange) = c('DOCR_RespParam','DOCL_RespParam','R_auto','BurialFactor_R','BurialFactor_L','POC_lcR','POC_lcL')
 ## 2. Calculate sensitivity: model is solved 10 times, uniform parameter distribution (default)
 DOCsens <- function(p){
-  pars = c(0.005345,0.00267,0.8558,0.904096,0.010085,0.008615,0.483261)
+  pars = c(0.001572,0.001184,0.514193,0.892303,0.973353,0.009416,0.121458)
   names(pars) = c('DOCR_RespParam','DOCL_RespParam','R_auto','BurialFactor_R','BurialFactor_L','POC_lcR','POC_lcL')
   
   pars[names(pars) %in% names(p)] = p
@@ -90,13 +94,13 @@ joinMod = inner_join(ValidationDataDOC,modeled,by='datetime')
 png(paste0('R/ResultsViz/SensitivityAnalyses/par',LakeName,'.png'),height = 8,width = 7,units = 'in',res=300)
   par(mar = c(3,3,1,1),mgp=c(1.5,0.5,0),mfrow=c(4,2))
   # PLOTTING
-  plot(joinMod$datetime,joinMod$DOC,type='o',ylab='DOC',xlab='Date',pch=16,cex=0.7,ylim=c(2,6))
+  plot(joinMod$datetime,joinMod$DOC,type='o',ylab='DOC',xlab='Date',pch=16,cex=0.7,ylim=c(3,8))
   # lines(joinMod$datetime,joinMod$DOCwc,type='o',col='grey50')
   lines(joinMod$datetime,joinMod$DOC_conc,type='o',col='red3',pch=16,cex=0.7)
   legend('topleft',legend = c('Observed','Modeled'),fill=c('black','red3'),bty='n')
   for (i in 1:7){
     # png(paste0('Figures/Sensitivity_',names(startPars)[i],'.png'),width = 7,height = 7,units = 'in',res=300)
-    plot.sensRange.HD(Sens[[i]],Select = 2,ylabs = "DOC",ylims = c(2,6),
+    plot.sensRange.HD(Sens[[i]],Select = 2,ylabs = "DOC",ylims = c(3,8),
                       main=paste(names(startPars)[i],' ',pRange[i,1],'-',pRange[i,2],sep=''))
     lines(as.POSIXlt(ValidationDataDOC$datetime),ValidationDataDOC$DOC,lty=2,pch=16,cex=0.7,type='o')
     # dev.off()
