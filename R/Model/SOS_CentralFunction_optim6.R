@@ -2,7 +2,7 @@ setwd('C:/Users/hdugan/Documents/Rpackages/SOS/')
 setwd("~/Documents/Rpackages/SOS")
 #CarbonFluxModel <- function(LakeName,PlotFlag,ValidationFlag){
 #Flags 1 for yes, else no.
-LakeName = 'Cannonsville'
+LakeName = 'Monona'
 OptimizationFlag = 1
 updateParameters = 1
 PlotFlag = 1
