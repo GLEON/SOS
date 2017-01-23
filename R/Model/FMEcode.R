@@ -27,18 +27,21 @@ NSE(joinMod$DOC_conc, joinMod$DOC) #Harp 0.09 Trtou -0.015 Monona 0.279
 # Test1: BFGS
 # parStart = c(0.0022,0.0027,0.9,0.33,0.1,0.05,0.05) #Harp
 # parStart = c(0.022288,0.00495,0.707381,0.479661,0.01,0.01,0.480108) #Trout
-parStart = c(0.022288,0.00495,0.707381,0.479661,0.01,0.01,0.480108) # Cannonsville
+parStart = c(0.029849,0.199514,0.999971,0.000507,0.012573,0.046772,0.46913) # Cannonsville
 parStart = c(0.00079,0.00223,0.815567,0.195992,0.13656,0.01,0.043347) # Monona
+parStart = c(0.00153205993800365,0.000695425284613213,0.554185248724029,0.0111865174956529,0.217093487420212,0.001,0.0204770652079501) #Vanern
 names(parStart) = c('DOCR_RespParam','DOCL_RespParam','R_auto','BurialFactor_R','BurialFactor_L','POC_lcR','POC_lcL')
 Fit2 <- modFit(f = DOCdiff, p=parStart,method = 'BFGS',
                lower= c(0,0,0.5,0,0,0,0),
-               upper= c(0.03,0.2,1,1,1,0.3,0.5))
+               upper= c(0.005,0.01,1,1,1,0.1,0.5))
 
 #0.0021797,0.0004051,0.9746785,0.9668259,0.0107793,0.0042922,0.2927224 #HARP
 #0.005345,0.00267,0.8558,0.904096,0.010085,0.008615,0.483261 #Trout
-#0.029849,0.199514,0.999971,0.000507,0.012573,0.046772,0.469137 #Cannonsville
+#0.02376539391  0.00002679875  0.96910872072  0.95797337438  0.99179312975  0.00001154516  0.41626287998 #Cannonsville
 #0.001572,0.001184,0.514193,0.892303,0.973353,0.009416,0.121458 #Monona
-
+Fit2 <- modFit(f = DOCdiff, p=parStart,method = 'Pseudo',
+               lower= c(0,0,0.5,0,0,0,0),
+               upper= c(0.03,0.2,1,1,1,0.3,0.5))
 
 summary(Fit2)
 pars1 = Fit2$par
@@ -94,7 +97,7 @@ joinMod = inner_join(ValidationDataDOC,modeled,by='datetime')
 png(paste0('R/ResultsViz/SensitivityAnalyses/par',LakeName,'.png'),height = 8,width = 7,units = 'in',res=300)
   par(mar = c(3,3,1,1),mgp=c(1.5,0.5,0),mfrow=c(4,2))
   # PLOTTING
-  plot(joinMod$datetime,joinMod$DOC,type='o',ylab='DOC',xlab='Date',pch=16,cex=0.7,ylim=c(3,8))
+  plot(joinMod$datetime,joinMod$DOC,type='o',ylab='DOC',xlab='Date',pch=16,cex=0.7,ylim=c(2,6))
   # lines(joinMod$datetime,joinMod$DOCwc,type='o',col='grey50')
   lines(joinMod$datetime,joinMod$DOC_conc,type='o',col='red3',pch=16,cex=0.7)
   legend('topleft',legend = c('Observed','Modeled'),fill=c('black','red3'),bty='n')
