@@ -9,7 +9,6 @@ PlotFlag = 1
 ValidationFlag = 1
 WriteFiles = 1
 BootstrapFlag = 0
-timestampFormat =	'%m/%d/%Y'
 timestampFormat =	'%Y-%m-%d'
 ##### INPUT FILE NAMES ################
 TimeSeriesFile <- paste('./',LakeName,'Lake/',LakeName,'TS.csv',sep='')
