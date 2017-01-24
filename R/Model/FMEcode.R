@@ -29,14 +29,14 @@ NSE(joinMod$DOC_conc, joinMod$DOC) #Harp 0.09 Trtou -0.015 Monona 0.279 Vanern -
 # Test1: BFGS
 # parStart = c(0.0022,0.0027,0.9,0.33,0.1,0.05,0.05) #Harp
 # parStart = c(0.022288,0.00495,0.707381,0.479661,0.01,0.01,0.480108) #Trout
-parStart = c(0.029849,0.199514,0.999971,0.000507,0.012573,0.046772,0.46913) # Cannonsville
+parStart = c(0.01,0.01,0.9,0.000507,0.012573,0.046772,0.46913) # Cannonsville
 parStart = c(0.00079,0.00223,0.815567,0.195992,0.13656,0.01,0.043347) # Monona
 parStart = c(0.00153205993800365,0.000695425284613213,0.554185248724029,0.0111865174956529,0.217093487420212,0.001,0.0204770652079501) #Vanern
 
 names(parStart) = c('DOCR_RespParam','DOCL_RespParam','R_auto','BurialFactor_R','BurialFactor_L','POC_lcR','POC_lcL')
 Fit2 <- modFit(f = DOCdiff, p=parStart,method = 'BFGS',
                lower= c(0,0,0.5,0,0,0,0),
-               upper= c(0.005,0.01,1,1,1,0.1,0.5))
+               upper= c(0.01,0.01,1,1,1,0.1,0.5))
 
 #0.0021797,0.0004051,0.9746785,0.9668259,0.0107793,0.0042922,0.2927224 #HARP
 #0.005345,0.00267,0.8558,0.904096,0.010085,0.008615,0.483261 #Trout
