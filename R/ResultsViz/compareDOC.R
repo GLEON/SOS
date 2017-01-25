@@ -28,11 +28,11 @@ png(paste0('R/ResultsViz/Figures/compareDOC.png'),width = 7,height = 10,units = 
   par(mfrow=c(5,1))
   par(mar=c(1.5,3,2,1),mgp=c(1.5,0.5,0),tck=-0.03,cex=0.8)
   # run over the lakes
-  Vanern = docComp('Vanern', ylim=c(3,5))
-  Toolik = docComp('Toolik')
+  Vanern = docComp('Vanern', ylim=c(3,5),timestamp = '%Y-%m-%d')
+  Toolik = docComp('Toolik',timestamp = '%Y-%m-%d')
   Trout = docComp('Trout',timestamp = '%Y-%m-%d',ylim=c(0.5,3.5))
   Monona = docComp('Monona',timestamp = '%Y-%m-%d',ylim=c(4.5,7))
-  Harp = docComp('Harp', ylim=c(3,5.5))
+  Harp = docComp('Harp', ylim=c(3,5.5),timestamp = '%Y-%m-%d')
 dev.off()
 
 #### Compare DO observations vs. model ####
