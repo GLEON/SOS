@@ -24,7 +24,7 @@ docComp = function(lakename,timestamp = "%m/%d/%Y",ylim=NULL) {
   lines(ValidationDataDOC$datetime,ValidationDataDOC$DOC,lty=2,col='red3',pch=19,cex=0.7)
 }
 
-png(paste0('R/ResultsViz/Figures/compareDOC.png'),width = 7,height = 10,units = 'in',res=300)
+png(paste0('R/ResultsViz/Figures/compareDOCx.png'),width = 7,height = 10,units = 'in',res=300)
   par(mfrow=c(5,1))
   par(mar=c(1.5,3,2,1),mgp=c(1.5,0.5,0),tck=-0.03,cex=0.8)
   # run over the lakes
