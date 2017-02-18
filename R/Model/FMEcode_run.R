@@ -1,5 +1,5 @@
 setwd("~/Documents/SOS")
-LakeName = 'Toolik'
+LakeName = 'Trout'
 
 ##### LOAD PACKAGES ########################
 library(signal)
@@ -83,7 +83,7 @@ NSE(joinMod$DOC_conc, joinMod$DOC) #Harp 0.09 Trtou -0.015 Monona 0.279 Vanern -
 # Starting parameters cannot be negative, because of bounds we set 
 parStart = pars
 lowerBound = c(0,0,0.5,0,0,0,0)
-upperBound = c(0.01,0.01,1,1,1,0.1,0.5)
+upperBound = c(0.005,0.01,1,1,1,0.1,0.5)
 parStart[(parStart - lowerBound) < 0] = lowerBound[(parStart - lowerBound) < 0]
 parStart[(upperBound - parStart) < 0] = upperBound[(upperBound - parStart) < 0]
 names(parStart) = c('DOCR_RespParam','DOCL_RespParam','R_auto','BurialFactor_R','BurialFactor_L','POC_lcR','POC_lcL')
