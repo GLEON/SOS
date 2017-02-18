@@ -1,6 +1,13 @@
-setwd("~/Documents/Rpackages/SOS")
+setwd("~/Documents/SOS")
 LakeName = 'Vanern'
 
+##### LOAD PACKAGES ########################
+library(signal)
+library(zoo)
+library(lubridate)
+library(LakeMetabolizer)
+library(plyr)
+library(dplyr)
 ##### INPUT FILE NAMES ################
 TimeSeriesFile <- paste('./',LakeName,'Lake/',LakeName,'TS.csv',sep='')
 RainFile <- paste('./',LakeName,'Lake/',LakeName,'Rain.csv',sep='')
@@ -34,14 +41,6 @@ InputData$Chla[InputData$Chla == 0] = 0.0001
 RainData <- read.csv(RainFile,header=T,stringsAsFactors = F) #Read daily rain file (units=mm) Read separately and added back to main file to avoid issues of linear interpolation with rain data in length units
 RainData$datetime <- as.POSIXct(strptime(RainData$datetime,timestampFormat,tz='GMT'))
 InputData$Rain <- RainData$Rain[RainData$datetime %in% InputData$datetime] #Plug daily rain data into InputData file to integrate with original code.
-
-##### LOAD PACKAGES ########################
-library(signal)
-library(zoo)
-library(lubridate)
-library(LakeMetabolizer)
-library(plyr)
-library(dplyr)
 
 ##### LOAD FUNCTIONS #######################
 source("./R/Model/SOS_Sedimentation.R")
@@ -82,18 +81,12 @@ library(hydroGOF)
 rmse(joinMod$DOC_conc, joinMod$DOC) #Harp 0.43 Trout 0.427 Monona 0.62 Vanern 0.32
 NSE(joinMod$DOC_conc, joinMod$DOC) #Harp 0.09 Trtou -0.015 Monona 0.279 Vanern -0.03
 
-# Test1: BFGS
-# # parStart = c(0.0022,0.0027,0.9,0.33,0.1,0.05,0.05) #Harp
-# # parStart = c(0.022288,0.00495,0.707381,0.479661,0.01,0.01,0.480108) #Trout
-# parStart = c(0.01,0.01,0.9,0.000507,0.012573,0.046772,0.46913) # Cannonsville
-# parStart = c(0.00079,0.00223,0.815567,0.195992,0.13656,0.01,0.043347) # Monona
-# parStart = c(0.00153205993800365,0.000695425284613213,0.554185248724029,0.0111865174956529,0.217093487420212,0.001,0.0204770652079501) #Vanern
-
+# Starting parameters cannot be negative, because of bounds we set 
 parStart = pars
 parStart[parStart < 0] = 0
 names(parStart) = c('DOCR_RespParam','DOCL_RespParam','R_auto','BurialFactor_R','BurialFactor_L','POC_lcR','POC_lcL')
 
-Fit2 <- modFit(f = DOCdiff, p=parStart,method = 'BFGS',
+Fit <- modFit(f = DOCdiff, p=parStart,method = 'BFGS',
                lower= c(0,0,0.5,0,0,0,0),
                upper= c(0.01,0.01,1,1,1,0.1,0.5))
 
@@ -102,12 +95,14 @@ Fit2 <- modFit(f = DOCdiff, p=parStart,method = 'BFGS',
 Fit2 <- modFit(f = DOCdiff, p=parStart,method = 'Pseudo',
                lower= c(0,0,0.5,0,0,0,0),
                upper= c(0.005,0.01,1,1,1,0.1,0.5))
-Fit2 <- modFit(f = DOCdiff, p=parStart,method = 'Pseudo',
+Fit2par = Fit2$par
+
+Fit3 <- modFit(f = DOCdiff, p=Fit2par,method = 'Pseudo',
                lower= c(0,0,0.5,0,0,0,0),
                upper= c(0.005,0.01,1,1,1,0.1,0.5))
 
 summary(Fit2)
-pars1 = Fit2$par
+summary(Fit3)
 names(pars1) = c('DOCR_RespParam','DOCL_RespParam','R_auto','BurialFactor_R','BurialFactor_L','POC_lcR','POC_lcL')
 
 covar <- solve(0.5 * Fit2$hessian)
