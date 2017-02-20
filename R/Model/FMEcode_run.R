@@ -127,6 +127,8 @@ fitTest(Fit3$par)
 
 summary(Fit2)
 summary(Fit3)
+Fit2$par
+Fit3$par
 # Save Fit data
 save(Fit3,file=paste0('R/FMEresults/',LakeName,'_fitresults.RData'))
 write.csv(Fit3$par,paste0('R/FMEresults/',LakeName,'_fitpars.csv'),row.names = F)
