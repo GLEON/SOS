@@ -99,7 +99,7 @@ Fit2 <- modFit(f = DOCdiff, p=parStart,method = 'Pseudo',
                upper= c(0.005,0.01,1,1,1,0.1,0.5))
 Fit2par = Fit2$par
 
-Fit3 <- modFit(f = DOCdiff, p=Fit2par,method = 'Pseudo',
+Fit3 <- modFit(f = DOCdiff, p=Fit2par,
                lower= c(0,0,0.5,0,0,0,0),
                upper= c(0.005,0.01,1,1,1,0.1,0.5))
 
@@ -203,17 +203,17 @@ modeled = modelDOC(pars[1],pars[2],pars[3],pars[4],pars[5],pars[6],pars[7])
 joinMod = inner_join(ValidationDataDOC,modeled,by='datetime')
 
 png(paste0('R/FMEresults/',LakeName,'_sensitivity.png'),height = 8,width = 7,units = 'in',res=300)
-par(mar = c(3,3,1,1),mgp=c(1.5,0.5,0),mfrow=c(4,2))
-# PLOTTING
-plot(joinMod$datetime,joinMod$DOC,type='o',ylab='DOC',xlab='Date',pch=16,cex=0.7,ylim=c(2,8))
-# lines(joinMod$datetime,joinMod$DOCwc,type='o',col='grey50')
-lines(joinMod$datetime,joinMod$DOC_conc,type='o',col='red3',pch=16,cex=0.7)
-legend('topleft',legend = c('Observed','Modeled'),fill=c('black','red3'),bty='n')
-for (i in 1:7){
-  plot.sensRange.HD(Sens[[i]],Select = 2,ylabs = "DOC",ylims = c(3,8),
-                    main=paste(names(startPars)[i],' ',pRange[i,1],'-',pRange[i,2],sep=''))
-  lines(as.POSIXlt(ValidationDataDOC$datetime),ValidationDataDOC$DOC,lty=2,pch=16,cex=0.7,type='o')
-}
+  par(mar = c(3,3,1,1),mgp=c(1.5,0.5,0),mfrow=c(4,2))
+  # PLOTTING
+  plot(joinMod$datetime,joinMod$DOC,type='o',ylab='DOC',xlab='Date',pch=16,cex=0.7,ylim=c(2,8))
+  # lines(joinMod$datetime,joinMod$DOCwc,type='o',col='grey50')
+  lines(joinMod$datetime,joinMod$DOC_conc,type='o',col='red3',pch=16,cex=0.7)
+  legend('topleft',legend = c('Observed','Modeled'),fill=c('black','red3'),bty='n')
+  for (i in 1:7){
+    plot.sensRange.HD(Sens[[i]],Select = 2,ylabs = "DOC",ylims = c(3,8),
+                      main=paste(names(startPars)[i],' ',pRange[i,1],'-',pRange[i,2],sep=''))
+    lines(as.POSIXlt(ValidationDataDOC$datetime),ValidationDataDOC$DOC,lty=2,pch=16,cex=0.7,type='o')
+  }
 dev.off()
 
 
