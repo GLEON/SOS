@@ -1,5 +1,5 @@
 setwd("~/Documents/SOS")
-LakeName = 'Trout'
+LakeName = 'Monona'
 
 ##### LOAD PACKAGES ########################
 library(signal)
@@ -103,20 +103,47 @@ Fit3 <- modFit(f = DOCdiff, p=Fit2par,method = 'Pseudo',
                lower= c(0,0,0.5,0,0,0,0),
                upper= c(0.005,0.01,1,1,1,0.1,0.5))
 
+#Test Fits
+fitTest <- function(pars){
+  # DOC model 
+  modeled = modelDOC(pars[1],pars[2],pars[3],pars[4],pars[5],pars[6],pars[7])
+  joinMod = inner_join(ValidationDataDOC,modeled,by='datetime')
+  # PLOTTING and GOF
+  png(paste0('R/FMEresults/',LakeName,'FMEfit.png'),width = 6,height = 4,units = 'in',res = 300)
+  par(mar=c(3,3,3,1),mgp=c(1.5,0.5,0))
+    plot(joinMod$datetime,joinMod$DOC,type='o',ylab='Date',xlab = 'DOC (mg/L)',pch=16,main=LakeName)
+    lines(joinMod$datetime,joinMod$DOCwc,type='o',col='grey50',pch=16)
+    lines(joinMod$datetime,joinMod$DOC_conc,type='o',col='red3',pch=16)
+    legend('bottomleft',legend = c('ObsSurf','ObsWC','Mod'),col=c('black','grey50','red3'),pch=16)
+  dev.off()
+  #Goodness of fit
+  library(hydroGOF)
+  print(paste('RMSE = ',rmse(joinMod$DOC_conc, joinMod$DOC))) #Harp 0.43 Trout 0.427 Monona 0.62 Vanern 0.32
+  print(paste('NSE = ',NSE(joinMod$DOC_conc, joinMod$DOC))) #Harp 0.09 Trtou -0.015 Monona 0.279 Vanern -0.03
+}
+
+fitTest(Fit2$par)
+fitTest(Fit3$par)
+
 summary(Fit2)
 summary(Fit3)
-names(pars1) = c('DOCR_RespParam','DOCL_RespParam','R_auto','BurialFactor_R','BurialFactor_L','POC_lcR','POC_lcL')
+# Save Fit data
+save(Fit3,file=paste0('R/FMEresults/',LakeName,'_fitresults.RData'))
+write.csv(Fit3$par,paste0('R/FMEresults/',LakeName,'_fitpars.csv'),row.names = F)
 
+# New parameters
+newPars = Fit3$par
+names(newPars) = c('DOCR_RespParam','DOCL_RespParam','R_auto','BurialFactor_R','BurialFactor_L','POC_lcR','POC_lcL')
 covar <- solve(0.5 * Fit2$hessian)
 
 # Sensitivity of parameters
-sF <- sensFun(DOCdiff,parms = pars1,tiny = 1e-2)
+sF <- sensFun(DOCdiff,parms = newPars,tiny = 1e-2)
 plot(sF)
 summary(sF)
 plot(summary(sF))
 collin(sF)
 plot(collin(sF), log="y")
-
+write.csv(collin(sF),paste0('R/FMEresults/',LakeName,'_collinearity.csv'),row.names = F)
 ##------------------------------------------------------------------------------
 ##   Sensitivity range
 ##------------------------------------------------------------------------------
@@ -126,11 +153,9 @@ pRange <- data.frame(min = lower, max = upper)
 rownames(pRange) = c('DOCR_RespParam','DOCL_RespParam','R_auto','BurialFactor_R','BurialFactor_L','POC_lcR','POC_lcL')
 ## 2. Calculate sensitivity: model is solved 10 times, uniform parameter distribution (default)
 DOCsens <- function(p){
-  pars = pars1
+  pars = newPars
   names(pars) = c('DOCR_RespParam','DOCL_RespParam','R_auto','BurialFactor_R','BurialFactor_L','POC_lcR','POC_lcL')
-  
   pars[names(pars) %in% names(p)] = p
-  
   # DOC model 
   modeled = modelDOC(pars[1],pars[2],pars[3],pars[4],pars[5],pars[6],pars[7])
   
@@ -139,34 +164,55 @@ DOCsens <- function(p){
   return(joinMod2)
 }
 
-startPars = pars1
+startPars = newPars
 Sens <- list()
 for (i in 1:7){
   print(i)
   
   Sens[[i]] <- sensRange(parms=startPars[i], func=DOCsens, 
-                         num=10, parRange=pRange[i,])
+                         num=100, parRange=pRange[i,])
 }
-
+##------------------------------------------------------------------------------
+##   Functions ####
+##------------------------------------------------------------------------------
+plot.sensRange.HD <- function (x,Select = 2,ylabs = NULL,main=NULL,ylims=NULL){
+  npar <- attr(x, "npar")
+  nx <- attr(x, "nx")
+  varnames <- attr(x, "var")
+  X <- attr(x, "x")
+  X <- strptime(X,'%Y-%m-%d')
+  sens <- x[, -(1:npar)]
+  
+  ii <- ((Select - 1) * nx + 1):(Select * nx)
+  y = t(sens[,ii])
+  plot(X, rowMeans(y), col = add.alpha('red3',0), lwd = 2,type='l',ylab=ylabs,xlab = 'Date',main=main,ylim=ylims) 
+  min = apply(y,1,min)
+  max = apply(y,1,max)
+  polygon(x = c(X,rev(X)),y = c(min,rev(max)),col= add.alpha("red3",0.6),border = add.alpha("red3",0.6))
+  legend('bottomright',legend = c('Mean','Max-Min'),fill=c('navy', add.alpha("red3",0.6)),bty='n')
+}
+add.alpha <- function(col, alpha=1){
+  apply(sapply(col, col2rgb)/255, 2, 
+        function(x) 
+          rgb(x[1], x[2], x[3], alpha=alpha))  
+}
+##------------------------------------------------------------------------------
 ## Plotting ##
-source('~/Dropbox/2017MadisonGLM_TestFolder/GLMtest/plot.sensRange.HD.R')
 pars = startPars
 modeled = modelDOC(pars[1],pars[2],pars[3],pars[4],pars[5],pars[6],pars[7])
 joinMod = inner_join(ValidationDataDOC,modeled,by='datetime')
 
-png(paste0('R/ResultsViz/SensitivityAnalyses/par',LakeName,'.png'),height = 8,width = 7,units = 'in',res=300)
+png(paste0('R/FMEresults/',LakeName,'_sensitivity.png'),height = 8,width = 7,units = 'in',res=300)
 par(mar = c(3,3,1,1),mgp=c(1.5,0.5,0),mfrow=c(4,2))
 # PLOTTING
-plot(joinMod$datetime,joinMod$DOC,type='o',ylab='DOC',xlab='Date',pch=16,cex=0.7,ylim=c(2,6))
+plot(joinMod$datetime,joinMod$DOC,type='o',ylab='DOC',xlab='Date',pch=16,cex=0.7,ylim=c(2,8))
 # lines(joinMod$datetime,joinMod$DOCwc,type='o',col='grey50')
 lines(joinMod$datetime,joinMod$DOC_conc,type='o',col='red3',pch=16,cex=0.7)
 legend('topleft',legend = c('Observed','Modeled'),fill=c('black','red3'),bty='n')
 for (i in 1:7){
-  # png(paste0('Figures/Sensitivity_',names(startPars)[i],'.png'),width = 7,height = 7,units = 'in',res=300)
   plot.sensRange.HD(Sens[[i]],Select = 2,ylabs = "DOC",ylims = c(3,8),
                     main=paste(names(startPars)[i],' ',pRange[i,1],'-',pRange[i,2],sep=''))
   lines(as.POSIXlt(ValidationDataDOC$datetime),ValidationDataDOC$DOC,lty=2,pch=16,cex=0.7,type='o')
-  # dev.off()
 }
 dev.off()
 
@@ -220,24 +266,5 @@ if (updateParameters == 1){
 
 
 
-##------------------------------------------------------------------------------
-##   Functions ####
-##------------------------------------------------------------------------------
-plot.sensRange.HD <- function (x,Select = 2,ylabs = NULL,main=NULL,ylims=NULL){
-  npar <- attr(x, "npar")
-  nx <- attr(x, "nx")
-  varnames <- attr(x, "var")
-  X <- attr(x, "x")
-  X <- strptime(X,'%Y-%m-%d')
-  sens <- x[, -(1:npar)]
-  
-  ii <- ((Select - 1) * nx + 1):(Select * nx)
-  y = t(sens[,ii])
-  plot(X, rowMeans(y), col = "navy", lwd = 2,type='l',ylab=ylabs,xlab = 'Date',main=main,ylim=ylims) 
-  min = apply(y,1,min)
-  max = apply(y,1,max)
-  polygon(x = c(X,rev(X)),y = c(min,rev(max)),col= add.alpha("red3",0.6),border = add.alpha("red3",0.6))
-  legend('bottomright',legend = c('Mean','Max-Min'),fill=c('navy', add.alpha("red3",0.6)),bty='n')
-}
 
 
