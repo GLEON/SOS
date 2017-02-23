@@ -1,5 +1,5 @@
 
-bootstrapDOC <- function(newObs,datetime,LakeName,timestampFormat = '%m/%d/%Y') {
+bootstrapDOC <- function(newObs,datetime,LakeName,timestampFormat = '%Y-%m-%d') {
   pseudoDOC = data.frame(datetime = datetime, DOC = newObs, DOCwc = newObs)
   
   ##### INPUT FILE NAMES ################
@@ -180,37 +180,43 @@ bootstrapDOC <- function(newObs,datetime,LakeName,timestampFormat = '%m/%d/%Y') 
   #SedData MAR OC 
   ValidationDataMAROC <- ObservedMAR_oc #g/m2
   
-  
-  min.calcModelNLL <- function(pars,ValidationDataDOC,ValidationDataDO,ValidationDataMAROC){
+  DOCdiff <- function(pars,ValidationDataDOC){
+    # DOC model 
     modeled = modelDOC(pars[1],pars[2],pars[3],pars[4],pars[5],pars[6],pars[7])
-    
-    obsIndx = ValidationDataDOC$datetime %in% modeled$datetime
-    modIndx = modeled$datetime %in% ValidationDataDOC$datetime
-    CalibrationOutputDOC <- data.frame(datetime = ValidationDataDOC[obsIndx,]$datetime,
-                                       Measured = ValidationDataDOC[obsIndx,]$DOC, Modelled = modeled[modIndx,]$DOC_conc)
-    #resDOC = scale(CalibrationOutputDOC$Measured - CalibrationOutputDOC$Modelled,center = F)
-    resDOC = (CalibrationOutputDOC$Measured - CalibrationOutputDOC$Modelled)
-    obsIndx = ValidationDataDO$datetime %in% modeled$datetime
-    modIndx = modeled$datetime %in% ValidationDataDO$datetime
-    CalibrationOutputDO <- data.frame(datetime = ValidationDataDO[obsIndx,]$datetime,
-                                      Measured = ValidationDataDO[obsIndx,]$Flux, Modelled = modeled[modIndx,]$MetabOxygen)
-    
-    #resDO = scale(CalibrationOutputDO$Measured - CalibrationOutputDO$Modelled,center = F)
-    DOScale = 5
-    resDO = (CalibrationOutputDO$Measured - CalibrationOutputDO$Modelled) * DOScale
-    sedScale = 0.001
-    resSedData = (mean(modeled$SedData_MAR,na.rm = T) - ValidationDataMAROC) * sedScale #not scaled because it is 1 value
-    
-    res = c(resDOC,resDO,rep(resSedData,length(resDOC)))
-    
-    nRes 	= length(res)
-    SSE 	= sum(res^2)
-    sigma2 	= SSE/nRes
-    NLL 	= 0.5*((SSE/sigma2) + nRes*log(2*pi*sigma2))
-    print(paste('NLL: ',NLL,sep=''))
-    print(paste('parameters: ',pars,sep=''))
-    return(NLL)
+    joinMod = inner_join(ValidationDataDOC,modeled,by='datetime')
+    resDOC = joinMod$DOC - joinMod$DOC_conc
+    return(resDOC)
   }
+  # min.calcModelNLL <- function(pars,ValidationDataDOC,ValidationDataDO,ValidationDataMAROC){
+  #   modeled = modelDOC(pars[1],pars[2],pars[3],pars[4],pars[5],pars[6],pars[7])
+  #   
+  #   obsIndx = ValidationDataDOC$datetime %in% modeled$datetime
+  #   modIndx = modeled$datetime %in% ValidationDataDOC$datetime
+  #   CalibrationOutputDOC <- data.frame(datetime = ValidationDataDOC[obsIndx,]$datetime,
+  #                                      Measured = ValidationDataDOC[obsIndx,]$DOC, Modelled = modeled[modIndx,]$DOC_conc)
+  #   #resDOC = scale(CalibrationOutputDOC$Measured - CalibrationOutputDOC$Modelled,center = F)
+  #   resDOC = (CalibrationOutputDOC$Measured - CalibrationOutputDOC$Modelled)
+  #   obsIndx = ValidationDataDO$datetime %in% modeled$datetime
+  #   modIndx = modeled$datetime %in% ValidationDataDO$datetime
+  #   CalibrationOutputDO <- data.frame(datetime = ValidationDataDO[obsIndx,]$datetime,
+  #                                     Measured = ValidationDataDO[obsIndx,]$Flux, Modelled = modeled[modIndx,]$MetabOxygen)
+  #   
+  #   #resDO = scale(CalibrationOutputDO$Measured - CalibrationOutputDO$Modelled,center = F)
+  #   DOScale = 5
+  #   resDO = (CalibrationOutputDO$Measured - CalibrationOutputDO$Modelled) * DOScale
+  #   sedScale = 0.001
+  #   resSedData = (mean(modeled$SedData_MAR,na.rm = T) - ValidationDataMAROC) * sedScale #not scaled because it is 1 value
+  #   
+  #   res = c(resDOC,resDO,rep(resSedData,length(resDOC)))
+  #   
+  #   nRes 	= length(res)
+  #   SSE 	= sum(res^2)
+  #   sigma2 	= SSE/nRes
+  #   NLL 	= 0.5*((SSE/sigma2) + nRes*log(2*pi*sigma2))
+  #   print(paste('NLL: ',NLL,sep=''))
+  #   print(paste('parameters: ',pars,sep=''))
+  #   return(NLL)
+  # }
 
   modelDOC <- function (DOCR_RespParam,DOCL_RespParam,R_auto,BurialFactor_R,BurialFactor_L,
                         POC_lcR,POC_lcL) {
@@ -308,15 +314,21 @@ bootstrapDOC <- function(newObs,datetime,LakeName,timestampFormat = '%m/%d/%Y') 
                       'MetabOxygen' = Metabolism_out,'SedData_MAR' = Sed_out))
   }
   
-  
-  min.calcModelNLL(par = c(DOCR_RespParam,DOCL_RespParam,R_auto,BurialFactor_R,BurialFactor_L,POC_lcR,POC_lcL),
-                   ValidationDataDOC = pseudoDOC,
-                   ValidationDataDO = ValidationDataDO,ValidationDataMAROC = ValidationDataMAROC)
-  
-  optimOut = optim(par = c(DOCR_RespParam,DOCL_RespParam,R_auto,BurialFactor_R,BurialFactor_L,POC_lcR,POC_lcL), 
-                   min.calcModelNLL,ValidationDataDOC = pseudoDOC,
-                   ValidationDataDO = ValidationDataDO,ValidationDataMAROC = ValidationDataMAROC, 
-                   control = list(maxit = 150)) #setting maximum number of attempts for now
+  # Starting parameters cannot be negative, because of bounds we set 
+  # parStart = pars
+  # lowerBound = c(0,0,0.5,0,0,0,0)
+  # upperBound = c(0.005,0.01,1,1,1,0.1,0.5)
+  # parStart[(parStart - lowerBound) < 0] = lowerBound[(parStart - lowerBound) < 0]
+  # parStart[(upperBound - parStart) < 0] = upperBound[(upperBound - parStart) < 0]
+  # names(parStart) = c('DOCR_RespParam','DOCL_RespParam','R_auto','BurialFactor_R','BurialFactor_L','POC_lcR','POC_lcL')
+
+  # For difficult problems it may be efficient to perform some iterations with Pseudo, which will bring the algorithm 
+  # near the vicinity of a (the) minimum, after which the default algorithm (Marq) is used to locate the minimum more precisely.
+  Fit2 <- modFit(f = DOCdiff, p=c(DOCR_RespParam,DOCL_RespParam,R_auto,BurialFactor_R,BurialFactor_L,POC_lcR,POC_lcL),
+                 method = 'BFGS',control = list(maxit = 10),
+                 ValidationDataDOC = pseudoDOC,
+                 lower= c(0,0,0.5,0,0,0,0),
+                 upper= c(0.005,0.01,1,1,1,0.1,0.5))
   
   ## New parameters from optimization output
   outV <- c(optimOut$par, optimOut$value, optimOut$convergence)
