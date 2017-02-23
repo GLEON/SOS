@@ -386,7 +386,7 @@ for (i in 1:(steps)) {
     DOC_df$DOCtotal_conc_gm3[i+1] = DOC_df$DOCR_conc_gm3[i+1] + DOC_df$DOCL_conc_gm3[i+1]
     
     #Stop code and output error if concentrations go to negative
-    if (POC_df$POCtotal_conc_gm3[i+1]<=0){stop("Negative POC concentration!")}
+    # if (POC_df$POCtotal_conc_gm3[i+1]<=0){stop("Negative POC concentration!")}
     if (DOC_df$DOCtotal_conc_gm3[i+1]<=0){stop("Negative DOC concentration!")}
   }
 }
@@ -514,6 +514,7 @@ if (BootstrapFlag==1){
   
   resids <- CalibrationOutputDOC[,4]-CalibrationOutputDOC[,2]
   set.seed(001) # just to make it reproducible
+  #set number of psuedo observations
   pseudoObs = matrix(replicate(4,sample(resids) + CalibrationOutputDOC$Measured),ncol = length(resids)) # matrix of psuedo observations 
   
   library(parallel)

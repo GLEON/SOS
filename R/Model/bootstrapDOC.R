@@ -330,7 +330,15 @@ bootstrapDOC <- function(newObs,datetime,LakeName,timestampFormat = '%Y-%m-%d') 
                  lower= c(0,0,0.5,0,0,0,0),
                  upper= c(0.005,0.01,1,1,1,0.1,0.5))
   
+  newPars = Fit2$par
+  modeled = modelDOC(newPars[1],newPars[2],newPars[3],newPars[4],newPars[5],newPars[6],newPars[7])
+  joinMod = inner_join(ValidationDataDOC,modeled,by='datetime')
+  #Goodness of fit
+  library(hydroGOF)
+  rmseFit = rmse(joinMod$DOC_conc, joinMod$DOC) #Harp 0.43 Trout 0.427 Monona 0.62 Vanern 0.32
+  nseFit = NSE(joinMod$DOC_conc, joinMod$DOC) #Harp 0.09 Trtou -0.015 Monona 0.279 Vanern -0.03
+  
   ## New parameters from optimization output
-  outV <- c(optimOut$par, optimOut$value, optimOut$convergence)
+  outV <- c(Fit2$par, rmseFit, nseFit)
   return(outV)
 }
