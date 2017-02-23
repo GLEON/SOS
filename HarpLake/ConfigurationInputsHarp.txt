@@ -6,8 +6,6 @@ LakeVolume 8320000 m^3
 DOC_init 3.7 g/m^3
 POC_init 0.37 g/m^3
 BurialFactor 0.07086 1/days
-BurialFactor_R 0.464492283458973 1/days
-BurialFactor_L -0.79595429675272 1/day
 PropCanopy 1 unitless
 PropWetlands 0 unitless
 AerialLoad 1 gPOC/m/d
@@ -17,12 +15,15 @@ DOC_gw 10 g/m3
 DOC_sw 6.2 g/m3
 DOC_precip 2 g/m3
 ObservedMAR_oc 78 g/m2/yr
-POC_lc 0.01 1/days
-POC_lcR -0.357529064224807 1/days
-POC_lcL 0.84667877472329 1/days
-RespParam 0.0021639 unitless
-DOCR_RespParam -0.0000594667204805978 unitless
-DOCL_RespParam 0.000187092970054612 unitless
-R_auto 1 unitless
+
 ProdStartDay 90 JulianDay
 ProdEndDay 330 JulianDay
+
+DOCR_RespParam 0.00231268799603365 unitless
+DOCL_RespParam 1.04763426878041e-09 unitless
+R_auto 0.977095218763308 unitless
+BurialFactor_R 0.998853356943148 1/days
+BurialFactor_L 9.36873494838952e-07 1/day
+POC_lcR 8.53378842424757e-08 1/days
+POC_lcL 0.499999843749024 1/days
+

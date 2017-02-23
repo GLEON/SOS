@@ -5,8 +5,7 @@ LakeArea 13260000 m^2
 LakeVolume 1.1e+08 m^3
 DOC_init 7 g/m^3
 POC_init 0.1 g/m^3
-BurialFactor_R 0.195991695460872 1/days
-BurialFactor_L 0.136559638009914 1/day
+
 PropCanopy 0.167 unitless
 PropWetlands 0.0256 unitless
 AerialLoad 1 gPOC/m/d
@@ -14,11 +13,13 @@ WetlandLoad 1 gDOC/m/d
 DOC_gw 10 g/m3
 PropGW 0 unitless
 DOC_precip 2 g/m3
-POC_lc 0.016376368 1/days
-POC_lcR -0.0559387021057463 1/days
-POC_lcL 0.0433468624845877 1/days
 DOC_miner_const 0.003 1/days
-DOCR_RespParam 0.000790007441081585 unitless
-DOCL_RespParam 0.00223027142025543 unitless
-R_auto 0.815567147080386 unitless
 ObservedMAR_oc 249 g/m2/y
+
+DOCR_RespParam 0.00174422900917458 unitless
+DOCL_RespParam 0.000872704490999381 unitless
+R_auto 0.852744107265082 unitless
+BurialFactor_R 0 1/days
+BurialFactor_L 1 1/day
+POC_lcR 0.00272215201150074 1/days
+POC_lcL 0.5 1/days

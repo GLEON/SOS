@@ -31,8 +31,10 @@ plotCollinearity <- function(lakeName) {
   axis(1,at = 1:7,labels = colnames(m),cex.axis=0.7)
   axis(2,at = 1:7,labels = colnames(m),las=2,cex.axis=0.7)
   grid(7,7, col = 'grey80', lty = "dotted") #add.grid
+  
+  text(x = c(1:7,1:7,1:7,1:7,1:7,1:7,1:7),
+       y =c(rep(1,7),rep(2,7),rep(3,7),rep(4,7),rep(5,7),rep(6,7),rep(7,7)),
+       labels=round(as.vector(m),), cex= 0.7)
 }
 
-text(x = c(1:7,1:7,1:7,1:7,1:7,1:7,1:7),
-     y =c(rep(1,7),rep(2,7),rep(3,7),rep(4,7),rep(5,7),rep(6,7),rep(7,7)),
-     labels=round(as.vector(m),), cex= 0.7)
+
