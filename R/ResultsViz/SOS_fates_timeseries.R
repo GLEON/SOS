@@ -45,7 +45,7 @@ SOS_fate = function(LakeName){
   # Processor: fOut < R + S
   # Source: R > S
   # Sink: R < S
-  # Full budget: alloch + autoch = R - S + fOut + dStorage
+  # Total Load: alloch + autoch = R - S + fOut + dStorage
   # dStorage = change in storage in water column
   
   # Calculate Change to total carbon stocks (pulled code from optim6)
@@ -102,7 +102,7 @@ par(new=T)
 plot(S_gm2y ~ Date, Harp, type='h', xaxt='n',yaxt='n', xlab='',ylab='', ylim=ylim, col=colors[2], lwd=4)
 par(new=T)
 plot(R_gm2y ~ Date, Harp, type='h', xaxt='n',yaxt='n', xlab='',ylab='', ylim=ylim, col=colors[3], lwd=4)
-legend('topright', lwd=lwd, legend=c('Full Budget','Sed','Resp'), col=colors)
+legend('topright', lwd=lwd, legend=c('Total Load','Sed','Resp'), col=colors)
 abline(0,0,lty=lty, lwd=lwd)
 
 # Monona
@@ -111,7 +111,7 @@ par(new=T)
 plot(S_gm2y ~ Date, Monona, type='h', xaxt='n',yaxt='n', xlab='',ylab='', ylim=ylim, col=colors[2], lwd=4)
 par(new=T)
 plot(R_gm2y ~ Date, Monona, type='h', xaxt='n',yaxt='n', xlab='',ylab='', ylim=ylim, col=colors[3], lwd=4)
-#legend('topright', lwd=lwd, legend=c('Full Budget','Sed','Resp'), col=colors)
+#legend('topright', lwd=lwd, legend=c('Total Load','Sed','Resp'), col=colors)
 abline(0,0,lty=lty, lwd=lwd)
 
 # Toolik
@@ -120,7 +120,7 @@ par(new=T)
 plot(S_gm2y ~ Date, Toolik, type='h', xaxt='n',yaxt='n', xlab='',ylab='', ylim=ylim, col=colors[2], lwd=4)
 par(new=T)
 plot(R_gm2y ~ Date, Toolik, type='h', xaxt='n',yaxt='n', xlab='',ylab='', ylim=ylim, col=colors[3], lwd=4)
-#legend('topright', lwd=lwd, legend=c('Full Budget','Sed','Resp'), col=colors)
+#legend('topright', lwd=lwd, legend=c('Total Load','Sed','Resp'), col=colors)
 abline(0,0,lty=lty, lwd=lwd)
 
 # Trout
@@ -129,7 +129,7 @@ par(new=T)
 plot(S_gm2y ~ Date, Trout, type='h', xaxt='n',yaxt='n', xlab='',ylab='', ylim=ylim, col=colors[2], lwd=4)
 par(new=T)
 plot(R_gm2y ~ Date, Trout, type='h', xaxt='n',yaxt='n', xlab='',ylab='', ylim=ylim, col=colors[3], lwd=4)
-#legend('topright', lwd=lwd, legend=c('Full Budget','Sed','Resp'), col=colors)
+#legend('topright', lwd=lwd, legend=c('Total Load','Sed','Resp'), col=colors)
 abline(0,0,lty=lty, lwd=lwd)
 
 # Vanern
@@ -139,7 +139,7 @@ plot(S_gm2y ~ Date, Vanern, type='h', xaxt='n',yaxt='n', xlab='',ylab='', ylim=y
 abline(0,0,lty=lty, lwd=lwd)
 par(new=T)
 plot(R_gm2y ~ Date, Vanern, type='h', xaxt='n',yaxt='n', xlab='',ylab='', ylim=ylim, col=colors[3], lwd=4)
-#legend('topright', lwd=lwd, legend=c('Full Budget','Sed','Resp'), col=colors)
+#legend('topright', lwd=lwd, legend=c('Total Load','Sed','Resp'), col=colors)
 dev.off()
 
 # compare export to difference between R and S to determine pipe or processor of OC
