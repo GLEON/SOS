@@ -1,5 +1,5 @@
 setwd("~/Documents/SOS")
-LakeName = 'Monona'
+LakeName = 'Vanern'
 
 ##### LOAD PACKAGES ########################
 library(signal)

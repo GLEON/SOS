@@ -82,10 +82,7 @@ Vanern = SOS_fate('Vanern')
 ############# plotting time series ##########
 # compare R to S
 # Source: R > S, Sink: R < S
-png(paste0('R/ResultsViz/Figures/SOSfates.png'),width = 11,height = 9,units = 'in',res=300)
-par(mar=c(5.1, 5.1, 4.1, 2.1)) #bot, left, top, right, def=c(5.1, 4.1, 4.1, 2.1)
-#par(mfrow=c(1,1))
-par(mfrow=c(3,2))
+
 lty = 2
 lwd = 2
 ylab = 'OC (g/m2/yr)'
@@ -94,52 +91,40 @@ ylim = c(-50,400)
 cex.main = 2
 cex.axis = 2
 cex.lab = 2
-colors=c('gray','black','gold')
 
-# Harp
-plot(Budget_left_gm2y ~ Date, Harp, type='h', main='Harp', col=colors[1], ylim=ylim, ylab=ylab, cex.main=cex.main, cex.axis=cex.axis, cex.lab=cex.lab)
-par(new=T)
-plot(S_gm2y ~ Date, Harp, type='h', xaxt='n',yaxt='n', xlab='',ylab='', ylim=ylim, col=colors[2], lwd=4)
-par(new=T)
-plot(R_gm2y ~ Date, Harp, type='h', xaxt='n',yaxt='n', xlab='',ylab='', ylim=ylim, col=colors[3], lwd=4)
-legend('topright', lwd=lwd, legend=c('Total Load','Sed','Resp'), col=colors)
-abline(0,0,lty=lty, lwd=lwd)
+png(paste0('R/ResultsViz/Figures/SOSfates2.png'),width = 11,height = 9,units = 'in',res=300)
+par(mar=c(3,3,3,1),mgp=c(1.5,0.4,0),mfrow=c(3,2),tck=-0.02,cex=1.2) 
+
+  # Harp
+  plot(Harp$Date,Harp$Budget_left_gm2y,type = 'h',col = 'grey70',xlab = 'Date',ylab = 'OC (g/m2/yr)',ylim = c(-50,400),main='Harp')
+  lines(Harp$Date,Harp$R_gm2y,type='h',col='gold')
+  lines(Harp$Date,Harp$S_gm2y,type='h',col='black')
+  legend('topright',legend=c('Total Load','Sed','Resp'), col=c('grey70','black','gold'),lwd=2)
+  abline(0,0,lty=2, lwd=2)
 
 # Monona
-plot(Budget_left_gm2y ~ Date, Monona, type='h', main='Monona', col=colors[1], ylim=ylim, ylab=ylab, cex.main=cex.main, cex.axis=cex.axis, cex.lab=cex.lab)
-par(new=T)
-plot(S_gm2y ~ Date, Monona, type='h', xaxt='n',yaxt='n', xlab='',ylab='', ylim=ylim, col=colors[2], lwd=4)
-par(new=T)
-plot(R_gm2y ~ Date, Monona, type='h', xaxt='n',yaxt='n', xlab='',ylab='', ylim=ylim, col=colors[3], lwd=4)
-#legend('topright', lwd=lwd, legend=c('Total Load','Sed','Resp'), col=colors)
-abline(0,0,lty=lty, lwd=lwd)
+  plot(Monona$Date,Monona$Budget_left_gm2y,type = 'h',col = 'grey70',xlab = 'Date',ylab = 'OC (g/m2/yr)',ylim = c(-50,400),main='Monona')
+  lines(Monona$Date,Monona$S_gm2y,type='h',col='black')
+  lines(Monona$Date,Monona$R_gm2y,type='h',col='gold')
+  abline(0,0,lty=2, lwd=2)
 
 # Toolik
-plot(Budget_left_gm2y ~ Date, Toolik, type='h', main='Toolik', col=colors[1], ylim=ylim, ylab=ylab, cex.main=cex.main, cex.axis=cex.axis, cex.lab=cex.lab)
-par(new=T)
-plot(S_gm2y ~ Date, Toolik, type='h', xaxt='n',yaxt='n', xlab='',ylab='', ylim=ylim, col=colors[2], lwd=4)
-par(new=T)
-plot(R_gm2y ~ Date, Toolik, type='h', xaxt='n',yaxt='n', xlab='',ylab='', ylim=ylim, col=colors[3], lwd=4)
-#legend('topright', lwd=lwd, legend=c('Total Load','Sed','Resp'), col=colors)
-abline(0,0,lty=lty, lwd=lwd)
+  plot(Toolik$Date,Toolik$Budget_left_gm2y,type = 'h',col = 'grey70',xlab = 'Date',ylab = 'OC (g/m2/yr)',ylim = c(-50,400),main='Toolik')
+  lines(Toolik$Date,Toolik$S_gm2y,type='h',col='black')
+  lines(Toolik$Date,Toolik$R_gm2y,type='h',col='gold')
+  abline(0,0,lty=2, lwd=2)
 
 # Trout
-plot(Budget_left_gm2y ~ Date, Trout, type='h', main='Trout', col=colors[1], ylim=ylim, ylab=ylab, cex.main=cex.main, cex.axis=cex.axis, cex.lab=cex.lab)
-par(new=T)
-plot(S_gm2y ~ Date, Trout, type='h', xaxt='n',yaxt='n', xlab='',ylab='', ylim=ylim, col=colors[2], lwd=4)
-par(new=T)
-plot(R_gm2y ~ Date, Trout, type='h', xaxt='n',yaxt='n', xlab='',ylab='', ylim=ylim, col=colors[3], lwd=4)
-#legend('topright', lwd=lwd, legend=c('Total Load','Sed','Resp'), col=colors)
-abline(0,0,lty=lty, lwd=lwd)
+  plot(Trout$Date,Trout$Budget_left_gm2y,type = 'h',col = 'grey70',xlab = 'Date',ylab = 'OC (g/m2/yr)',ylim = c(-50,400),main='Trout')
+  lines(Trout$Date,Trout$S_gm2y,type='h',col='black')
+  lines(Trout$Date,Trout$R_gm2y,type='h',col='gold')
+  abline(0,0,lty=2, lwd=2)
 
 # Vanern
-plot(Budget_left_gm2y ~ Date, Vanern, type='h', main='Vanern', col=colors[1], ylim=ylim, ylab=ylab, cex.main=cex.main, cex.axis=cex.axis, cex.lab=cex.lab)
-par(new=T)
-plot(S_gm2y ~ Date, Vanern, type='h', xaxt='n',yaxt='n', xlab='',ylab='', ylim=ylim, col=colors[2], lwd=4)
-abline(0,0,lty=lty, lwd=lwd)
-par(new=T)
-plot(R_gm2y ~ Date, Vanern, type='h', xaxt='n',yaxt='n', xlab='',ylab='', ylim=ylim, col=colors[3], lwd=4)
-#legend('topright', lwd=lwd, legend=c('Total Load','Sed','Resp'), col=colors)
+  plot(Vanern$Date,Vanern$Budget_left_gm2y,type = 'h',col = 'grey70',xlab = 'Date',ylab = 'OC (g/m2/yr)',ylim = c(-50,400),main='Vanern')
+  lines(Vanern$Date,Vanern$R_gm2y,type='h',col='gold')
+  lines(Vanern$Date,Vanern$S_gm2y,type='h',col='black')
+  abline(0,0,lty=2, lwd=2)
 dev.off()
 
 # compare export to difference between R and S to determine pipe or processor of OC

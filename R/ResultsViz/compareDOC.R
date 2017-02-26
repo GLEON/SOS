@@ -36,7 +36,7 @@ png(paste0('R/ResultsViz/Figures/compareDOC.png'),width = 7,height = 10,units = 
 dev.off()
 
 #### Compare DO observations vs. model ####
-doComp = function(lakename,timestamp = "%m/%d/%Y",ylim=NULL) {
+doComp = function(lakename,timestamp = "%Y-%m-%d",ylim=NULL) {
   #read in results csv files of DOC 
   #lakename = lake name
   DOpath = paste0(lakename,'Lake','/Results/',lakename,'_DO_Results.csv')
@@ -61,12 +61,12 @@ doComp = function(lakename,timestamp = "%m/%d/%Y",ylim=NULL) {
 }
  
 png(paste0('R/ResultsViz/Figures/compareDO.png'),width = 7,height = 10,units = 'in',res=300)
-par(mfrow=c(5,1))
-par(mar=c(1.5,3,2,1),mgp=c(1.5,0.5,0),tck=-0.03,cex=0.8)
-# run over the lakes
-Vanern = doComp('Vanern', ylim=c(-2,2))
-#Toolik = doComp('Toolik')
-Trout = doComp('Trout',timestamp = '%Y-%m-%d',ylim=c(-2,2))
-Monona = doComp('Monona',timestamp = '%Y-%m-%d',ylim=c(-2,2))
-Harp = doComp('Harp', ylim=c(-2,2))
+  par(mfrow=c(5,1))
+  par(mar=c(1.5,3,2,1),mgp=c(1.5,0.5,0),tck=-0.03,cex=0.8)
+  # run over the lakes
+  Vanern = doComp('Vanern', ylim=c(-2,2))
+  #Toolik = doComp('Toolik')
+  Trout = doComp('Trout',timestamp = '%Y-%m-%d',ylim=c(-2,2))
+  Monona = doComp('Monona',timestamp = '%Y-%m-%d',ylim=c(-2,2))
+  Harp = doComp('Harp', ylim=c(-2,2))
 dev.off()

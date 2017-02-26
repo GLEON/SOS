@@ -61,37 +61,37 @@ Harp = clean_shave('Harp')
 png(paste0('R/ResultsViz/Figures/beardplot.png'),width = 8,height = 4,units = 'in',res=300)
 par(mfrow=c(1,6))
 par(mar=c(2.5,2.5,2,1),mgp=c(1.5,0.5,0),tck=-0.03,cex=0.8)
-ylab = 'Respiration/Sedimentation'
-xlab = 'log(Alloch/Autoch)'
-xlim = c(-4,4)
-ylim = c(0,8)
+xlab = 'Respiration/Sedimentation'
+ylab = 'log(Alloch/Autoch)'
+ylim = c(-5,25)
+xlim = c(-2.5,2.5)
 pch = 19
 
 cols = rainbow(12)[month(Harp$Date)]
-plot(RS ~ logAA, Harp, xlab = '', ylab = ylab, main='Harp', pch=pch, col= cols,xlim=xlim,ylim=ylim)
+plot(logAA ~ logRS, Harp, xlab = '', ylab = ylab, main='Harp', pch=pch, col= cols,xlim=xlim,ylim=ylim)
 mtext(side=3, paste0('n=',nrow(Harp)), cex=0.5)
-abline(h=1,v=0,lty=2,col='red4',lwd=1.5)
+abline(h=1,v=1,lty=2,col='red4',lwd=1.5)
 #legend('topleft',legend = month.abb[1:12],ncol=1,fill=rainbow(12),bty='n')
 
 cols = rainbow(12)[month(Monona$Date)]
-plot(RS ~ logAA, Monona, xlab = '', ylab = '', main='Monona', pch=pch, col= cols,xlim=xlim,ylim=ylim)
+plot(logAA ~ logRS, Monona, xlab = '', ylab = '', main='Monona', pch=pch, col= cols,xlim=xlim,ylim=ylim)
 mtext(side=3, paste0('n=',nrow(Monona)), cex=0.5)
+abline(h=1,v=1,lty=2,col='red4',lwd=1.5)
+
+cols = rainbow(12)[month(Trout$Date)]
+plot(logAA ~ logRS, Trout, xlab = xlab, ylab = '', main='Trout', pch=pch, col= cols,xlim=xlim,ylim=ylim)
+mtext(side=3, paste0('n=',nrow(Trout)), cex=0.5)
+abline(h=1,v=1,lty=2,col='red4',lwd=1.5)
+
+cols = rainbow(12)[month(Vanern$Date)]
+plot(logAA ~ logRS, Vanern, xlab = '', ylab = '', main='Vanern', pch=pch, col=cols,xlim=xlim,ylim=ylim)
+mtext(side=3, paste0('n=',nrow(Vanern)), cex=0.5)
 abline(h=1,v=0,lty=2,col='red4',lwd=1.5)
 
 cols = rainbow(12)[month(Toolik$Date)]
-plot(RS ~ logAA, Toolik, xlab = xlab, ylab = '', main='Toolik', pch=19, col= cols,xlim=xlim,ylim=ylim)
+plot(logAA ~ logRS, Toolik, xlab = '', ylab = '', main='Toolik', pch=19, col= cols,xlim=xlim,ylim=ylim)
 mtext(side=3, paste0('n=',nrow(Toolik)), cex=0.5)
-abline(h=1,v=0,lty=2,col='red4',lwd=1.5)
-
-cols = rainbow(12)[month(Trout$Date)]
-plot(RS ~ logAA, Trout, xlab = '', ylab = '', main='Trout', pch=pch, col= cols,xlim=xlim,ylim=ylim)
-mtext(side=3, paste0('n=',nrow(Trout)), cex=0.5)
-abline(h=1,v=0,lty=2,col='red4',lwd=1.5)
-
-cols = rainbow(12)[month(Vanern$Date)]
-plot(RS ~ logAA, Vanern, xlab = '', ylab = '', main='Vanern', pch=pch, col=cols,xlim=xlim,ylim=ylim)
-mtext(side=3, paste0('n=',nrow(Vanern)), cex=0.5)
-abline(h=1,v=0,lty=2,col='red4',lwd=1.5)
+abline(h=1,v=1,lty=2,col='red4',lwd=1.5)
 
 # Plot legend
 plot.new()
