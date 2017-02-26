@@ -292,6 +292,14 @@ bootstrapDOC <- function(newObs,datetime,LakeName,timestampFormat = '%Y-%m-%d') 
                  lower= c(0,0,0.5,0,0,0,0),
                  upper= c(0.005,0.01,1,1,1,0.1,0.5))
   
+  Fit1 <- modFit(f = DOCdiff, p=c(DOCR_RespParam,DOCL_RespParam,R_auto,BurialFactor_R,BurialFactor_L,POC_lcR,POC_lcL),
+                 method = 'BFGS',
+                 ValidationDataDOC = pseudoDOC,
+                 control = list(maxit = 10),
+                 lower= c(0,0,0.5,0,0,0,0),
+                 upper= c(0.005,0.01,1,1,1,0.1,0.5))
+  
+  
   newPars = Fit2$par
   modeled = modelDOC(newPars[1],newPars[2],newPars[3],newPars[4],newPars[5],newPars[6],newPars[7])
   joinMod = inner_join(ValidationDataDOC,modeled,by='datetime')
