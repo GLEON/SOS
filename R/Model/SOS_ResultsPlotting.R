@@ -137,8 +137,8 @@ plot(DOC_df$Date,DOC_df$DOCtotal_conc_gm3+POC_df$POCtotal_conc_gm3,type='l',yaxt
 axis(side = 4)
 mtext('OC concentration (g/m3)',side = 4,line = 1.5,cex=0.8)
 
-legend('topleft',legend = c('Inflow','GPP','Flow Out','Sed','Respiration','DOC Conc'),
-       col = c('darkblue','cyan4','goldenrod','brown','grey50','black'),pch=c(15,15,15,15,15,NA),
+legend('topleft',legend = c('Inflow','GPP','Flow Out','Burial','Respiration','DOC Conc'),
+       col = c('darkblue','cyan4','green4','brown','grey50','black'),pch=c(15,15,15,15,15,NA),
        lty=c(0,0,0,0,0,1),lwd=2,ncol=2,cex=1,pt.cex=2,seg.len=1,
        inset=0.01)
 dev.off()
