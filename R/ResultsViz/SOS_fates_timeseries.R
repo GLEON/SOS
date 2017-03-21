@@ -92,14 +92,14 @@ cex.main = 2
 cex.axis = 2
 cex.lab = 2
 
-png(paste0('R/ResultsViz/Figures/SOSfates2.png'),width = 11,height = 9,units = 'in',res=300)
+png(paste0('R/ResultsViz/Figures/SOSfates.png'),width = 11,height = 9,units = 'in',res=300)
 par(mar=c(3,3,3,1),mgp=c(1.5,0.4,0),mfrow=c(3,2),tck=-0.02,cex=1.2) 
 
   # Harp
   plot(Harp$Date,Harp$Budget_left_gm2y,type = 'h',col = 'grey70',xlab = 'Date',ylab = 'OC (g/m2/yr)',ylim = c(-50,400),main='Harp')
   lines(Harp$Date,Harp$R_gm2y,type='h',col='gold')
   lines(Harp$Date,Harp$S_gm2y,type='h',col='black')
-  legend('topright',legend=c('Total Load','Sed','Resp'), col=c('grey70','black','gold'),lwd=2)
+  legend('topright',legend=c('Total Load','Burial','Respiration'), col=c('grey70','black','gold'),lwd=2)
   abline(0,0,lty=2, lwd=2)
 
 # Monona
