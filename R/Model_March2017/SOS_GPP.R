@@ -55,12 +55,6 @@ GPP <- function(CHL,P,PhoticDepth,WT,JulianDay) {
   #M Authors converted chl-a mass per volume to areal values by integrating 
   #M over photic zone depth defined in original papers 
   #M GPP output in g m-2 d-1
-  
-  # Morin, A., W. Lamoureux, and J. Busnarda. 1999. Empirical
-  # models predicting primary productivity from chlorophyll
-  # a and water temperature for stream periphyton and lake
-  # and ocean phytoplankton. J. North Am. Benthol. Soc. 18:
-  #   299-307. doi:10.2307/1468446
 
   if (WT>=4) {
     GPP_rate <- 10^(b0+(b1*log10(CHL))+(b2*WT)) #mg C/m2/d
