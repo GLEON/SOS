@@ -1,8 +1,6 @@
-setwd('~/Rpackages/SOS/R/FMEresults/')
 library(dplyr)
 
-
-png('plotCollinearity.png',width = 8,height = 8,units = 'in',res = 300)
+png('R/FMEresults/plotCollinearity.png',width = 8,height = 8,units = 'in',res = 300)
 par(mfrow=c(2,2))
   plotCollinearity('Trout')
   plotCollinearity('Vanern')
@@ -12,7 +10,7 @@ dev.off()
 
 plotCollinearity <- function(lakeName) {
 
-  col = read.csv(paste0(lakeName,'_collinearity.csv'),stringsAsFactors = F)
+  col = read.csv(paste0('R/FMEresults/',lakeName,'_collinearity.csv'),stringsAsFactors = F)
   col <- col %>% filter(N == 2)
   m = matrix(data = NA, ncol=4,nrow=4)
   colnames(m) = names(col[,1:4])
