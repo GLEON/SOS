@@ -132,13 +132,14 @@ lines(DOC_df$Date,ocOutflow + ocSed + ocResp ,type='h',col='green4') # Flow
 lines(DOC_df$Date,ocSed + ocResp ,type='h',col='brown') # Sedimentation
 lines(DOC_df$Date,ocResp ,type='h',col='grey50') # Respiration
 
-par(new=T) # Plot OC concentration on separate yaxis 
-plot(DOC_df$Date,DOC_df$DOCtotal_conc_gm3+POC_df$POCtotal_conc_gm3,type='l',yaxt='n',ylab='',xlab='',lwd=1.5)
-axis(side = 4)
-mtext('OC concentration (g/m3)',side = 4,line = 1.5,cex=0.8)
+#par(new=T) # Plot OC concentration on separate yaxis 
+#plot(DOC_df$Date,DOC_df$DOCtotal_conc_gm3+POC_df$POCtotal_conc_gm3,type='l',yaxt='n',ylab='',xlab='',lwd=1.5)
+#axis(side = 4)
+#mtext('OC concentration (g/m3)',side = 4,line = 1.5,cex=0.8)
 
-legend('topleft',legend = c('Inflow','GPP','Flow Out','Burial','Respiration','DOC Conc'),
-       col = c('darkblue','cyan4','green4','brown','grey50','black'),pch=c(15,15,15,15,15,NA),
+legend('topleft',legend = c('Inflow','Autoch','Outflow','Burial','Respiration'),#,'DOC Conc'),
+       col = c('darkblue','cyan4','green4','brown','grey50'),#,'black'),
+       pch=c(15,15,15,15,15,NA),
        lty=c(0,0,0,0,0,1),lwd=2,ncol=2,cex=1,pt.cex=2,seg.len=1,
        inset=0.01)
 dev.off()
