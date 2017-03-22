@@ -408,9 +408,9 @@ POC_df$POCalloch_g <- SWGWData$POCR_massIn_g
 POC_df$POCautoch_g <- PPdata$NPP_POCL_mass
 POC_df$POCout_g = SWGWData$POCR_outflow + SWGWData$POCL_outflow + SedData$POC_burial_total + LeachData$POCR_leachOut + LeachData$POCL_leachOut
 
-DOC_df$DOCload_g <- PPdata$NPP_DOCL_mass + SWGWData$DOCR_massIn_g + LeachData$DOCR_leachIn + LeachData$DOCL_leachIn #g
-DOC_df$DOCalloch_g <- SWGWData$DOCR_massIn_g + LeachData$DOCR_leachIn
-DOC_df$DOCautoch_g <- PPdata$NPP_DOCL_mass + LeachData$DOCL_leachIn
+DOC_df$DOCload_g <- PPdata$NPP_DOCL_mass + SWGWData$DOCR_massIn_g #+ LeachData$DOCR_leachIn + LeachData$DOCL_leachIn #g
+DOC_df$DOCalloch_g <- SWGWData$DOCR_massIn_g #+ LeachData$DOCR_leachIn
+DOC_df$DOCautoch_g <- PPdata$NPP_DOCL_mass #+ LeachData$DOCL_leachIn
 DOC_df$DOCout_g <- SWGWData$DOCR_outflow + SWGWData$DOCL_outflow + PPdata$DOCR_massRespired + PPdata$DOCL_massRespired #g
 
 #OC mass sourced/sank at each time step
