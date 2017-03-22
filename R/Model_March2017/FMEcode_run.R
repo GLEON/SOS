@@ -87,19 +87,19 @@ DOC_DO_diff <- function(pars){
   return(c(resDOC,resDO/lengthScale))
 }
 
-# PLOTTING and GOF
-par(mfrow=c(2,1),mar=c(3,3,1,1),mgp=c(1.5,0.5,0))
-plot(joinDOC$datetime,joinDOC$DOC,type='o',xlab='',ylab='DOC')
-lines(joinDOC$datetime,joinDOC$DOCwc,type='o',col='grey50')
-lines(joinDOC$datetime,joinDOC$DOC_conc,type='o',col='red3')
+# # PLOTTING and GOF
+# par(mfrow=c(2,1),mar=c(3,3,1,1),mgp=c(1.5,0.5,0))
+# plot(joinDOC$datetime,joinDOC$DOC,type='o',xlab='',ylab='DOC')
+# lines(joinDOC$datetime,joinDOC$DOCwc,type='o',col='grey50')
+# lines(joinDOC$datetime,joinDOC$DOC_conc,type='o',col='red3')
+# 
+# plot(joinDO$datetime,joinDO$DO_con,type='o',xlab='',ylab='DO')
+# lines(joinDO$datetime,joinDO$DOC_conc,type='o',col='red3')
 
-plot(joinDO$datetime,joinDO$DO_con,type='o',xlab='',ylab='DO')
-lines(joinDO$datetime,joinDO$DOC_conc,type='o',col='red3')
-
-#Goodness of fit
-library(hydroGOF)
-rmse(c(joinDOC$DOC,joinDO$DO_con), c(joinDOC$DOC_conc,joinDO$MetabOxygen.oxy_conc)) #Harp 0.43 Trout 0.427 Monona 0.62 Vanern 0.32
-NSE(c(joinDOC$DOC,joinDO$DO_con), c(joinDOC$DOC_conc,joinDO$MetabOxygen.oxy_conc)) #Harp 0.09 Trtou -0.015 Monona 0.279 Vanern -0.03
+# #Goodness of fit
+# library(hydroGOF)
+# rmse(c(joinDOC$DOC,joinDO$DO_con), c(joinDOC$DOC_conc,joinDO$MetabOxygen.oxy_conc)) #Harp 0.43 Trout 0.427 Monona 0.62 Vanern 0.32
+# NSE(c(joinDOC$DOC,joinDO$DO_con), c(joinDOC$DOC_conc,joinDO$MetabOxygen.oxy_conc)) #Harp 0.09 Trtou -0.015 Monona 0.279 Vanern -0.03
 
 # Starting parameters cannot be negative, because of bounds we set 
 parStart = pars
@@ -109,9 +109,9 @@ parStart[(parStart - lowerBound) < 0] = lowerBound[(parStart - lowerBound) < 0]
 parStart[(upperBound - parStart) < 0] = upperBound[(upperBound - parStart) < 0]
 names(parStart) = c('DOCR_RespParam','DOCL_RespParam','BurialFactor_R','BurialFactor_L')
 
-Fit <- modFit(f = DOC_DO_diff, p=parStart,method = 'BFGS',
-               lower= lowerBound,
-               upper= upperBound)
+# Fit <- modFit(f = DOC_DO_diff, p=parStart,method = 'BFGS',
+#                lower= lowerBound,
+#                upper= upperBound)
 
 # For difficult problems it may be efficient to perform some iterations with Pseudo, which will bring the algorithm 
 # near the vicinity of a (the) minimum, after which the default algorithm (Marq) is used to locate the minimum more precisely.
@@ -158,16 +158,16 @@ summary(Fit3)
 Fit2$par
 Fit3$par
 # Save Fit data
-save(Fit3,file=paste0('R/FMEresults/',LakeName,'_fitresults.RData'))
-write.csv(Fit3$par,paste0('R/FMEresults/',LakeName,'_fitpars.csv'),row.names = F)
+save(Fit2,file=paste0('R/FMEresults/',LakeName,'_fitresults.RData'))
+write.csv(Fit2$par,paste0('R/FMEresults/',LakeName,'_fitpars.csv'),row.names = F)
 
 # New parameters
-newPars = Fit3$par
-names(newPars) = c('DOCR_RespParam','DOCL_RespParam','R_auto','BurialFactor_R','BurialFactor_L','POC_lcR','POC_lcL')
+newPars = Fit2$par
+names(newPars) = c('DOCR_RespParam','DOCL_RespParam','BurialFactor_R','BurialFactor_L')
 covar <- solve(0.5 * Fit2$hessian)
 
 # Sensitivity of parameters
-sF <- sensFun(DOCdiff,parms = newPars,tiny = 1e-2)
+sF <- sensFun(DOC_DO_diff,parms = newPars,tiny = 1e-2)
 plot(sF)
 summary(sF)
 plot(summary(sF))
