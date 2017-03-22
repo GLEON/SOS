@@ -336,19 +336,20 @@ for (i in 1:(steps)) {
   #LOAD DOC (g/d) = DOC_Wetland + DOC_GW + DOC_SW +DOC_Precip # g/d DOC
   #LOAD POC (g/d) = POC_Aerial + POC_SW # g/d POC roughly estimated as (0.1 * DOC)
   
-  #Calc outflow subtractions (assuming outflow concentrations = mixed lake concentrations)
-  SWGWData$POCR_outflow[i] <- POC_df$POCR_conc_gm3[i]*Q_out*60*60*24*TimeStep #g
-  SWGWData$POCL_outflow[i] <- POC_df$POCL_conc_gm3[i]*Q_out*60*60*24*TimeStep #g
-  SWGWData$DOCR_outflow[i] <- DOC_df$DOCR_conc_gm3[i]*Q_out*60*60*24*TimeStep #g
-  SWGWData$DOCL_outflow[i] <- DOC_df$DOCL_conc_gm3[i]*Q_out*60*60*24*TimeStep #g
   #Calculate load from SWGW_in
   SWGWData$DOCR_massIn_g[i] <- SWGWData$Load_DOCR[i]*TimeStep #g
   SWGWData$POCR_massIn_g[i] <- SWGWData$Load_POCR[i]*TimeStep #g
   
-  #POC mass in 
-  POCR_mass <- SWGWData$Load_POCR[i] * (1-(Q_out*3600*24)/LakeVolume) #g/day
-  POCL_mass <- PPdata$NPP_POCL_mass[i] * (1-(Q_out*3600*24)/LakeVolume) #g/day
+  #Calc outflow subtractions (assuming outflow concentrations = mixed lake concentrations)
+  SWGWData$POCR_outflow[i] <- SWGWData$Load_POCR[i]*(Q_out*60*60*24/LakeVolume)*TimeStep #g
+  SWGWData$POCL_outflow[i] <- PPdata$NPP_POCL_mass[i]*(Q_out*60*60*24/LakeVolume)*TimeStep #g
+  SWGWData$DOCR_outflow[i] <- DOC_df$DOCR_conc_gm3[i]*Q_out*60*60*24*TimeStep #g
+  SWGWData$DOCL_outflow[i] <- DOC_df$DOCL_conc_gm3[i]*Q_out*60*60*24*TimeStep #g
   
+  #POC mass left after outflow
+  POCR_mass <- SWGWData$Load_POCR[i] - (SWGWData$Load_POCR[i]*(Q_out*60*60*24/LakeVolume)) #g/day
+  POCL_mass <- PPdata$NPP_POCL_mass[i] - (PPdata$NPP_POCL_mass[i]*(Q_out*60*60*24/LakeVolume)) #g/day
+
   #Call Sedimentation Function
   SedOutput_R <- SedimentationFunction(BurialFactor_R,TimeStep,POCR_mass,LakeArea)
   SedOutput_L <- SedimentationFunction(BurialFactor_L,TimeStep,POCL_mass,LakeArea)
