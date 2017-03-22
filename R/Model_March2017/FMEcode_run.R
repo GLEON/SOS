@@ -121,9 +121,10 @@ Fit2 <- modFit(f = DOC_DO_diff, p=parStart,method = 'Pseudo',
 
 Fit2par = Fit2$par
 
-Fit3 <- modFit(f = DOC_DO_diff, p=Fit2par,
-               lower= lowerBound,
-               upper= upperBound)
+# Constrain burial factors == 1
+Fit3 <- modFit(f = DOC_DO_diff, p=c(Fit2par[1:2],1,1),method = 'Pseudo',
+               lower= c(0,0,1,1),
+               upper= c(0.005,0.1,1,1))
 
 #Test Fits
 fitTest <- function(pars){
