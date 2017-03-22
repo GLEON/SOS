@@ -1,5 +1,5 @@
 setwd("~/Documents/SOS")
-LakeName = 'Monona'
+LakeName = 'Trout'
 
 ##### LOAD PACKAGES ########################
 library(lubridate)
@@ -58,11 +58,11 @@ ValidationDataDO$Flux <- k*(ValidationDataDO$DO_con - ValidationDataDO$DO_sat)/(
 
 
 ##### LOAD FUNCTIONS #######################
-source("./R/Model/SOS_Sedimentation.R")
-source("./R/Model/SOS_SWGW.R")
-source("./R/Model/SOS_GPP.R")
-source("./R/Model/SOS_Resp.R")
-source("./R/Model/modelDOC_7.R")
+source("./R/Model_March2017/SOS_Sedimentation.R")
+source("./R/Model_March2017/SOS_SWGW.R")
+source("./R/Model_March2017/SOS_GPP.R")
+source("./R/Model_March2017/SOS_Resp.R")
+source("./R/Model_March2017/modelDOC_7.R")
 
 ##### READ PARAMETER FILE ##################
 parameters <- read.table(file = ParameterFile,header=TRUE,comment.char="#",stringsAsFactors = F)

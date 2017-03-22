@@ -1,8 +1,8 @@
 setwd('C:/Users/hdugan/Documents/Rpackages/SOS/')
-setwd("~/Documents/Rpackages/SOS")
+# setwd("~/Documents/Rpackages/SOS")
 #CarbonFluxModel <- function(LakeName,PlotFlag,ValidationFlag){
 #Flags 1 for yes, else no.
-LakeName = 'Monona'
+LakeName = 'Trout'
 OptimizationFlag = 0
 updateParameters = 0
 PlotFlag = 1
@@ -302,8 +302,6 @@ if (updateParameters == 1){
 # ####################### MAIN PROGRAM #############################################
 
 for (i in 1:(steps)) {
-  if (R_auto > 1){R_auto = 1}
-  
   Q_sw <- InputData$FlowIn[i] #m3/s surface water flowrate at i
   Q_gw <- Q_sw/(1-PropGW) - Q_sw #m3/s; as a function of proportion of inflow that is GW
   Q_out <- InputData$FlowOut[i] #m3/s: total outflow. Assume steady state pending dynamic output
@@ -315,8 +313,8 @@ for (i in 1:(steps)) {
   GPPrates <- GPP(InputData$Chla[i],InputData$TP[i],PhoticDepth,InputData$EpiTemp[i],yday(InputData$datetime[i])) #mg C/m^2/d
   PPdata$GPP_DOCL_rate[i] = GPPrates$GPP_DOC_rate #mg C/m2/d
   PPdata$GPP_POCL_rate[i] = GPPrates$GPP_POC_rate #mg C/m2/d #All NPP in POC
-  PPdata$NPP_DOCL_mass[i] <- PPdata$GPP_DOCL_rate[i]*(1-R_auto)*LakeArea*TimeStep/1000 #g
-  PPdata$NPP_POCL_mass[i] <- PPdata$GPP_POCL_rate[i]*(1-R_auto)*LakeArea*TimeStep/1000 #g
+  PPdata$NPP_DOCL_mass[i] <- PPdata$GPP_DOCL_rate[i]*LakeArea*TimeStep/1000 #g
+  PPdata$NPP_POCL_mass[i] <- PPdata$GPP_POCL_rate[i]*LakeArea*TimeStep/1000 #g
   
   #Call heterotrophic respiration function for recalitrant DOC pool (DOCR) and labile DOC pool (DOCL)
   DOCR_resp_rate <- Resp(DOC_df$DOCR_conc_gm3[i],InputData$EpiTemp[i],DOCR_RespParam) #g C/m3/d
@@ -358,7 +356,6 @@ for (i in 1:(steps)) {
   SedData[i,5:7] = SedOutput_L
   SedData[i,8:9] = (SedOutput_L + SedOutput_R) [2:3]
   
-
   #Calc POC-to-DOC leaching
   LeachData$POCR_leachOut[i] <- POCR_mass*(1-BurialFactor_R)*TimeStep #g - POC concentration times leaching parameter
   LeachData$DOCR_leachIn[i] <- LeachData$POCR_leachOut[i]
@@ -484,7 +481,7 @@ if (ValidationFlag==1){
   
   #Plot Calibration DO
   plot(CalibrationOutputDO$datetime,CalibrationOutputDO$Conc_Measured,type='o',pch=19,cex=0.7,ylab = 'DO Flux',xlab='',
-       ylim = c(min(CalibrationOutputDO[,2],na.rm = T)-10,max(CalibrationOutputDO[,2],na.rm = T)+10))
+       ylim = c(min(CalibrationOutputDO[,2:3],na.rm = T),max(CalibrationOutputDO[,2:3],na.rm = T)))
   lines(CalibrationOutputDO$datetime,CalibrationOutputDO$Conc_Modelled,col='darkgreen',lwd=2)
   lines(CalibrationOutputDO$datetime,CalibrationOutputDO$Sat_Conc,col='grey50')
     abline(v = as.Date(paste0(unique(year(DOC_df$Date)),'-01-01')),lty=2,col='grey50') #lines at Jan 1
@@ -546,7 +543,6 @@ if (BootstrapFlag==1){
   } # Loop instead?
 }
 
-
 ################## Write results files ##################
 if (WriteFiles==1){
   DOC_results_filename = paste('./',LakeName,'Lake/','Results/',LakeName,'_DOC_Results.csv',sep='')
@@ -564,6 +560,5 @@ if (WriteFiles==1){
   
   Metabolism$Oxygen_Area = Metabolism$Oxygen * PhoticDepth$PhoticDepth
   write.csv(Metabolism,file = DO_results_filename,row.names = F,quote = F)
-  
 }
 
