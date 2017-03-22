@@ -177,17 +177,16 @@ write.csv(collin(sF),paste0('R/FMEresults/',LakeName,'_collinearity.csv'),row.na
 ##------------------------------------------------------------------------------
 ##   Sensitivity range
 ##------------------------------------------------------------------------------
-lower= c(0,0,0.5,0,0,0,0)
-upper= c(0.005,0.01,1,1,1,0.1,0.5)
-pRange <- data.frame(min = lower, max = upper)
-rownames(pRange) = c('DOCR_RespParam','DOCL_RespParam','R_auto','BurialFactor_R','BurialFactor_L','POC_lcR','POC_lcL')
+
+pRange <- data.frame(min = lowerBound, max = upperBound)
+rownames(pRange) = c('DOCR_RespParam','DOCL_RespParam','BurialFactor_R','BurialFactor_L')
 ## 2. Calculate sensitivity: model is solved 10 times, uniform parameter distribution (default)
 DOCsens <- function(p){
   pars = newPars
-  names(pars) = c('DOCR_RespParam','DOCL_RespParam','R_auto','BurialFactor_R','BurialFactor_L','POC_lcR','POC_lcL')
+  names(pars) = c('DOCR_RespParam','DOCL_RespParam','BurialFactor_R','BurialFactor_L')
   pars[names(pars) %in% names(p)] = p
   # DOC model 
-  modeled = modelDOC(pars[1],pars[2],pars[3],pars[4],pars[5],pars[6],pars[7])
+  modeled = modelDOC(pars[1],pars[2],pars[3],pars[4])
   
   joinMod = inner_join(ValidationDataDOC,modeled,by='datetime')
   joinMod2 <- joinMod %>% select(datetime,DOC,DOC_conc)
@@ -196,7 +195,7 @@ DOCsens <- function(p){
 
 startPars = newPars
 Sens <- list()
-for (i in 1:7){
+for (i in 1:4){
   print(i)
   
   Sens[[i]] <- sensRange(parms=startPars[i], func=DOCsens, 
