@@ -30,7 +30,7 @@ plotCollinearity <- function(lakeName) {
   
   text(x = c(1:4,1:4,1:4,1:4,1:4,1:4,1:4),
        y =c(rep(1,4),rep(2,4),rep(3,4),rep(4,4),rep(5,4),rep(6,4),rep(7,4)),
-       labels=round(as.vector(m),), cex= 0.7)
+       labels=round(as.vector(m),3), cex= 0.7)
 }
 
 

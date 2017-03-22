@@ -141,8 +141,8 @@ fitTest <- function(pars){
     lines(joinDOC$datetime,joinDOC$DOC_conc,type='o',col='red3',pch=16)
     legend('bottomleft',legend = c('ObsSurf','ObsWC','Mod'),col=c('black','grey50','red3'),pch=16)
     
-    plot(joinDO$datetime,joinDO$DO_con,xlab='Date',ylab = 'DO (mg/L)',pch=16,main=LakeName)
-    lines(joinDO$datetime,joinDO$MetabOxygen.oxy_conc,col='red3',pch=16)
+    plot(joinDO$datetime,joinDO$DO_con,xlab='Date',type='o',ylab = 'DO (mg/L)',pch=16,main=LakeName)
+    lines(joinDO$datetime,joinDO$MetabOxygen.oxy_conc,type='o',col='red3',pch=16)
     
   dev.off()
   #Goodness of fit
