@@ -128,20 +128,26 @@ Fit3 <- modFit(f = DOC_DO_diff, p=Fit2par,
 #Test Fits
 fitTest <- function(pars){
   # DOC model 
-  modeled = modelDOC(pars[1],pars[2],pars[3],pars[4],pars[5],pars[6],pars[7])
-  joinMod = inner_join(ValidationDataDOC,modeled,by='datetime')
+  modeled = modelDOC(pars[1],pars[2],pars[3],pars[4])
+  joinDOC = inner_join(ValidationDataDOC,modeled,by='datetime')
+  joinDO = inner_join(ValidationDataDO,modeled,by='datetime')
+
   # PLOTTING and GOF
-  png(paste0('R/FMEresults/',LakeName,'FMEfit.png'),width = 6,height = 4,units = 'in',res = 300)
-  par(mar=c(3,3,3,1),mgp=c(1.5,0.5,0))
-    plot(joinMod$datetime,joinMod$DOC,type='o',ylab='Date',xlab = 'DOC (mg/L)',pch=16,main=LakeName)
-    lines(joinMod$datetime,joinMod$DOCwc,type='o',col='grey50',pch=16)
-    lines(joinMod$datetime,joinMod$DOC_conc,type='o',col='red3',pch=16)
+  png(paste0('R/FMEresults/',LakeName,'FMEfit.png'),width = 6,height = 8,units = 'in',res = 300)
+  par(mar=c(3,3,3,1),mgp=c(1.5,0.5,0),mfrow=c(2,1),cex=0.8)
+    plot(joinDOC$datetime,joinDOC$DOC,type='o',xlab='Date',ylab = 'DOC (mg/L)',pch=16,main=LakeName)
+    lines(joinDOC$datetime,joinDOC$DOCwc,type='o',col='grey50',pch=16)
+    lines(joinDOC$datetime,joinDOC$DOC_conc,type='o',col='red3',pch=16)
     legend('bottomleft',legend = c('ObsSurf','ObsWC','Mod'),col=c('black','grey50','red3'),pch=16)
+    
+    plot(joinDO$datetime,joinDO$DO_con,xlab='Date',ylab = 'DO (mg/L)',pch=16,main=LakeName)
+    lines(joinDO$datetime,joinDO$MetabOxygen.oxy_conc,col='red3',pch=16)
+    
   dev.off()
   #Goodness of fit
   library(hydroGOF)
-  print(paste('RMSE = ',rmse(joinMod$DOC_conc, joinMod$DOC))) #Harp 0.43 Trout 0.427 Monona 0.62 Vanern 0.32
-  print(paste('NSE = ',NSE(joinMod$DOC_conc, joinMod$DOC))) #Harp 0.09 Trtou -0.015 Monona 0.279 Vanern -0.03
+  print(paste('RMSE = ',rmse(c(joinDOC$DOC,joinDO$DO_con), c(joinDOC$DOC_conc,joinDO$MetabOxygen.oxy_conc))))
+  print(paste('NSE = ',NSE(c(joinDOC$DOC,joinDO$DO_con), c(joinDOC$DOC_conc,joinDO$MetabOxygen.oxy_conc))))
 }
 
 fitTest(Fit2$par)
