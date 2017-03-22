@@ -22,6 +22,9 @@ flux_plot = function(LakeName, ylim1, ylim2, legend){
   DOC_df <- read.csv(DOC_results_filename)
   POC_df <- read.csv(POC_results_filename)
   
+  mean(DOC_df$DOCalloch_g) + mean(POC_df$POCalloch_g)
+  mean(DOC_df$DOCautoch_g) + mean(POC_df$POCautoch_g)
+  
   ### aggregate daily to monthly
   DOC_df$Date = as.Date(DOC_df$Date)
   POC_df$Date = as.Date(POC_df$Date)
@@ -110,16 +113,22 @@ flux_plot = function(LakeName, ylim1, ylim2, legend){
 #### run function over lakes ####
 png(paste0('R/ResultsViz/Figures/OCfates_allLakes.png'),width = 11,height = 9,units = 'in',res=300)
 par(mfrow=c(3,2))
-#par(mar=c(3,3,3,1),mgp=c(1.5,0.4,0),mfrow=c(3,2),tck=-0.02,cex=1.2) 
-ylim1= -400
-ylim2= 400
+    #par(mar=c(3,3,3,1),mgp=c(1.5,0.4,0),mfrow=c(3,2),tck=-0.02,cex=1.2) 
+  ylim1= -400
+  ylim2= 400
+  
+  flux_plot('Monona',ylim1=ylim1,ylim2=ylim2,legend=1)
+  flux_plot('Trout',ylim1=ylim1,ylim2=ylim2,legend=0)
+  flux_plot('Toolik',ylim1=ylim1,ylim2=ylim2,legend=0)
+  flux_plot('Vanern',ylim1=ylim1,ylim2=ylim2,legend=0)
+  flux_plot('Harp',ylim1=ylim1,ylim2=ylim2,legend=0)
+dev.off()
 
-flux_plot('Monona',ylim1=ylim1,ylim2=ylim2,legend=1)
-flux_plot('Trout',ylim1=ylim1,ylim2=ylim2,legend=0)
-flux_plot('Toolik',ylim1=ylim1,ylim2=ylim2,legend=0)
-flux_plot('Vanern',ylim1=ylim1,ylim2=ylim2,legend=0)
-flux_plot('Harp',ylim1=ylim1,ylim2=ylim2,legend=0)
-
+png(paste0('R/ResultsViz/Figures/OCfates_',LakeName,'.png'),width = 11,height = 9,units = 'in',res=300)
+  par(mar=c(3,3,3,1),mgp=c(1.5,0.4,0),mfrow=c(1,1),tck=-0.02,cex=1.2) 
+  ylim1= -400
+  ylim2= 400
+  flux_plot(LakeName,ylim1=ylim1,ylim2=ylim2,legend=1)
 dev.off()
 
 # #Read in results data from SOS Carbon Flux Model
