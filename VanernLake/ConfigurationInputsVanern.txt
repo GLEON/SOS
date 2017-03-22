@@ -17,10 +17,8 @@ ObservedMAR_oc 186 g/m2/yr
 ProdStartDay 100 JulianDay
 ProdEndDay 300 JulianDay
 
-DOCR_RespParam 0.00255190469253197 unitless
-DOCL_RespParam 0.000654155444196609 unitless
-R_auto 0.916531191371075 unitless
-BurialFactor_R 1 1/days
-BurialFactor_L 0.00123338410112461 1/day
-POC_lcR 6.5445274172281e-05 1/days
-POC_lcL 0.431200987528494 1/days
+#Fit Parameters
+DOCR_RespParam 0.0012299687291234 unitless
+DOCL_RespParam 0.0891577643672559 unitless
+BurialFactor_R 0.999166508564389 1/days
+BurialFactor_L 1 1/day
