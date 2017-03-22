@@ -1,5 +1,5 @@
 setwd("~/Documents/SOS")
-LakeName = 'Trout'
+LakeName = 'Toolik'
 
 ##### LOAD PACKAGES ########################
 library(lubridate)
@@ -122,9 +122,15 @@ Fit2 <- modFit(f = DOC_DO_diff, p=parStart,method = 'Pseudo',
 Fit2par = Fit2$par
 
 # Constrain burial factors == 1
-Fit3 <- modFit(f = DOC_DO_diff, p=c(Fit2par[1:2],1,1),method = 'Pseudo',
+Fit3 <- modFit(f = DOC_DO_diff, p=c(pars[1:2],1,1),method = 'Pseudo',
                lower= c(0,0,1,1),
                upper= c(0.005,0.1,1,1))
+
+# Constrain burial factors == 0
+Fit4 <- modFit(f = DOC_DO_diff, p=c(pars[1:2],0,0),method = 'Pseudo',
+               lower= c(0,0,0,0),
+               upper= c(0.005,0.1,0,0))
+
 
 #Test Fits
 fitTest <- function(pars){
@@ -134,7 +140,7 @@ fitTest <- function(pars){
   joinDO = inner_join(ValidationDataDO,modeled,by='datetime')
 
   # PLOTTING and GOF
-  png(paste0('R/FMEresults/',LakeName,'FMEfit.png'),width = 6,height = 8,units = 'in',res = 300)
+  # png(paste0('R/FMEresults/',LakeName,'FMEfit.png'),width = 6,height = 8,units = 'in',res = 300)
   par(mar=c(3,3,3,1),mgp=c(1.5,0.5,0),mfrow=c(2,1),cex=0.8)
     plot(joinDOC$datetime,joinDOC$DOC,type='o',xlab='Date',ylab = 'DOC (mg/L)',pch=16,main=LakeName)
     lines(joinDOC$datetime,joinDOC$DOCwc,type='o',col='grey50',pch=16)
@@ -144,13 +150,14 @@ fitTest <- function(pars){
     plot(joinDO$datetime,joinDO$DO_con,xlab='Date',type='o',ylab = 'DO (mg/L)',pch=16,main=LakeName)
     lines(joinDO$datetime,joinDO$MetabOxygen.oxy_conc,type='o',col='red3',pch=16)
     
-  dev.off()
+  # dev.off()
   #Goodness of fit
   library(hydroGOF)
   print(paste('RMSE = ',rmse(c(joinDOC$DOC,joinDO$DO_con), c(joinDOC$DOC_conc,joinDO$MetabOxygen.oxy_conc))))
   print(paste('NSE = ',NSE(c(joinDOC$DOC,joinDO$DO_con), c(joinDOC$DOC_conc,joinDO$MetabOxygen.oxy_conc))))
 }
 
+fitTest(pars)
 fitTest(Fit2$par)
 fitTest(Fit3$par)
 
