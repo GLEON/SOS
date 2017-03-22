@@ -217,9 +217,13 @@ SOS_fate = function(LakeName, monthlyFlag){
   
   S<-POC_df$sedOut_gm2y
   
-  fOut<-(POC_df$leachOut_gm2y + POC_df$FlowOut_gm2y+ DOC_df$FlowOut_gm2y)
+  #fOut<-(POC_df$leachOut_gm2y + POC_df$FlowOut_gm2y+ DOC_df$FlowOut_gm2y)
+  fOut<-(POC_df$FlowOut_gm2y+ DOC_df$FlowOut_gm2y)
   
-  alloch<-DOC_df$FlowIn_gm2y+DOC_df$leachIn_gm2y+POC_df$FlowIn_gm2y
+  #alloch<-DOC_df$FlowIn_gm2y+DOC_df$leachIn_gm2y+POC_df$FlowIn_gm2y
+  #autoch<-POC_df$NPPin_gm2y+DOC_df$NPPin_gm2y
+  
+  alloch<-DOC_df$FlowIn_gm2y+POC_df$FlowIn_gm2y
   autoch<-POC_df$NPPin_gm2y+DOC_df$NPPin_gm2y
   
   # From Paul Hanson, Jedi master, 1-6-17

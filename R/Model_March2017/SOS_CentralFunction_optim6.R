@@ -2,7 +2,7 @@ setwd('C:/Users/hdugan/Documents/Rpackages/SOS/')
 # setwd("~/Documents/Rpackages/SOS")
 #CarbonFluxModel <- function(LakeName,PlotFlag,ValidationFlag){
 #Flags 1 for yes, else no.
-LakeName = 'Harp'
+LakeName = 'Vanern'
 OptimizationFlag = 0
 updateParameters = 0
 PlotFlag = 1
@@ -409,8 +409,8 @@ POC_df$POCautoch_g <- PPdata$NPP_POCL_mass
 POC_df$POCout_g = SWGWData$POCR_outflow + SWGWData$POCL_outflow + SedData$POC_burial_total + LeachData$POCR_leachOut + LeachData$POCL_leachOut
 
 DOC_df$DOCload_g <- PPdata$NPP_DOCL_mass + SWGWData$DOCR_massIn_g + LeachData$DOCR_leachIn + LeachData$DOCL_leachIn #g
-DOC_df$DOCalloch_g <- SWGWData$DOCR_massIn_g + LeachData$DOCR_leachIn
-DOC_df$DOCautoch_g <- PPdata$NPP_DOCL_mass + LeachData$DOCL_leachIn
+DOC_df$DOCalloch_g <- SWGWData$DOCR_massIn_g
+DOC_df$DOCautoch_g <- LeachData$POCL_leachOut
 DOC_df$DOCout_g <- SWGWData$DOCR_outflow + SWGWData$DOCL_outflow + PPdata$DOCR_massRespired + PPdata$DOCL_massRespired #g
 
 #OC mass sourced/sank at each time step
@@ -490,7 +490,8 @@ if (PlotFlag==1){
 ################## Calc goodness of fit #################
 
 RMSE_DOC <- sqrt((1/length(CalibrationOutputDOC[,1]))*sum((CalibrationOutputDOC$Measured-CalibrationOutputDOC$Modelled)^2)) #mg^2/L^2
-RMSE_DO <- sqrt((1/length(CalibrationOutputDO[,1]))*sum((CalibrationOutputDO$Conc_Measured - CalibrationOutputDO$Conc_Modelled)^2)) #mg^2/L^2
+CalibrationOutputDO = CalibrationOutputDO[complete.cases(CalibrationOutputDO),]
+RMSE_DO <- sqrt((1/length(CalibrationOutputDO[,1]))*sum((CalibrationOutputDO$DO_con - CalibrationOutputDO$Conc_Modelled)^2)) #mg^2/L^2
 print(paste0('RMSE DOC ',RMSE_DOC))
 print(paste0('RMSE DO ',RMSE_DO))
 
