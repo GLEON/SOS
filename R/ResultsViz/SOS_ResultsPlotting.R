@@ -22,6 +22,9 @@ flux_plot = function(LakeName, ylim1, ylim2, legend){
   DOC_df <- read.csv(DOC_results_filename)
   POC_df <- read.csv(POC_results_filename)
   
+  mean(DOC_df$DOCalloch_g) + mean(POC_df$POCalloch_g)
+  mean(DOC_df$DOCautoch_g) + mean(POC_df$POCautoch_g)
+  
   ### aggregate daily to monthly
   DOC_df$Date = as.Date(DOC_df$Date)
   POC_df$Date = as.Date(POC_df$Date)
