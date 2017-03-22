@@ -1,7 +1,7 @@
 getParameters <- function(lakenames) {
   
-  df = data.frame(lakename=lakenames,DOCR_RespParam=NA,DOCL_RespParam=NA,R_auto=NA,
-                  BurialFactor_R=NA,BurialFactor_L=NA,POC_lcR=NA,POC_lcL=NA)  
+  df = data.frame(lakename=lakenames,DOCR_RespParam=NA,DOCL_RespParam=NA,
+                  BurialFactor_R=NA,BurialFactor_L=NA)  
   
   for (n in 1:length(lakenames)) {
     LakeName = lakenames[n]
@@ -13,7 +13,7 @@ getParameters <- function(lakenames) {
       assign(parameters[i,1],parameters[i,2])
     }
     
-    df[n,-1] = c(DOCR_RespParam,DOCL_RespParam,R_auto,BurialFactor_R,BurialFactor_L,POC_lcR,POC_lcL)  
+    df[n,-1] = c(DOCR_RespParam,DOCL_RespParam,BurialFactor_R,BurialFactor_L)  
   }
   return(df)
 }
