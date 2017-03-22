@@ -20,9 +20,14 @@ clean_shave = function(lakename) {
   POC = read.csv(POCpath)
   
   # create new data frame with select columns
+  # lake_df = data.frame(Date = DOC$Date, Resp = DOC$respOut_gm2y,
+  #                        Sed = POC$sedOut_gm2y, Alloch = DOC$DOCalloch_g + POC$POCalloch_g,
+  #                        Autoch = DOC$DOCautoch_g + POC$POCautoch_g)
+  
+  #IM: redid above lines because had been using cumulative totals for some fluxes; didn't make sense
   lake_df = data.frame(Date = DOC$Date, Resp = DOC$respOut_gm2y,
-                         Sed = POC$sedOut_gm2y, Alloch = DOC$DOCalloch_g + POC$POCalloch_g,
-                         Autoch = DOC$DOCautoch_g + POC$POCautoch_g)
+                       Sed = POC$sedOut_gm2y, Alloch = DOC$FlowIn_gm2y+DOC$leachIn_gm2y+POC$FlowIn_gm2y,
+                       Autoch = POC$NPPin_gm2y+DOC$NPPin_gm2y)
 
   # retain only complete cases
   cc = which(complete.cases(lake_df))
@@ -61,9 +66,9 @@ Harp = clean_shave('Harp')
 png(paste0('R/ResultsViz/Figures/beardplot.png'),width = 8,height = 4,units = 'in',res=300)
 par(mfrow=c(1,6))
 par(mar=c(2.5,2.5,2,1),mgp=c(1.5,0.5,0),tck=-0.03,cex=0.8)
-xlab = 'Respiration/Sedimentation'
+xlab = 'Resp/Burial'
 ylab = 'log(Alloch/Autoch)'
-ylim = c(-5,25)
+ylim = c(-3,3)
 xlim = c(-2.5,2.5)
 pch = 19
 
