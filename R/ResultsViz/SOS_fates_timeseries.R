@@ -1,15 +1,17 @@
 ################################################################
 # Time series plots of SOS fates 
 # Date: 1-3-17
-# Updated: 1-5-17
+# Updated: 3-22-17 to include monthly aggregations
 # Author: Ian McC, adapted from Hilary's SOS_mean.R code (HD makes some mean R code)
 ################################################################
 
 library(lubridate)
+library(dplyr)
 
 #### define function ####
-SOS_fate = function(LakeName){
+SOS_fate = function(LakeName, monthlyFlag){
   #Lakename = lake name in quotes
+  #monthlyFlag = 1 if want to aggregate to monthly data,0 for daily
   #Read in results data from SOS Carbon Flux Model
   DOC_results_filename = paste('./',LakeName,'Lake/','Results/',LakeName,'_DOC_Results.csv',sep='')
   POC_results_filename = paste('./',LakeName,'Lake/','Results/',LakeName,'_POC_Results.csv',sep='')
@@ -18,6 +20,10 @@ SOS_fate = function(LakeName){
   DOC_df <- read.csv(DOC_results_filename)
   POC_df <- read.csv(POC_results_filename)
   #SOS <- read.csv(SOS_results_filename)
+  
+  ### aggregate daily to monthly
+  DOC_df$Date = as.Date(DOC_df$Date)
+  POC_df$Date = as.Date(POC_df$Date)
   
   ParameterFile <- paste('./',LakeName,'Lake/','ConfigurationInputs',LakeName,'.txt',sep='')
   parameters <- read.table(file = ParameterFile,header=TRUE,comment.char="#",stringsAsFactors = F)
@@ -28,9 +34,185 @@ SOS_fate = function(LakeName){
   volume = LakeVolume
   area = LakeArea
   
-  #alloch<-POC_df$POCalloch_g+DOC_df$DOCalloch_g
-  #autoch<-POC_df$POCautoch_g+DOC_df$DOCautoch_g
-  
+  if (monthlyFlag==1){
+    FlowIn_gm2y=POC_df %>%
+      mutate(month = format(Date, "%m"), year = format(Date, "%Y")) %>%
+      group_by(month, year) %>%
+      summarise(mean = mean(FlowIn_gm2y))
+    FlowIn_gm2y$day = rep(1,1,nrow(FlowIn_gm2y))
+    FlowIn_gm2y$month = as.numeric(FlowIn_gm2y$month)
+    FlowIn_gm2y$year = as.numeric(FlowIn_gm2y$year)
+    colnames(FlowIn_gm2y) = c('month','year','FlowIn_gm2y','day')
+    month_day_year = paste0(FlowIn_gm2y$month,'/',FlowIn_gm2y$day,'/',FlowIn_gm2y$year)
+    FlowIn_gm2y = FlowIn_gm2y[3]
+    
+    sedOut_gm2y=POC_df %>%
+      mutate(month = format(Date, "%m"), year = format(Date, "%Y")) %>%
+      group_by(month, year) %>%
+      summarise(mean = mean(FlowIn_gm2y))
+    sedOut_gm2y$day = rep(1,1,nrow(sedOut_gm2y))
+    sedOut_gm2y$month = as.numeric(sedOut_gm2y$month)
+    sedOut_gm2y$year = as.numeric(sedOut_gm2y$year)
+    colnames(sedOut_gm2y) = c('month','year','sedOut_gm2y','day')
+    sedOut_gm2y = sedOut_gm2y[3]
+    
+    leachOut_gm2y=POC_df %>%
+      mutate(month = format(Date, "%m"), year = format(Date, "%Y")) %>%
+      group_by(month, year) %>%
+      summarise(mean = mean(FlowIn_gm2y))
+    leachOut_gm2y$day = rep(1,1,nrow(leachOut_gm2y))
+    leachOut_gm2y$month = as.numeric(leachOut_gm2y$month)
+    leachOut_gm2y$year = as.numeric(leachOut_gm2y$year)
+    colnames(leachOut_gm2y) = c('month','year','leachOut_gm2y','day')
+    leachOut_gm2y = leachOut_gm2y[3]
+    
+    FlowOut_gm2y=POC_df %>%
+      mutate(month = format(Date, "%m"), year = format(Date, "%Y")) %>%
+      group_by(month, year) %>%
+      summarise(mean = mean(FlowIn_gm2y))
+    FlowOut_gm2y$day = rep(1,1,nrow(FlowOut_gm2y))
+    FlowOut_gm2y$month = as.numeric(FlowOut_gm2y$month)
+    FlowOut_gm2y$year = as.numeric(FlowOut_gm2y$year)
+    colnames(FlowOut_gm2y) = c('month','year','FlowOut_gm2y','day')
+    FlowOut_gm2y = FlowOut_gm2y[3]
+    
+    NPPin_gm2y=POC_df %>%
+      mutate(month = format(Date, "%m"), year = format(Date, "%Y")) %>%
+      group_by(month, year) %>%
+      summarise(mean = mean(FlowIn_gm2y))
+    NPPin_gm2y$day = rep(1,1,nrow(NPPin_gm2y))
+    NPPin_gm2y$month = as.numeric(NPPin_gm2y$month)
+    NPPin_gm2y$year = as.numeric(NPPin_gm2y$year)
+    colnames(NPPin_gm2y) = c('month','year','NPPin_gm2y','day')
+    NPPin_gm2y = NPPin_gm2y[3]
+    
+    POCtotal_conc_gm3=POC_df %>%
+      mutate(month = format(Date, "%m"), year = format(Date, "%Y")) %>%
+      group_by(month, year) %>%
+      summarise(mean = mean(FlowIn_gm2y))
+    POCtotal_conc_gm3$day = rep(1,1,nrow(POCtotal_conc_gm3))
+    POCtotal_conc_gm3$month = as.numeric(POCtotal_conc_gm3$month)
+    POCtotal_conc_gm3$year = as.numeric(POCtotal_conc_gm3$year)
+    colnames(POCtotal_conc_gm3) = c('month','year','POCtotal_conc_gm3','day')
+    POCtotal_conc_gm3 = POCtotal_conc_gm3[3]
+    
+    POCload_g=POC_df %>%
+      mutate(month = format(Date, "%m"), year = format(Date, "%Y")) %>%
+      group_by(month, year) %>%
+      summarise(mean = mean(FlowIn_gm2y))
+    POCload_g$day = rep(1,1,nrow(POCload_g))
+    POCload_g$month = as.numeric(POCload_g$month)
+    POCload_g$year = as.numeric(POCload_g$year)
+    colnames(POCload_g) = c('month','year','POCload_g','day')
+    POCload_g = POCload_g[3]
+    
+    POCout_g=POC_df %>%
+      mutate(month = format(Date, "%m"), year = format(Date, "%Y")) %>%
+      group_by(month, year) %>%
+      summarise(mean = mean(FlowIn_gm2y))
+    POCout_g$day = rep(1,1,nrow(POCout_g))
+    POCout_g$month = as.numeric(POCout_g$month)
+    POCout_g$year = as.numeric(POCout_g$year)
+    colnames(POCout_g) = c('month','year','POCout_g','day')
+    POCout_g = POCout_g[3]
+    
+    POC_df = data.frame(Date=month_day_year, POCtotal_conc_gm3=POCtotal_conc_gm3,
+                        NPPin_gm2y=NPPin_gm2y,FlowIn_gm2y=FlowIn_gm2y,FlowOut_gm2y=FlowOut_gm2y,
+                        sedOut_gm2y=sedOut_gm2y,leachOut_gm2y=leachOut_gm2y,POCload_g=POCload_g,
+                        POCout_g=POCout_g)
+    POC_df$Date = as.Date(POC_df$Date, format = "%m/%d/%Y")
+    POC_df = dplyr::arrange(POC_df, Date)
+    
+    ## doc
+    FlowIn_gm2y=DOC_df %>%
+      mutate(month = format(Date, "%m"), year = format(Date, "%Y")) %>%
+      group_by(month, year) %>%
+      summarise(mean = mean(FlowIn_gm2y))
+    FlowIn_gm2y$day = rep(1,1,nrow(FlowIn_gm2y))
+    FlowIn_gm2y$month = as.numeric(FlowIn_gm2y$month)
+    FlowIn_gm2y$year = as.numeric(FlowIn_gm2y$year)
+    colnames(FlowIn_gm2y) = c('month','year','FlowIn_gm2y','day')
+    month_day_year = paste0(FlowIn_gm2y$month,'/',FlowIn_gm2y$day,'/',FlowIn_gm2y$year)
+    FlowIn_gm2y = FlowIn_gm2y[3]
+    
+    respOut_gm2y=DOC_df %>%
+      mutate(month = format(Date, "%m"), year = format(Date, "%Y")) %>%
+      group_by(month, year) %>%
+      summarise(mean = mean(FlowIn_gm2y))
+    respOut_gm2y$day = rep(1,1,nrow(respOut_gm2y))
+    respOut_gm2y$month = as.numeric(respOut_gm2y$month)
+    respOut_gm2y$year = as.numeric(respOut_gm2y$year)
+    colnames(respOut_gm2y) = c('month','year','respOut_gm2y','day')
+    respOut_gm2y = respOut_gm2y[3]
+    
+    leachIn_gm2y=DOC_df %>%
+      mutate(month = format(Date, "%m"), year = format(Date, "%Y")) %>%
+      group_by(month, year) %>%
+      summarise(mean = mean(FlowIn_gm2y))
+    leachIn_gm2y$day = rep(1,1,nrow(leachIn_gm2y))
+    leachIn_gm2y$month = as.numeric(leachIn_gm2y$month)
+    leachIn_gm2y$year = as.numeric(leachIn_gm2y$year)
+    colnames(leachIn_gm2y) = c('month','year','leachIn_gm2y','day')
+    leachIn_gm2y = leachIn_gm2y[3]
+    
+    FlowOut_gm2y=DOC_df %>%
+      mutate(month = format(Date, "%m"), year = format(Date, "%Y")) %>%
+      group_by(month, year) %>%
+      summarise(mean = mean(FlowIn_gm2y))
+    FlowOut_gm2y$day = rep(1,1,nrow(FlowOut_gm2y))
+    FlowOut_gm2y$month = as.numeric(FlowOut_gm2y$month)
+    FlowOut_gm2y$year = as.numeric(FlowOut_gm2y$year)
+    colnames(FlowOut_gm2y) = c('month','year','FlowOut_gm2y','day')
+    FlowOut_gm2y = FlowOut_gm2y[3]
+    
+    NPPin_gm2y=DOC_df %>%
+      mutate(month = format(Date, "%m"), year = format(Date, "%Y")) %>%
+      group_by(month, year) %>%
+      summarise(mean = mean(FlowIn_gm2y))
+    NPPin_gm2y$day = rep(1,1,nrow(NPPin_gm2y))
+    NPPin_gm2y$month = as.numeric(NPPin_gm2y$month)
+    NPPin_gm2y$year = as.numeric(NPPin_gm2y$year)
+    colnames(NPPin_gm2y) = c('month','year','NPPin_gm2y','day')
+    NPPin_gm2y = NPPin_gm2y[3]
+    
+    DOCtotal_conc_gm3=DOC_df %>%
+      mutate(month = format(Date, "%m"), year = format(Date, "%Y")) %>%
+      group_by(month, year) %>%
+      summarise(mean = mean(FlowIn_gm2y))
+    DOCtotal_conc_gm3$day = rep(1,1,nrow(DOCtotal_conc_gm3))
+    DOCtotal_conc_gm3$month = as.numeric(DOCtotal_conc_gm3$month)
+    DOCtotal_conc_gm3$year = as.numeric(DOCtotal_conc_gm3$year)
+    colnames(DOCtotal_conc_gm3) = c('month','year','DOCtotal_conc_gm3','day')
+    DOCtotal_conc_gm3 = DOCtotal_conc_gm3[3]
+    
+    DOCload_g=DOC_df %>%
+      mutate(month = format(Date, "%m"), year = format(Date, "%Y")) %>%
+      group_by(month, year) %>%
+      summarise(mean = mean(FlowIn_gm2y))
+    DOCload_g$day = rep(1,1,nrow(DOCload_g))
+    DOCload_g$month = as.numeric(DOCload_g$month)
+    DOCload_g$year = as.numeric(DOCload_g$year)
+    colnames(DOCload_g) = c('month','year','DOCload_g','day')
+    DOCload_g = DOCload_g[3]
+    
+    DOCout_g=DOC_df %>%
+      mutate(month = format(Date, "%m"), year = format(Date, "%Y")) %>%
+      group_by(month, year) %>%
+      summarise(mean = mean(FlowIn_gm2y))
+    DOCout_g$day = rep(1,1,nrow(DOCout_g))
+    DOCout_g$month = as.numeric(DOCout_g$month)
+    DOCout_g$year = as.numeric(DOCout_g$year)
+    colnames(DOCout_g) = c('month','year','DOCout_g','day')
+    DOCout_g = DOCout_g[3]
+    
+    DOC_df = data.frame(Date=month_day_year, DOCtotal_conc_gm3=DOCtotal_conc_gm3,
+                        NPPin_gm2y=NPPin_gm2y,FlowIn_gm2y=FlowIn_gm2y,FlowOut_gm2y=FlowOut_gm2y,
+                        respOut_gm2y=respOut_gm2y,leachIn_gm2y=leachIn_gm2y,DOCload_g=DOCload_g,
+                        DOCout_g=DOCout_g)
+    DOC_df$Date = as.Date(DOC_df$Date, format = "%m/%d/%Y")
+    DOC_df = dplyr::arrange(DOC_df, Date)
+  }
+ 
   R<-DOC_df$respOut_gm2y
   
   S<-POC_df$sedOut_gm2y
@@ -73,12 +255,27 @@ SOS_fate = function(LakeName){
 }
 
 #### run function over lakes ####
-Harp = SOS_fate('Harp')
-Monona = SOS_fate('Monona')
-Toolik = SOS_fate('Toolik')
-Trout = SOS_fate('Trout')
-Vanern = SOS_fate('Vanern')
+monthlyFlag = 1 #1=monthly, 0=daily
+Harp = SOS_fate('Harp',monthlyFlag = monthlyFlag) 
+Monona = SOS_fate('Monona',monthlyFlag = monthlyFlag)
+Toolik = SOS_fate('Toolik', monthlyFlag = monthlyFlag)
+Trout = SOS_fate('Trout',monthlyFlag = monthlyFlag)
+Vanern = SOS_fate('Vanern',monthlyFlag = monthlyFlag)
 
+#### generate summary table of fates by lake ####
+# recommend using daily
+Harp_means = colMeans(Harp[,3:11])
+Monona_means = colMeans(Monona[,3:11])
+Toolik_means = colMeans(Toolik[,3:11])
+Trout_means = colMeans(Trout[,3:11])
+Vanern_means = colMeans(Vanern[,3:11])
+
+table_heads = names(Harp_means)
+fate_means = rbind.data.frame(Harp_means,Monona_means,Toolik_means,Trout_means,Vanern_means)
+colnames(fate_means) = table_heads
+rownames(fate_means) = c('Harp','Monona','Toolik','Trout','Vanern')
+#write.csv(fate_means,'FateOutputs_byLake.csv')
+  
 ############# plotting time series ##########
 # compare R to S
 # Source: R > S, Sink: R < S
@@ -87,7 +284,7 @@ lty = 2
 lwd = 2
 ylab = 'OC (g/m2/yr)'
 xlab = 'Date'
-ylim = c(-50,400)
+ylim = c(-50,600)
 cex.main = 2
 cex.axis = 2
 cex.lab = 2
@@ -96,32 +293,32 @@ png(paste0('R/ResultsViz/Figures/SOSfates.png'),width = 11,height = 9,units = 'i
 par(mar=c(3,3,3,1),mgp=c(1.5,0.4,0),mfrow=c(3,2),tck=-0.02,cex=1.2) 
 
   # Harp
-  plot(Harp$Date,Harp$Budget_left_gm2y,type = 'h',col = 'grey70',xlab = 'Date',ylab = 'OC (g/m2/yr)',ylim = c(-50,400),main='Harp')
+  plot(Harp$Date,Harp$Budget_left_gm2y,type = 'h',col = 'grey70',xlab = 'Date',ylab = 'OC (g/m2/yr)',ylim = ylim,main='Harp')
   lines(Harp$Date,Harp$R_gm2y,type='h',col='gold')
   lines(Harp$Date,Harp$S_gm2y,type='h',col='black')
   legend('topright',legend=c('Total Load','Burial','Respiration'), col=c('grey70','black','gold'),lwd=2)
   abline(0,0,lty=2, lwd=2)
 
 # Monona
-  plot(Monona$Date,Monona$Budget_left_gm2y,type = 'h',col = 'grey70',xlab = 'Date',ylab = 'OC (g/m2/yr)',ylim = c(-50,400),main='Monona')
+  plot(Monona$Date,Monona$Budget_left_gm2y,type = 'h',col = 'grey70',xlab = 'Date',ylab = 'OC (g/m2/yr)',ylim = ylim,main='Monona')
   lines(Monona$Date,Monona$S_gm2y,type='h',col='black')
   lines(Monona$Date,Monona$R_gm2y,type='h',col='gold')
   abline(0,0,lty=2, lwd=2)
 
 # Toolik
-  plot(Toolik$Date,Toolik$Budget_left_gm2y,type = 'h',col = 'grey70',xlab = 'Date',ylab = 'OC (g/m2/yr)',ylim = c(-50,400),main='Toolik')
+  plot(Toolik$Date,Toolik$Budget_left_gm2y,type = 'h',col = 'grey70',xlab = 'Date',ylab = 'OC (g/m2/yr)',ylim = ylim,main='Toolik')
   lines(Toolik$Date,Toolik$S_gm2y,type='h',col='black')
   lines(Toolik$Date,Toolik$R_gm2y,type='h',col='gold')
   abline(0,0,lty=2, lwd=2)
 
 # Trout
-  plot(Trout$Date,Trout$Budget_left_gm2y,type = 'h',col = 'grey70',xlab = 'Date',ylab = 'OC (g/m2/yr)',ylim = c(-50,400),main='Trout')
+  plot(Trout$Date,Trout$Budget_left_gm2y,type = 'h',col = 'grey70',xlab = 'Date',ylab = 'OC (g/m2/yr)',ylim = ylim,main='Trout')
   lines(Trout$Date,Trout$S_gm2y,type='h',col='black')
   lines(Trout$Date,Trout$R_gm2y,type='h',col='gold')
   abline(0,0,lty=2, lwd=2)
 
 # Vanern
-  plot(Vanern$Date,Vanern$Budget_left_gm2y,type = 'h',col = 'grey70',xlab = 'Date',ylab = 'OC (g/m2/yr)',ylim = c(-50,400),main='Vanern')
+  plot(Vanern$Date,Vanern$Budget_left_gm2y,type = 'h',col = 'grey70',xlab = 'Date',ylab = 'OC (g/m2/yr)',ylim = ylim,main='Vanern')
   lines(Vanern$Date,Vanern$R_gm2y,type='h',col='gold')
   lines(Vanern$Date,Vanern$S_gm2y,type='h',col='black')
   abline(0,0,lty=2, lwd=2)
