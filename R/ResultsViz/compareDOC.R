@@ -1,4 +1,4 @@
-# Updated 12-16-16 by Ian McC
+# Updated 3-22-17 by Ian McC
 # Note from Ian: some of the various input files still seem to have inconsistent date formatting,
 # which was causing some lakes to return errors. I created some fixes based on current data/date
 # structure
@@ -51,7 +51,7 @@ doComp = function(lakename,timestamp = "%Y-%m-%d",ylim=NULL) {
   k = 0.5
   ValidationDataDO$DOflux <- k*(ValidationDataDO$DO_con - DO_sat$do.sat) #Should be divided by photic depth
   
-  plot(DO$Date,DO$Oxygen_Area,type='l',xlab = '', ylab = 'DO (flux/m2)',main=deparse(lakename),
+  plot(DO$Date,DO$Oxygen,type='l',xlab = '', ylab = 'DO (flux/m2)',main=deparse(lakename),
        ylim = ylim)
   points(ValidationDataDO$datetime,ValidationDataDO$DOflux,col='red3',pch=19,cex=0.7)
   lines(ValidationDataDO$datetime,ValidationDataDO$DOflux,lty=2,col='red3',pch=19,cex=0.7)
