@@ -75,7 +75,7 @@ flux_plot = function(LakeName, ylim1, ylim2, legend){
   #axis(side = 4)
   #mtext('OC concentration (g/m3)',side = 4,line = 1.5,cex=0.8)
   if (legend==1){
-  legend('bottomleft',legend = c('Inflow','Autoch','Outflow','Burial','Respiration'),#,'DOC Conc'),
+  legend('bottomleft',legend = c('Alloch','Autoch','Export','Burial','Respiration'),#,'DOC Conc'),
          col = c('darkblue','cyan4','green4','brown','grey50'),#,'black'),
          pch=c(15,15,15,15,15,NA),
          lty=c(0,0,0,0,0,1),lwd=2,ncol=2,cex=1,pt.cex=2,seg.len=1,
