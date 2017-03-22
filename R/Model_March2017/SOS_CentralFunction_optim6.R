@@ -2,7 +2,7 @@ setwd('C:/Users/hdugan/Documents/Rpackages/SOS/')
 # setwd("~/Documents/Rpackages/SOS")
 #CarbonFluxModel <- function(LakeName,PlotFlag,ValidationFlag){
 #Flags 1 for yes, else no.
-LakeName = 'Trout'
+LakeName = 'Vanern'
 OptimizationFlag = 0
 updateParameters = 0
 PlotFlag = 1
@@ -346,8 +346,8 @@ for (i in 1:(steps)) {
   SWGWData$POCR_massIn_g[i] <- SWGWData$Load_POCR[i]*TimeStep #g
   
   #POC mass in 
-  POCR_mass <- SWGWData$Load_POCR[i]*TimeStep * (1-Q_out)/LakeVolume #g
-  POCL_mass <- PPdata$NPP_POCL_mass[i] * (1-Q_out)/LakeVolume
+  POCR_mass <- SWGWData$Load_POCR[i] * (1-(Q_out*3600*24)/LakeVolume) #g/day
+  POCL_mass <- PPdata$NPP_POCL_mass[i] * (1-(Q_out*3600*24)/LakeVolume) #g/day
   
   #Call Sedimentation Function
   SedOutput_R <- SedimentationFunction(BurialFactor_R,TimeStep,POCR_mass,LakeArea)
@@ -453,46 +453,30 @@ if (ValidationFlag==1){
   CalibrationOutputDOC$Modelled <- DOC_df$DOCtotal_conc_gm3[modIndx]
   
   #DO Validation Output Setup
-  ValidationDataDO_match = ValidationDataDO[ValidationDataDO$datetime %in% OutputTimeSeries,]
-  modIndx = OutputTimeSeries %in% ValidationDataDO_match$datetime
-  CalibrationOutputDO = data.frame(datetime = ValidationDataDO_match$datetime,Conc_Measured = NA,
-                                   Conc_Modelled = NA,
-                                   Flux_Measured = NA, Flux_Modelled = NA)
+  newDO <- ValidationDataDO %>% mutate(DO_sat = o2.at.sat.base(wtr)) %>%
+    group_by(datetime) %>%
+    summarise_all(.,funs(mean),na.rm=T)
   
-  PhoticDepth <- data.frame(datetime = InputData$datetime,PhoticDepth = log(100)/(1.7/InputData$Secchi))
-  PhoticDepth$PhoticDepth[PhoticDepth$PhoticDepth > LakeDepth] = LakeDepth
-  DO_sat <- o2.at.sat(ValidationDataDO_match[,1:2])  
-  IndxPhotic = as.Date(PhoticDepth$datetime) %in% ValidationDataDO_match$datetime
-  
-  CalibrationOutputDO$Conc_Measured = ValidationDataDO_match$DO_con
-  CalibrationOutputDO$Conc_Modelled <- Metabolism$Oxygen_conc[modIndx]
-  CalibrationOutputDO$Flux_Measured <- k*(ValidationDataDO_match$DO_con-DO_sat$do.sat) /(PhoticDepth$PhoticDepth[IndxPhotic]) #mg/m2
-  CalibrationOutputDO$Flux_Modelled <- Metabolism$Oxygen[modIndx]
-  CalibrationOutputDO$Sat_Conc <- DO_sat$do.sat
-  
+  CalibrationOutputDO = left_join(data.frame(datetime = as.Date(DOC_df$Date)),newDO)
+  CalibrationOutputDO$Conc_Modelled <- Metabolism$Oxygen_conc
+  CalibrationOutputDO$Flux_Modelled <- Metabolism$Oxygen
+
   #Plot Calibration DOC
   par(mfrow=c(2,1),mar=c(2,3,2,1),mgp=c(1.5,0.3,0),tck=-0.02)
   plot(CalibrationOutputDOC$datetime,CalibrationOutputDOC$Measured,type='o',pch=19,cex=0.7,ylab = 'DOC',xlab='',
        ylim = c(min(CalibrationOutputDOC[,2:3]),max(CalibrationOutputDOC[,2:3])),main=LakeName)
-  lines(CalibrationOutputDOC$datetime,CalibrationOutputDOC$Modelled,col='red',lwd=2)
+  lines(CalibrationOutputDOC$datetime,CalibrationOutputDOC$Modelled,col='red',lwd=1)
   lines(as.Date(DOC_df$Date),DOC_df$DOC_conc_gm3,col='darkgreen',lwd=2)
   abline(v = as.Date(paste0(unique(year(DOC_df$Date)),'-01-01')),lty=2,col='grey50') #lines at Jan 1
   abline(v = as.Date(paste0(unique(year(DOC_df$Date)),'-06-01')),lty=3,col='grey80') #lines at Jul 1
   
   #Plot Calibration DO
-  plot(CalibrationOutputDO$datetime,CalibrationOutputDO$Conc_Measured,type='o',pch=19,cex=0.7,ylab = 'DO Flux',xlab='',
-       ylim = c(min(CalibrationOutputDO[,2:3],na.rm = T),max(CalibrationOutputDO[,2:3],na.rm = T)))
-  lines(CalibrationOutputDO$datetime,CalibrationOutputDO$Conc_Modelled,col='darkgreen',lwd=2)
-  lines(CalibrationOutputDO$datetime,CalibrationOutputDO$Sat_Conc,col='grey50')
-    abline(v = as.Date(paste0(unique(year(DOC_df$Date)),'-01-01')),lty=2,col='grey50') #lines at Jan 1
+  plot(CalibrationOutputDO$datetime,CalibrationOutputDO$DO_con,type='o',pch=19,cex=0.7,ylab = 'DO Flux',xlab='',
+       ylim = c(min(CalibrationOutputDO[,c(3,6)],na.rm = T),max(CalibrationOutputDO[,c(3,6)],na.rm = T)))
+  lines(CalibrationOutputDO$datetime,CalibrationOutputDO$Conc_Modelled,col='darkgreen',lwd=1,type='l')
+
+  abline(v = as.Date(paste0(unique(year(DOC_df$Date)),'-01-01')),lty=2,col='grey50') #lines at Jan 1
   abline(v = as.Date(paste0(unique(year(DOC_df$Date)),'-06-01')),lty=3,col='grey80') #lines at Jul 1
-  
-  # plot(CalibrationOutputDO$datetime,CalibrationOutputDO$Flux_Measured,type='o',pch=19,cex=0.7,ylab = 'DO Flux',xlab='',
-  #      ylim = c(min(CalibrationOutputDO[,4:5],na.rm = T),max(CalibrationOutputDO[,4:5],na.rm = T)))
-  # lines(CalibrationOutputDO$datetime,CalibrationOutputDO$Flux_Modelled,col='darkgreen',lwd=2)
-  # abline(h=0,lty=2)
-  # abline(v = as.Date(paste0(unique(year(DOC_df$Date)),'-01-01')),lty=2,col='grey50') #lines at Jan 1
-  # abline(v = as.Date(paste0(unique(year(DOC_df$Date)),'-06-01')),lty=3,col='grey80') #lines at Jul 1
 }
 
 ################## PLOTTING ###########################################################
@@ -557,8 +541,7 @@ if (WriteFiles==1){
   write.csv(InputData,file = Input_filename,row.names = F,quote = F)
   write.csv(CalibrationOutputDOC,file = DOC_validation_filename,row.names = F,quote = F)
   write.csv(CalibrationOutputDO,file = DO_validation_filename,row.names = F,quote = F)
-  
-  Metabolism$Oxygen_Area = Metabolism$Oxygen * PhoticDepth$PhoticDepth
+
   write.csv(Metabolism,file = DO_results_filename,row.names = F,quote = F)
 }
 

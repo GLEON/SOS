@@ -55,17 +55,17 @@ modelDOC <- function (DOCR_RespParam,DOCL_RespParam,BurialFactor_R,BurialFactor_
                          InputData$SW_DOC[i], DOC_precip, LakeArea) # All in g/day, except DailyRain in m3/day
 
     #Call Sedimentation Function
-    POCR_mass <- SWGW$Load_POC * TimeStep * (1-Q_out)/LakeVolume #g
-    POCL_mass <- PPdata_NPP_POCL_mass * (1-Q_out)/LakeVolume
+    POCR_mass <- SWGW$Load_POC * (1-(Q_out*3600*24)/LakeVolume) #g/day
+    POCL_mass <- PPdata_NPP_POCL_mass * (1-(Q_out*3600*24)/LakeVolume) #g/day
 
     #Burial Recalitrant
     # if (BurialFactor_R < 0 ){ BurialFactor_R = 0}
-    MAR_Roc <- POCR_mass*BurialFactor_R*365/LakeArea #g OC/(m^2 * yr)
-    SedR_POC_burial <- MAR_Roc*(TimeStep/365)*LakeArea #g/d; Timestep with conversion from years to timestep units - days
+    MAR_Roc <- POCR_mass * BurialFactor_R * 365/LakeArea #g OC/(m^2 * yr)
+    SedR_POC_burial <- POCR_mass * BurialFactor_R #g/d; Timestep with conversion from years to timestep units - days
     #Burial Labile
     # if (BurialFactor_L < 0 ){ BurialFactor_L = 0}
     MAR_Loc <- POCL_mass*BurialFactor_L*365/LakeArea #g OC/(m^2 * yr)
-    SedL_POC_burial <- MAR_Loc*(TimeStep/365)*LakeArea #g/d; Timestep with conversion from years to timestep units - days
+    SedL_POC_burial <-  POCL_mass*BurialFactor_L #g/d; Timestep with conversion from years to timestep units - days
     Sed_out[i] = MAR_Loc + MAR_Roc
     
     #Calc outflow subtractions (assuming outflow concentrations = mixed lake concentrations)
@@ -73,8 +73,8 @@ modelDOC <- function (DOCR_RespParam,DOCL_RespParam,BurialFactor_R,BurialFactor_
     SWGW_DOCL_outflow <- DOC_out$DOCL_conc_gm3[i]*Q_out*60*60*24*TimeStep #g
 
     #Calc POC-to-DOC leaching
-    POCR_leachOut <- POCR_mass*(1-BurialFactor_R)*LakeVolume*TimeStep #g - POC concentration times leaching parameter
-    POCL_leachOut <- POCL_mass*(1-BurialFactor_L)*LakeVolume*TimeStep #g - POC concentration times leaching parameter
+    POCR_leachOut <- POCR_mass*(1-BurialFactor_R)*TimeStep #g - POC concentration times leaching parameter
+    POCL_leachOut <- POCL_mass*(1-BurialFactor_L)*TimeStep #g - POC concentration times leaching parameter
 
     if (i < steps) { #don't calculate for last time step
       #Update POC and DOC concentration values (g/m3) for whole lake
