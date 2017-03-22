@@ -1,5 +1,4 @@
-# modelDOC <- function (RespParamR_init,RespParamL_init,R_auto_init,BurialFactorR_init,BurialFactorL_init,
-#                       POC_lcR_init,POC_lcL_init) {
+
 modelDOC <- function (DOCR_RespParam,DOCL_RespParam,BurialFactor_R,BurialFactor_L) {
 
   POC_out = data.frame(POCL_conc_gm3 = rep(NA,steps), POCR_conc_gm3 = rep(NA,steps), POCtotal_conc_gm3 = rep(NA,steps))

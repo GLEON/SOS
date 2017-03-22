@@ -227,7 +227,10 @@ add.alpha <- function(col, alpha=1){
           rgb(x[1], x[2], x[3], alpha=alpha))  
 }
 ##------------------------------------------------------------------------------
-## Plotting ##
+## Plotting Sensitivity ####
+modeled = modelDOC(startPars[1],startPars[2],startPars[3],startPars[4])
+joinDOC = inner_join(ValidationDataDOC,modeled,by='datetime')
+
 png(paste0('R/FMEresults/',LakeName,'_sensitivity.png'),height = 8,width = 7,units = 'in',res=300)
   par(mar = c(3,3,1,1),mgp=c(1.5,0.5,0),mfrow=c(3,2))
   # PLOTTING
