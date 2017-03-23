@@ -1,5 +1,5 @@
 setwd("~/Documents/SOS")
-LakeName = 'Monona'
+LakeName = 'Vanern'
 
 ##### LOAD PACKAGES ########################
 library(lubridate)
@@ -88,16 +88,16 @@ DOC_DO_diff <- function(pars){
 }
 
 ## PLOTTING and GOF
-modeled = modelDOC(pars[1],pars[2],pars[3],pars[4])
-par(mfrow=c(2,1),mar=c(3,3,1,1),mgp=c(1.5,0.5,0))
-joinDOC = inner_join(ValidationDataDOC,modeled,by='datetime')
-plot(joinDOC$datetime,joinDOC$DOC,type='o',xlab='',ylab='DOC')
-lines(joinDOC$datetime,joinDOC$DOCwc,type='o',col='grey50')
-lines(joinDOC$datetime,joinDOC$DOC_conc,type='o',col='red3')
-
-joinDO = inner_join(ValidationDataDO,modeled,by='datetime')
-plot(joinDO$datetime,joinDO$DO_con,type='o',xlab='',ylab='DO')
-lines(joinDO$datetime,joinDO$MetabOxygen.oxy_conc,type='o',col='red3')
+# modeled = modelDOC(pars[1],pars[2],pars[3],pars[4])
+# par(mfrow=c(2,1),mar=c(3,3,1,1),mgp=c(1.5,0.5,0))
+# joinDOC = inner_join(ValidationDataDOC,modeled,by='datetime')
+# plot(joinDOC$datetime,joinDOC$DOC,type='o',xlab='',ylab='DOC')
+# lines(joinDOC$datetime,joinDOC$DOCwc,type='o',col='grey50')
+# lines(joinDOC$datetime,joinDOC$DOC_conc,type='o',col='red3')
+# 
+# joinDO = inner_join(ValidationDataDO,modeled,by='datetime')
+# plot(joinDO$datetime,joinDO$DO_con,type='o',xlab='',ylab='DO')
+# lines(joinDO$datetime,joinDO$MetabOxygen.oxy_conc,type='o',col='red3')
 
 # #Goodness of fit
 # library(hydroGOF)
@@ -106,15 +106,11 @@ lines(joinDO$datetime,joinDO$MetabOxygen.oxy_conc,type='o',col='red3')
 
 # Starting parameters cannot be negative, because of bounds we set 
 parStart = pars
-lowerBound = c(0,0,0,0)
-upperBound = c(0.005,0.1,1,1)
+lowerBound = c(0.00003,0.03,0,0)
+upperBound = c(0.03,0.3,1,1)
 parStart[(parStart - lowerBound) < 0] = lowerBound[(parStart - lowerBound) < 0]
 parStart[(upperBound - parStart) < 0] = upperBound[(upperBound - parStart) < 0]
 names(parStart) = c('DOCR_RespParam','DOCL_RespParam','BurialFactor_R','BurialFactor_L')
-
-# Fit <- modFit(f = DOC_DO_diff, p=parStart,method = 'BFGS',
-#                lower= lowerBound,
-#                upper= upperBound)
 
 # For difficult problems it may be efficient to perform some iterations with Pseudo, which will bring the algorithm 
 # near the vicinity of a (the) minimum, after which the default algorithm (Marq) is used to locate the minimum more precisely.
