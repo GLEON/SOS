@@ -208,7 +208,7 @@ for (i in 1:4){
   print(i)
   
   Sens[[i]] <- sensRange(parms=startPars[i], func=DOCsens, 
-                         num=100, parRange=pRange[i,])
+                         num=20, parRange=pRange[i,])
 }
 ##------------------------------------------------------------------------------
 ##   Functions ####
@@ -251,6 +251,39 @@ png(paste0('R/FMEresults/',LakeName,'_sensitivity.png'),height = 8,width = 7,uni
                       main=paste(names(startPars)[i],' ',pRange[i,1],'-',pRange[i,2],sep=''))
     lines(as.POSIXlt(ValidationDataDOC$datetime),ValidationDataDOC$DOC,lty=2,pch=16,cex=0.7,type='o')
   }
+dev.off()
+
+plot.sensRange.HD <- function (x,Select = 2,cols){
+  npar <- attr(x, "npar")
+  nx <- attr(x, "nx")
+  varnames <- attr(x, "var")
+  X <- attr(x, "x")
+  X <- as.Date(strptime(X,'%Y-%m-%d'))
+  sens <- x[, -(1:npar)]
+  
+  ii <- ((Select - 1) * nx + 1):(Select * nx)
+  y = t(sens[,ii])
+  lines(X, rowMeans(y), col = add.alpha(cols,0), lwd = 2,type='l') 
+  min = apply(y,1,min)
+  max = apply(y,1,max)
+  polygon(x = c(X,rev(X)),y = c(min,rev(max)),col= add.alpha(cols,0.6),border = add.alpha(cols,0.6))
+}
+
+png(paste0('R/FMEresults/',LakeName,'_sensitivity_all.png'),height = 8,width = 7,units = 'in',res=300)
+  par(mar = c(3,3,1,1),mgp=c(1.5,0.5,0),mfrow=c(1,1))
+  # PLOTTING
+  plot(joinDOC$datetime,joinDOC$DOC,type='o',ylab='DOC',xlab='Date',pch=16,cex=0.7,ylim=c(1,8))
+  # lines(joinMod$datetime,joinMod$DOCwc,type='o',col='grey50')
+  # lines(joinDOC$datetime,joinDOC$DOC_conc,type='o',col='red3',pch=16,cex=0.7)
+  
+  cols = c('navy','red3','darkgreen','gold')
+  for (i in 1:4){
+    plot.sensRange.HD(Sens[[i]],Select = 2,cols = cols[i])
+    lines(as.POSIXlt(ValidationDataDOC$datetime),ValidationDataDOC$DOC,lty=2,pch=16,cex=0.7,type='o')
+  }
+  
+  legend('topleft',legend = c('Observed','Respiration_Alloch','Respiration_Auto','Burial_Alloch','Burial_Auto'),
+         fill=c('black',cols),bty='n')
 dev.off()
 
 
