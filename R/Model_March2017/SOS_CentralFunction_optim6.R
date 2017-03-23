@@ -2,7 +2,6 @@ setwd('C:/Users/hdugan/Documents/Rpackages/SOS/')
 # setwd("~/Documents/Rpackages/SOS")
 #Flags 1 for yes, else no.
 LakeName = 'Trout'
-PlotFlag = 1
 ValidationFlag = 1
 WriteFiles = 1
 BootstrapFlag = 0
@@ -133,7 +132,7 @@ IndxVal = ValidationDataDO$datetime %in% as.Date(PhoticDepth$datetime)
 IndxPhotic = as.Date(PhoticDepth$datetime) %in% ValidationDataDO$datetime
 ValidationDataDO = ValidationDataDO[IndxVal,]
 ValidationDataDO$DO_sat <- o2.at.sat(ValidationDataDO[,1:2])[,2]  
-ValidationDataDO$Flux <- k*(ValidationDataDO$DO_con - ValidationDataDO$DO_sat)/(PhoticDepth$PhoticDepth[IndxPhotic]) #g/m3/d
+ValidationDataDO$Flux <- k*(ValidationDataDO$DO_con - ValidationDataDO$DO_sat)/(0.5*PhoticDepth$PhoticDepth[IndxPhotic]) #g/m3/d
 #SedData MAR OC 
 ValidationDataMAROC <- ObservedMAR_oc #g/m2
 
@@ -207,8 +206,7 @@ for (i in 1:(steps)) {
     Metabolism$Oxygen_conc[i+1] = Metabolism$Oxygen_conc[i] + Metabolism$Oxygen[i] - Fatm
     
     #Update POC and DOC concentration values (g/m3) for whole lake
-    
-    POC_df$POCL_conc_gm3[i] <-  (POCL_mass - LeachData$POCL_leachOut[i] - SedData$POC_burial_L[i])/LakeVolume #g/m3
+      POC_df$POCL_conc_gm3[i] <-  (POCL_mass - LeachData$POCL_leachOut[i] - SedData$POC_burial_L[i])/LakeVolume #g/m3
     POC_df$POCR_conc_gm3[i] <-  (POCR_mass - LeachData$POCR_leachOut[i] - SedData$POC_burial_R[i])/LakeVolume
     POC_df$POCtotal_conc_gm3[i] = POC_df$POCR_conc_gm3[i] + POC_df$POCL_conc_gm3[i]
 
@@ -217,7 +215,6 @@ for (i in 1:(steps)) {
     DOC_df$DOCtotal_conc_gm3[i+1] = DOC_df$DOCR_conc_gm3[i+1] + DOC_df$DOCL_conc_gm3[i+1]
     
     #Stop code and output error if concentrations go to negative
-    # if (POC_df$POCtotal_conc_gm3[i+1]<=0){stop("Negative POC concentration!")}
     if (DOC_df$DOCtotal_conc_gm3[i+1]<=0){stop("Negative DOC concentration!")}
   }
 }
@@ -286,15 +283,9 @@ OutputTimeSeries <- as.Date(InputData$datetime)
 if (ValidationFlag==1){
   
   #DOC Validation Output Setup
-  ValidationDOCIndeces = ValidationDataDOC$datetime %in% OutputTimeSeries
-  modIndx = OutputTimeSeries %in% ValidationDataDOC$datetime
-  
-  CalibrationOutputDOC = data.frame(datetime = rep(NA,sum(ValidationDOCIndeces)),
-                                    Measured = NA, MeasuredWC = NA ,Modelled = NA)
-  CalibrationOutputDOC$datetime <- ValidationDataDOC$datetime[ValidationDOCIndeces]
-  CalibrationOutputDOC$Measured <- ValidationDataDOC$DOC[ValidationDOCIndeces]
-  CalibrationOutputDOC$MeasuredWC <- ValidationDataDOC$DOCwc[ValidationDOCIndeces]
-  CalibrationOutputDOC$Modelled <- DOC_df$DOCtotal_conc_gm3[modIndx]
+  ModelDOC = DOC_df %>% mutate(datetime = as.Date(Date)) %>%
+    select(datetime, Modelled = DOCtotal_conc_gm3)
+  CalibrationOutputDOC = left_join(ValidationDataDOC,ModelDOC) 
   
   #DO Validation Output Setup
   ModelO2 = Metabolism %>% mutate(datetime = as.Date(Date)) %>%
@@ -303,33 +294,23 @@ if (ValidationFlag==1){
   
   #Plot Calibration DOC
   par(mfrow=c(2,1),mar=c(2,3,2,1),mgp=c(1.5,0.3,0),tck=-0.02)
-  plot(CalibrationOutputDOC$datetime,CalibrationOutputDOC$Measured,type='o',pch=19,cex=0.7,ylab = 'DOC',xlab='',
+  plot(CalibrationOutputDOC$datetime,CalibrationOutputDOC$DOC,type='o',pch=19,cex=0.7,ylab = 'DOC',xlab='',
        ylim = c(min(CalibrationOutputDOC[,2:3]),max(CalibrationOutputDOC[,2:3])),main=LakeName)
-  lines(CalibrationOutputDOC$datetime,CalibrationOutputDOC$Modelled,col='red',lwd=1)
-  lines(as.Date(DOC_df$Date),DOC_df$DOC_conc_gm3,col='darkgreen',lwd=2)
-  abline(v = as.Date(paste0(unique(year(DOC_df$Date)),'-01-01')),lty=2,col='grey50') #lines at Jan 1
-  abline(v = as.Date(paste0(unique(year(DOC_df$Date)),'-06-01')),lty=3,col='grey80') #lines at Jul 1
+  lines(CalibrationOutputDOC$datetime,CalibrationOutputDOC$Modelled,col='red',lwd=1,type='o',pch=16,cex=0.7)
+  abline(v = as.Date(paste0(unique(year(CalibrationOutputDOC$datetime)),'-01-01')),lty=2,col='grey50') #lines at Jan 1
+  abline(v = as.Date(paste0(unique(year(CalibrationOutputDOC$datetime)),'-06-01')),lty=3,col='grey80') #lines at Jul 1
   
   #Plot Calibration DO
   plot(CalibrationOutputDO$datetime,CalibrationOutputDO$DO_con,type='o',pch=19,cex=0.7,ylab = 'DO Flux',xlab='',
        ylim = c(min(CalibrationOutputDO[,c(3,7)],na.rm = T),max(CalibrationOutputDO[,c(3,7)],na.rm = T)))
-  lines(CalibrationOutputDO$datetime,CalibrationOutputDO$Conc_Modelled,col='darkgreen',lwd=1,type='l')
-
-  abline(v = as.Date(paste0(unique(year(DOC_df$Date)),'-01-01')),lty=2,col='grey50') #lines at Jan 1
-  abline(v = as.Date(paste0(unique(year(DOC_df$Date)),'-06-01')),lty=3,col='grey80') #lines at Jul 1
+  lines(CalibrationOutputDO$datetime,CalibrationOutputDO$Conc_Modelled,col='darkgreen',type='o',pch=16,cex=0.7)
+  abline(v = as.Date(paste0(unique(year(CalibrationOutputDOC$datetime)),'-01-01')),lty=2,col='grey50') #lines at Jan 1
+  abline(v = as.Date(paste0(unique(year(CalibrationOutputDOC$datetime)),'-06-01')),lty=3,col='grey80') #lines at Jul 1
 }
 
-################## PLOTTING ###########################################################
-if (PlotFlag==1){
-  #POC and DOC concentration in time (g/m3)
-  par(mar=c(2.5,3,1,1),mgp=c(1.5,0.3,0),tck=-0.02,cex=0.8)
-  plot(OutputTimeSeries,DOC_df$DOCtotal_conc_gm3,xlab='Date',ylab="DOC Conc (g/m3)",type="l")
-  lines(ValidationDataDOC$datetime,ValidationDataDOC$DOC,col='red3',type='o')
-}
 ################## Calc goodness of fit #################
 
 RMSE_DOC <- sqrt((1/length(CalibrationOutputDOC[,1]))*sum((CalibrationOutputDOC$Measured-CalibrationOutputDOC$Modelled)^2)) #mg^2/L^2
-CalibrationOutputDO = CalibrationOutputDO[complete.cases(CalibrationOutputDO),]
 RMSE_DO <- sqrt((1/length(CalibrationOutputDO[,1]))*sum((CalibrationOutputDO$DO_con - CalibrationOutputDO$Conc_Modelled)^2)) #mg^2/L^2
 print(paste0('RMSE DOC ',RMSE_DOC))
 print(paste0('RMSE DO ',RMSE_DO))
