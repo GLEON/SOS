@@ -1,5 +1,5 @@
 setwd("~/Documents/SOS")
-LakeName = 'Toolik'
+LakeName = 'Monona'
 
 ##### LOAD PACKAGES ########################
 library(lubridate)
@@ -87,14 +87,17 @@ DOC_DO_diff <- function(pars){
   return(c(resDOC,resDO/lengthScale))
 }
 
-# # PLOTTING and GOF
-# par(mfrow=c(2,1),mar=c(3,3,1,1),mgp=c(1.5,0.5,0))
-# plot(joinDOC$datetime,joinDOC$DOC,type='o',xlab='',ylab='DOC')
-# lines(joinDOC$datetime,joinDOC$DOCwc,type='o',col='grey50')
-# lines(joinDOC$datetime,joinDOC$DOC_conc,type='o',col='red3')
-# 
-# plot(joinDO$datetime,joinDO$DO_con,type='o',xlab='',ylab='DO')
-# lines(joinDO$datetime,joinDO$DOC_conc,type='o',col='red3')
+## PLOTTING and GOF
+modeled = modelDOC(pars[1],pars[2],pars[3],pars[4])
+par(mfrow=c(2,1),mar=c(3,3,1,1),mgp=c(1.5,0.5,0))
+joinDOC = inner_join(ValidationDataDOC,modeled,by='datetime')
+plot(joinDOC$datetime,joinDOC$DOC,type='o',xlab='',ylab='DOC')
+lines(joinDOC$datetime,joinDOC$DOCwc,type='o',col='grey50')
+lines(joinDOC$datetime,joinDOC$DOC_conc,type='o',col='red3')
+
+joinDO = inner_join(ValidationDataDO,modeled,by='datetime')
+plot(joinDO$datetime,joinDO$DO_con,type='o',xlab='',ylab='DO')
+lines(joinDO$datetime,joinDO$MetabOxygen.oxy_conc,type='o',col='red3')
 
 # #Goodness of fit
 # library(hydroGOF)

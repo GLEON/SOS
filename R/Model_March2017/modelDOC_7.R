@@ -30,8 +30,8 @@ modelDOC <- function (DOCR_RespParam,DOCL_RespParam,BurialFactor_R,BurialFactor_
     }
     
     GPP_Percent_DOC <- 71.4*CHL^(-0.22) #GPP as DOC, estimated as equal to 
-    GPP_DOC_rate <- GPP_rate*(GPP_Percent_DOC/100)  #mg C/m2/d
-    GPP_POC_rate <- GPP_rate*(1-(GPP_Percent_DOC/100))  #mg C/m2/d
+    GPP_DOC_rate <- 0.2*GPP_rate*(GPP_Percent_DOC/100)  #mg C/m2/d
+    GPP_POC_rate <- 0.2*GPP_rate*(1-(GPP_Percent_DOC/100))  #mg C/m2/d
     
     ############################
     PPdata_NPP_DOCL_mass <- (GPP_DOC_rate)*LakeArea*TimeStep/1000 #g
