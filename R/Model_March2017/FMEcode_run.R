@@ -125,11 +125,13 @@ Fit2par = Fit2$par
 Fit3 <- modFit(f = DOC_DO_diff, p=c(pars[1:2],1,1),method = 'Pseudo',
                lower= c(0,0,1,1),
                upper= c(0.005,0.1,1,1))
+write.csv(Fit3$par,paste0('R/FMEresults/',LakeName,'_fitpars_Burial1.csv'),row.names = F)
 
 # Constrain burial factors == 0
 Fit4 <- modFit(f = DOC_DO_diff, p=c(pars[1:2],0,0),method = 'Pseudo',
                lower= c(0,0,0,0),
                upper= c(0.005,0.1,0,0))
+write.csv(Fit4$par,paste0('R/FMEresults/',LakeName,'_fitpars_Burial0.csv'),row.names = F)
 
 
 #Test Fits
