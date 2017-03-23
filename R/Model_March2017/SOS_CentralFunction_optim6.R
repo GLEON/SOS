@@ -1,10 +1,7 @@
 setwd('C:/Users/hdugan/Documents/Rpackages/SOS/')
 # setwd("~/Documents/Rpackages/SOS")
-#CarbonFluxModel <- function(LakeName,PlotFlag,ValidationFlag){
 #Flags 1 for yes, else no.
-LakeName = 'Vanern'
-OptimizationFlag = 0
-updateParameters = 0
+LakeName = 'Trout'
 PlotFlag = 1
 ValidationFlag = 1
 WriteFiles = 1
@@ -31,6 +28,7 @@ source("./R/Model_March2017/SOS_SWGW.R")
 source("./R/Model_March2017/SOS_GPP.R")
 source("./R/Model_March2017/SOS_Resp.R")
 source("./R/Model_March2017/modelDOC_7.R")
+source("./R/Model_March2017/SOS_fixToolik.R")
 
 ##### READ PARAMETER FILE ##################
 parameters <- read.table(file = ParameterFile,header=TRUE,comment.char="#",stringsAsFactors = F)
@@ -58,73 +56,8 @@ RainData$datetime <- as.POSIXct(strptime(RainData$datetime,timestampFormat,tz='G
 InputData$Rain <- RainData$Rain[RainData$datetime %in% InputData$datetime] #Plug daily rain data into InputData file to integrate with original code.
 
 #### For TOOLIK ONLY #### (dealing with ice season)
-if (LakeName=='Toolik'){
-  # Set FlowIn to 0 for ice-on periods for Toolik Inlet, based on historical data: 
-  # http://toolik.alaska.edu/edc/journal/annual_summaries.php?summary=inlet
-  # Used average ice on/off dates from 2006-2010 for 2001-2005 (no data available those years)
-  
-  icepath = paste0(LakeName,'Lake','/','ToolikInlet_IceOn_IceOff.csv')
-  IceOnOff = read.csv(icepath)
-  IceOnOff$IceOff = as.POSIXct(strptime(IceOnOff$IceOff,"%m/%d/%Y %H:%M"),tz="GMT") #Convert time to POSIX
-  IceOnOff$IceOn = as.POSIXct(strptime(IceOnOff$IceOn,"%m/%d/%Y %H:%M"),tz="GMT") #Convert time to POSIX
-  #str(IceOnOff)
-  
-  ice_func <- function(year,off,on, dataframe){
-    ## ARGUMENTS ##
-    # year: 4 digits, in quotes as character ('2002')
-    # off: month-day in quotes ('05-09') = May 9th
-    # on: same structure as off
-    # dataframe = name of dataframe of interest
-    
-    day1 = paste0(year,'-01-01')
-    year_num = as.numeric(year)
-    year_before = as.character(year_num - 1)
-    day1 = paste0(year_before, '-12-31') # there was a bug; R thought >= Jan 1 meant Jan 2 (must be something internal with date structure)
-    day365 = paste0(year, '-12-31')
-    iceoff = paste0(year,'-',off)
-    iceon = paste0(year,'-',on)
-    # create annual subset for specific year
-    annual_subset = dataframe[dataframe$datetime > day1 & dataframe$datetime <= day365,]
-    
-    # extract data for that year before ice off
-    pre_thaw = annual_subset[annual_subset$datetime < iceoff,]
-    pre_thaw$FlowIn = rep(0,length(pre_thaw$FlowIn)) # set FlowIn = 0 during ice time
-    pre_thaw$FlowOut = pre_thaw$FlowIn # we assume flow out = flow in
-    
-    # extract data for that year for between ice off and ice on (ice free season)
-    ice_free_season = annual_subset[annual_subset$datetime >= iceoff & annual_subset$datetime < iceon,]
-    
-    # extract data for that year for after fall ice on
-    post_freeze = annual_subset[annual_subset$datetime >= iceon,]
-    post_freeze$FlowIn = rep(0,length(post_freeze$FlowIn))
-    post_freeze$FlowOut = post_freeze$FlowIn
-    
-    # combine 3 annual subsets (pre thaw, ice free season, post freeze)
-    annual_corrected = rbind.data.frame(pre_thaw,ice_free_season,post_freeze)
-    return(annual_corrected)
-  }
-  
-  years = as.character(IceOnOff$Year)
-  iceoff_dates = IceOnOff$IceOff
-  iceoff_dates = format(iceoff_dates, format='%m-%d')
-  iceon_dates = IceOnOff$IceOn
-  iceon_dates = format(iceon_dates, format='%m-%d')
-  
-  for (i in 1:length(years)){
-    for (j in 1:length(iceoff_dates)) {
-      for (k in 1:length(iceon_dates)) {
-        x = ice_func(year = years[i], off = iceoff_dates[j], on = iceon_dates[k], dataframe = InputData)
-        assign(paste0(LakeName,years[i]),x)
-        x = NULL #get rid of extra output with unassigned name
-      }
-    }
-  }
-  
-  ## Combine annual data frames into single for lake
-  # I know this isn't the most dynamic code, but I was having trouble making the above loop output a single DF
-  InputData = rbind(Toolik2001,Toolik2002,Toolik2003,Toolik2004,Toolik2005,Toolik2006,
-                    Toolik2007,Toolik2008,Toolik2009,Toolik2010)
-  
+if (LakeName=='Toolik') {
+  InputData = fixToolik(InputData)
 }
 
 ###### Run Period and Time Step Setup #####
@@ -180,7 +113,7 @@ Metabolism$Oxygen_conc[1] <- o2.at.sat.base(InputData$EpiTemp[1])
 
 #DOC Validation Output Setup
 ValidationDataDOC <- read.csv(ValidationFileDOC,header=T)
-ValidationDataDOC$datetime <- as.Date(as.POSIXct(strptime(ValidationDataDOC$datetime,timestampFormat),tz="GMT")) #Convert time to POSIX
+ValidationDataDOC$datetime <- as.Date(strptime(ValidationDataDOC$datetime,timestampFormat),tz="GMT") #Convert time to POSIX
 ValidationDataDOC = ValidationDataDOC[complete.cases(ValidationDataDOC),]
 outlier.limit = (mean(ValidationDataDOC$DOC) + 3*(sd(ValidationDataDOC$DOC))) # Calculate mean + 3 SD of DOC column
 ValidationDataDOC = ValidationDataDOC[ValidationDataDOC$DOC <= outlier.limit,] # Remove rows where DOC > outlier.limit
@@ -188,117 +121,23 @@ ValidationDataDOC = ddply(ValidationDataDOC,'datetime',summarize,DOC=mean(DOC),D
 
 #DO Validation Output Setup
 ValidationDataDO <- read.csv(ValidationFileDO,header=T)
-ValidationDataDO$datetime <- as.Date(as.POSIXct(strptime(ValidationDataDO$datetime,timestampFormat),tz="GMT")) #Convert time to POSIX
+ValidationDataDO$datetime <- as.Date(strptime(ValidationDataDO$datetime,timestampFormat),tz="GMT") #Convert time to POSIX
 ValidationDataDO = ValidationDataDO[complete.cases(ValidationDataDO),]
 #Only compare to DO data during "production season."
 ValidationDataDO = ValidationDataDO[yday(ValidationDataDO$datetime)>ProdStartDay & yday(ValidationDataDO$datetime)<ProdEndDay,]
-#ValidationDataDO = ValidationDataDO[ValidationDataDO$wtr >= 10,]
+ValidationDataDO = ddply(ValidationDataDO,'datetime',summarize,wtr=mean(wtr,na.rm = T),DO_con=mean(DO_con))
 
-k <- 0.5 #m/d
+k <- 0.7 #m/d
 PhoticDepth <- data.frame(datetime = InputData$datetime,PhoticDepth = log(100)/(1.7/InputData$Secchi))
 IndxVal = ValidationDataDO$datetime %in% as.Date(PhoticDepth$datetime)
 IndxPhotic = as.Date(PhoticDepth$datetime) %in% ValidationDataDO$datetime
-
 ValidationDataDO = ValidationDataDO[IndxVal,]
 ValidationDataDO$DO_sat <- o2.at.sat(ValidationDataDO[,1:2])[,2]  
 ValidationDataDO$Flux <- k*(ValidationDataDO$DO_con - ValidationDataDO$DO_sat)/(PhoticDepth$PhoticDepth[IndxPhotic]) #g/m3/d
 #SedData MAR OC 
 ValidationDataMAROC <- ObservedMAR_oc #g/m2
 
-#################### OPTIMIZATION ROUTINE ############################################
-if (OptimizationFlag==1) {
-  min.calcModelNLL <- function(pars,ValidationDataDOC,ValidationDataDO,ValidationDataMAROC){
-    modeled = modelDOC(pars[1],pars[2],pars[3],pars[4],pars[5],pars[6],pars[7])
-    
-    #modeled = modelDOC(optimOut$par[1],optimOut$par[2],optimOut$par[3],optimOut$par[4],optimOut$par[5],optimOut$par[6],optimOut$par[7])
-    # DOC
-    obsIndx = ValidationDataDOC$datetime %in% modeled$datetime
-    modIndx = modeled$datetime %in% ValidationDataDOC$datetime
-    CalibrationOutputDOC <- data.frame(datetime = ValidationDataDOC[obsIndx,]$datetime,
-                                       Measured = ValidationDataDOC[obsIndx,]$DOC, Modelled = modeled[modIndx,]$DOC_conc)
-    resDOC = (CalibrationOutputDOC$Measured - CalibrationOutputDOC$Modelled)
-    resMDOC = CalibrationOutputDOC$Measured - mean(CalibrationOutputDOC$Measured)
-    
-    # Dissolved oxygen 
-    obsIndx = ValidationDataDO$datetime %in% modeled$datetime
-    modIndx = modeled$datetime %in% ValidationDataDO$datetime
-    CalibrationOutputDO <- data.frame(datetime = ValidationDataDO[obsIndx,]$datetime,
-                                      Measured = ValidationDataDO[obsIndx,]$Flux, Modelled = modeled[modIndx,]$MetabOxygen)
-    
-    # Scale residuals
-    DOScale = 5
-    resDO = (CalibrationOutputDO$Measured - CalibrationOutputDO$Modelled) * DOScale
-    resMDO = (CalibrationOutputDO$Measured - mean(CalibrationOutputDO$Measured)) * DOScale
-    #sedScale = 0.001
-    #resSedData = (mean(modeled$SedData_MAR,na.rm = T) - ValidationDataMAROC) * sedScale #not scaled because it is 1 value
-    
-    if (length(resDO) > length(resDOC)){
-      resExtras = sample(x = resDOC,size = length(resDO)-length(resDOC),replace = T)
-      resMExtras = sample(x = resMDOC,size = length(resDO)-length(resDOC),replace = T)
-      res = c(resDOC,resExtras,resDO) # residual string
-      resM = c(resMDOC,resMExtras,resMDO)
-    } else {
-      res = c(resDOC,resDO) # residual string
-      resM = c(resMDOC,resMDO)
-    }
-
-    
-    MSRE = sqrt((1/length(res))*sum((res)^2)) # mean square root error 
-    print(paste('MSRE: ',MSRE,sep=''))
-    
-    NashSutcliffe = 1 - (sum(res^2)/sum(resM^2))
-    print(paste('NashSutcliffe: ',NashSutcliffe,sep=''))
-
-    # 
-    # nRes 	= length(res)
-    # SSE 	= sum(res^2)
-    # sigma2 	= SSE/nRes
-    # NLL 	= 0.5*((SSE/sigma2) + nRes*log(2*pi*sigma2))
-    # print(paste('NLL: ',NLL,sep=''))
-    print(paste('parameters: ',pars,sep=''))
-    return(NashSutcliffe)
-  }
-  ## Test call ##
-  # min.calcModelNLL(par = c(DOCR_RespParam,DOCL_RespParam,R_auto,BurialFactor_R,BurialFactor_L,POC_lcR,POC_lcL),ValidationDataDOC = ValidationDataDOC,
-  #                  ValidationDataDO = ValidationDataDO,ValidationDataMAROC = ValidationDataMAROC)
-  # # # 
-  
-  optimOut = optim(par = c(DOCR_RespParam,DOCL_RespParam,R_auto,BurialFactor_R,BurialFactor_L,POC_lcR,POC_lcL), 
-                   min.calcModelNLL,ValidationDataDOC = ValidationDataDOC,
-                   ValidationDataDO = ValidationDataDO,ValidationDataMAROC = ValidationDataMAROC, 
-                    control = list(maxit = 300,fnscale = -1)) #setting maximum number of attempts for now 
-  # To maximize, set control(fnscale = -1) # Use this for Nash Sutcliffe Efficiency
-  # method = 'L-BFGS-B',lower=c(0,0,0) #To constrain
-  
-  print('Parameter estimates (burial, Rhet, Raut...')
-  print(optimOut$par)
-  ## New parameters from optimization output
-  
-  conv <- optimOut$convergence  #did model converge or not (0=yes, 1=no)
-  NLL <- optimOut$value #value of nll
-  
-  DOCR_RespParam <- optimOut$par[1]
-  DOCL_RespParam <- optimOut$par[2]
-  R_auto <- optimOut$par[3]
-  BurialFactor_R <- optimOut$par[4]
-  BurialFactor_L <- optimOut$par[5] 
-  POC_lcR <- optimOut$par[6]
-  POC_lcL <- optimOut$par[7]
-}
-
-if (updateParameters == 1){
-  parameters[parameters$Parameter == 'DOCR_RespParam',2] = DOCR_RespParam
-  parameters[parameters$Parameter == 'DOCL_RespParam',2] = DOCL_RespParam
-  parameters[parameters$Parameter == 'R_auto',2] = R_auto
-  parameters[parameters$Parameter == 'BurialFactor_R',2] = BurialFactor_R
-  parameters[parameters$Parameter == 'BurialFactor_L',2] = BurialFactor_L
-  parameters[parameters$Parameter == 'POC_lcR',2] = POC_lcR
-  parameters[parameters$Parameter == 'POC_lcL',2] = POC_lcL
-  write.table(parameters,file = ParameterFile,quote = F,row.names = F)
-}
-
-# 
-# ####################### END OPTIMIZATION ROUTINE #################################
+# ####################### END MODEL SETUP #################################
 # ####################### MAIN PROGRAM #############################################
 
 for (i in 1:(steps)) {
@@ -311,8 +150,8 @@ for (i in 1:(steps)) {
   PhoticDepth <- log(100)/(1.7/InputData$Secchi[i]) #Calc photic depth as function of Secchi depth
   if (PhoticDepth>LakeDepth){PhoticDepth<-LakeDepth} #QC - If photic depth calc'ed as greater than lake depth, photic depth = lake depth
   GPPrates <- GPP(InputData$Chla[i],InputData$TP[i],PhoticDepth,InputData$EpiTemp[i],yday(InputData$datetime[i])) #mg C/m^2/d
-  PPdata$GPP_DOCL_rate[i] = GPPrates$GPP_DOC_rate #mg C/m2/d
-  PPdata$GPP_POCL_rate[i] = GPPrates$GPP_POC_rate #mg C/m2/d #All NPP in POC
+  PPdata$GPP_DOCL_rate[i] = 0.2*GPPrates$GPP_DOC_rate #mg C/m2/d
+  PPdata$GPP_POCL_rate[i] = 0.2*GPPrates$GPP_POC_rate #mg C/m2/d #All NPP in POC
   PPdata$NPP_DOCL_mass[i] <- PPdata$GPP_DOCL_rate[i]*LakeArea*TimeStep/1000 #g
   PPdata$NPP_POCL_mass[i] <- PPdata$GPP_POCL_rate[i]*LakeArea*TimeStep/1000 #g
   
@@ -408,15 +247,13 @@ POC_df$POCalloch_g <- SWGWData$POCR_massIn_g
 POC_df$POCautoch_g <- PPdata$NPP_POCL_mass
 POC_df$POCout_g = SWGWData$POCR_outflow + SWGWData$POCL_outflow + SedData$POC_burial_total + LeachData$POCR_leachOut + LeachData$POCL_leachOut
 
-<<<<<<< HEAD
 DOC_df$DOCload_g <- PPdata$NPP_DOCL_mass + SWGWData$DOCR_massIn_g + LeachData$DOCR_leachIn + LeachData$DOCL_leachIn #g
 DOC_df$DOCalloch_g <- SWGWData$DOCR_massIn_g
 DOC_df$DOCautoch_g <- LeachData$POCL_leachOut
-=======
+
 DOC_df$DOCload_g <- PPdata$NPP_DOCL_mass + SWGWData$DOCR_massIn_g #+ LeachData$DOCR_leachIn + LeachData$DOCL_leachIn #g
 DOC_df$DOCalloch_g <- SWGWData$DOCR_massIn_g #+ LeachData$DOCR_leachIn
 DOC_df$DOCautoch_g <- PPdata$NPP_DOCL_mass #+ LeachData$DOCL_leachIn
->>>>>>> ea0ce19f969555c63ba5271650597186a6976922
 DOC_df$DOCout_g <- SWGWData$DOCR_outflow + SWGWData$DOCL_outflow + PPdata$DOCR_massRespired + PPdata$DOCL_massRespired #g
 
 #OC mass sourced/sank at each time step
@@ -460,14 +297,10 @@ if (ValidationFlag==1){
   CalibrationOutputDOC$Modelled <- DOC_df$DOCtotal_conc_gm3[modIndx]
   
   #DO Validation Output Setup
-  newDO <- ValidationDataDO %>% mutate(DO_sat = o2.at.sat.base(wtr)) %>%
-    group_by(datetime) %>%
-    summarise_all(.,funs(mean),na.rm=T)
+  ModelO2 = Metabolism %>% mutate(datetime = as.Date(Date)) %>%
+    select(datetime,Flux_Modelled=Oxygen,Conc_Modelled=Oxygen_conc)
+  CalibrationOutputDO = left_join(ValidationDataDO,ModelO2)
   
-  CalibrationOutputDO = left_join(data.frame(datetime = as.Date(DOC_df$Date)),newDO)
-  CalibrationOutputDO$Conc_Modelled <- Metabolism$Oxygen_conc
-  CalibrationOutputDO$Flux_Modelled <- Metabolism$Oxygen
-
   #Plot Calibration DOC
   par(mfrow=c(2,1),mar=c(2,3,2,1),mgp=c(1.5,0.3,0),tck=-0.02)
   plot(CalibrationOutputDOC$datetime,CalibrationOutputDOC$Measured,type='o',pch=19,cex=0.7,ylab = 'DOC',xlab='',
@@ -479,7 +312,7 @@ if (ValidationFlag==1){
   
   #Plot Calibration DO
   plot(CalibrationOutputDO$datetime,CalibrationOutputDO$DO_con,type='o',pch=19,cex=0.7,ylab = 'DO Flux',xlab='',
-       ylim = c(min(CalibrationOutputDO[,c(3,6)],na.rm = T),max(CalibrationOutputDO[,c(3,6)],na.rm = T)))
+       ylim = c(min(CalibrationOutputDO[,c(3,7)],na.rm = T),max(CalibrationOutputDO[,c(3,7)],na.rm = T)))
   lines(CalibrationOutputDO$datetime,CalibrationOutputDO$Conc_Modelled,col='darkgreen',lwd=1,type='l')
 
   abline(v = as.Date(paste0(unique(year(DOC_df$Date)),'-01-01')),lty=2,col='grey50') #lines at Jan 1

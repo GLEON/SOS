@@ -253,38 +253,6 @@ png(paste0('R/FMEresults/',LakeName,'_sensitivity.png'),height = 8,width = 7,uni
   }
 dev.off()
 
-plot.sensRange.HD <- function (x,Select = 2,cols){
-  npar <- attr(x, "npar")
-  nx <- attr(x, "nx")
-  varnames <- attr(x, "var")
-  X <- attr(x, "x")
-  X <- as.Date(strptime(X,'%Y-%m-%d'))
-  sens <- x[, -(1:npar)]
-  
-  ii <- ((Select - 1) * nx + 1):(Select * nx)
-  y = t(sens[,ii])
-  lines(X, rowMeans(y), col = add.alpha(cols,0), lwd = 2,type='l') 
-  min = apply(y,1,min)
-  max = apply(y,1,max)
-  polygon(x = c(X,rev(X)),y = c(min,rev(max)),col= add.alpha(cols,0.6),border = add.alpha(cols,0.6))
-}
-
-png(paste0('R/FMEresults/',LakeName,'_sensitivity_all.png'),height = 8,width = 7,units = 'in',res=300)
-  par(mar = c(3,3,1,1),mgp=c(1.5,0.5,0),mfrow=c(1,1))
-  # PLOTTING
-  plot(joinDOC$datetime,joinDOC$DOC,type='o',ylab='DOC',xlab='Date',pch=16,cex=0.7,ylim=c(1,8))
-  # lines(joinMod$datetime,joinMod$DOCwc,type='o',col='grey50')
-  # lines(joinDOC$datetime,joinDOC$DOC_conc,type='o',col='red3',pch=16,cex=0.7)
-  
-  cols = c('navy','red3','darkgreen','gold')
-  for (i in 1:4){
-    plot.sensRange.HD(Sens[[i]],Select = 2,cols = cols[i])
-    lines(as.POSIXlt(ValidationDataDOC$datetime),ValidationDataDOC$DOC,lty=2,pch=16,cex=0.7,type='o')
-  }
-  
-  legend('topleft',legend = c('Observed','Respiration_Alloch','Respiration_Auto','Burial_Alloch','Burial_Auto'),
-         fill=c('black',cols),bty='n')
-dev.off()
 
 
 ##------------------------------------------------------------------------------
@@ -312,27 +280,6 @@ plot(summary(sensRange(parms=pars, parInput=MCMC$par,
                        f=modelDOC, num=100)), xyswap=TRUE)
 
 
-
-
-DOCR_RespParam <- optimOut$par[1]
-DOCL_RespParam <- optimOut$par[2]
-R_auto <- optimOut$par[3]
-BurialFactor_R <- optimOut$par[4]
-BurialFactor_L <- optimOut$par[5] 
-POC_lcR <- optimOut$par[6]
-POC_lcL <- optimOut$par[7]
-}
-
-if (updateParameters == 1){
-  parameters[parameters$Parameter == 'DOCR_RespParam',2] = DOCR_RespParam
-  parameters[parameters$Parameter == 'DOCL_RespParam',2] = DOCL_RespParam
-  parameters[parameters$Parameter == 'R_auto',2] = R_auto
-  parameters[parameters$Parameter == 'BurialFactor_R',2] = BurialFactor_R
-  parameters[parameters$Parameter == 'BurialFactor_L',2] = BurialFactor_L
-  parameters[parameters$Parameter == 'POC_lcR',2] = POC_lcR
-  parameters[parameters$Parameter == 'POC_lcL',2] = POC_lcL
-  write.table(parameters,file = ParameterFile,quote = F,row.names = F)
-}
 
 
 

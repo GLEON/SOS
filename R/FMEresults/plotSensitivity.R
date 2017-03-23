@@ -126,13 +126,12 @@ plot.sensRange.HD <- function (x,Select = 2,cols){
   polygon(x = c(X,rev(X)),y = c(min,rev(max)),col= add.alpha(cols,0.6),border = add.alpha(cols,0.6))
 }
 
+###### PLOTTING #############
 png(paste0('R/FMEresults/',LakeName,'_sensitivity_all.png'),height = 8,width = 7,units = 'in',res=300)
   par(mar = c(3,3,1,1),mgp=c(1.5,0.5,0),mfrow=c(1,1))
-  # PLOTTING
+
   plot(joinDOC$datetime,joinDOC$DOC,type='o',ylab='DOC',xlab='Date',pch=16,cex=0.7,ylim=c(1,8))
-  # lines(joinMod$datetime,joinMod$DOCwc,type='o',col='grey50')
-  # lines(joinDOC$datetime,joinDOC$DOC_conc,type='o',col='red3',pch=16,cex=0.7)
-  
+
   cols = c('navy','red3','darkgreen','gold')
   for (i in 1:4){
     plot.sensRange.HD(Sens[[i]],Select = 2,cols = cols[i])
