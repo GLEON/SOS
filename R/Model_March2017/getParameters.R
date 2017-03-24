@@ -40,4 +40,4 @@ getParameters2 <- function(lakenames) {
   return(df)
 }
 gP = getParameters2(c('Monona','Trout','Harp','Vanern','Toolik'))
-View(gP)
+write.table(gP, "clipboard", sep="\t", row.names=FALSE, col.names=FALSE)
