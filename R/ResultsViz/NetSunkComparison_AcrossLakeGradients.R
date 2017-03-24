@@ -7,10 +7,10 @@
 library(dplyr)
 
 #### Set your own working directory #####
-setwd("H:/Ian_GIS/GLEON/SOS/")
+#setwd("H:/Ian_GIS/GLEON/SOS/")
 
 #### Plot mean fate Results for all lakes ####
-SOS_mean = read.csv('SOS_mean.csv')
+SOS_mean = read.csv('FateOutputs_byLake.csv')
 colnames(SOS_mean)[1] = 'Lake' #for joining later
 laketable = read.csv('Table1_SOS_Lake_Summary.csv')
 
@@ -41,7 +41,7 @@ par('cex'=1)
 par('cex.main'=1)
 ylab = 'Sedimentation (g/m2/yr)'
 col = 'gray'
-ylim = c(0,80)
+ylim = c(-80,0)
 
 # for x axis
 endlabel = length(variable_df$LakeAbbr) * 1.2 
@@ -125,7 +125,7 @@ par('cex'=1)
 par('cex.main'=1)
 ylab = 'Respiration (g/m2/yr)'
 col = 'gray'
-ylim=c(0,80)
+ylim=c(-100,0)
 
 # for x axis
 endlabel = length(variable_df$LakeAbbr) * 1.2 
@@ -209,7 +209,7 @@ par('cex'=1)
 par('cex.main'=1)
 ylab = 'Allochthonous (g/m2/yr)'
 col = 'gray'
-ylim=c(0,80)
+ylim=c(0,300)
 
 # for x axis
 endlabel = length(variable_df$LakeAbbr) * 1.2 
@@ -377,7 +377,7 @@ par('cex'=1)
 par('cex.main'=1)
 ylab = 'Outflow (g/m2/yr)'
 col = 'gray'
-ylim=c(0,80)
+ylim=c(-200,0)
 
 # for x axis
 endlabel = length(variable_df$LakeAbbr) * 1.2 
@@ -389,7 +389,7 @@ tickedoff = seq(0.7, endlabel, 1.2)
 byArea = variable_df[order(variable_df$area_rank) , ]
 labels = byArea$LakeAbbr
 
-barplot(byArea$Autoch_gm2y, xlab='', ylab=ylab, xaxt='n', ylim=ylim,
+barplot(byArea$Out_gm2y, xlab='', ylab=ylab, xaxt='n', ylim=ylim,
         main='Lake Area', col=col)
 axis(side=1,at=c(tickedoff), labels=labels, las=2,cex.axis=1)
 
@@ -397,7 +397,7 @@ axis(side=1,at=c(tickedoff), labels=labels, las=2,cex.axis=1)
 byVolume = variable_df[order(variable_df$volume_rank) , ]
 labels = byVolume$LakeAbbr
 
-barplot(byVolume$Autoch_gm2y, xlab='', ylab=ylab, xaxt='n', ylim=ylim,
+barplot(byVolume$Out_gm2y, xlab='', ylab=ylab, xaxt='n', ylim=ylim,
         main='Volume', col=col)
 axis(side=1,at=c(tickedoff), labels=labels, las=2,cex.axis=1)
 
@@ -405,7 +405,7 @@ axis(side=1,at=c(tickedoff), labels=labels, las=2,cex.axis=1)
 byPerim = variable_df[order(variable_df$perim_rank) , ]
 labels = byPerim$LakeAbbr
 
-barplot(byPerim$Autoch_gm2y, xlab='', ylab='', xaxt='n', ylim=ylim,
+barplot(byPerim$Out_gm2y, xlab='', ylab='', xaxt='n', ylim=ylim,
         main='Perimeter', col=col)
 axis(side=1,at=c(tickedoff), labels=labels, las=2,cex.axis=1)
 
@@ -413,7 +413,7 @@ axis(side=1,at=c(tickedoff), labels=labels, las=2,cex.axis=1)
 byResTime = variable_df[order(variable_df$restime_rank) , ]
 labels = byResTime$LakeAbbr
 
-barplot(byResTime$Autoch_gm2y, xlab='', ylab='', xaxt='n', ylim=ylim,
+barplot(byResTime$Out_gm2y, xlab='', ylab='', xaxt='n', ylim=ylim,
         main='Residence Time', col=col)
 axis(side=1,at=c(tickedoff), labels=labels, las=2)
 
@@ -421,7 +421,7 @@ axis(side=1,at=c(tickedoff), labels=labels, las=2)
 byMeanDepth = variable_df[order(variable_df$depth_rank) , ]
 labels = byMeanDepth$LakeAbbr
 
-barplot(byMeanDepth$Autoch_gm2y, xlab='', ylab='', xaxt='n', ylim=ylim,
+barplot(byMeanDepth$Out_gm2y, xlab='', ylab='', xaxt='n', ylim=ylim,
         main='Mean Depth', col=col)
 axis(side=1,at=c(tickedoff), labels=labels, las=2,cex.axis=1)
 
@@ -429,7 +429,7 @@ axis(side=1,at=c(tickedoff), labels=labels, las=2,cex.axis=1)
 byTP = variable_df[order(variable_df$TP_rank) , ]
 labels = byTP$LakeAbbr
 
-barplot(byTP$Autoch_gm2y, xlab='', ylab='', xaxt='n', ylim=ylim,
+barplot(byTP$Out_gm2y, xlab='', ylab='', xaxt='n', ylim=ylim,
         main='TP', col=col)
 axis(side=1,at=c(tickedoff), labels=labels, las=2,cex.axis=1)
 
@@ -437,7 +437,7 @@ axis(side=1,at=c(tickedoff), labels=labels, las=2,cex.axis=1)
 bySecchi = variable_df[order(variable_df$Secchi_rank) , ]
 labels = bySecchi$LakeAbbr
 
-barplot(bySecchi$Autoch_gm2y, xlab='', ylab='', xaxt='n', ylim=ylim,
+barplot(bySecchi$Out_gm2y, xlab='', ylab='', xaxt='n', ylim=ylim,
         main='Secchi', col=col)
 axis(side=1,at=c(tickedoff), labels=labels, las=2,cex.axis=1)
 
@@ -445,7 +445,7 @@ axis(side=1,at=c(tickedoff), labels=labels, las=2,cex.axis=1)
 byDOC = variable_df[order(variable_df$DOC_rank) , ]
 labels = byDOC$LakeAbbr
 
-barplot(byDOC$Autoch_gm2y, xlab='', ylab='', xaxt='n', ylim=ylim,
+barplot(byDOC$Out_gm2y, xlab='', ylab='', xaxt='n', ylim=ylim,
         main='DOC', col=col)
 axis(side=1,at=c(tickedoff), labels=labels, las=2,cex.axis=1)
 dev.off()
