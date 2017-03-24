@@ -1,7 +1,7 @@
 setwd('C:/Users/hdugan/Documents/Rpackages/SOS/')
 # setwd("~/Documents/Rpackages/SOS")
 #Flags 1 for yes, else no.
-LakeName = 'Trout'
+LakeName = 'Toolik'
 ValidationFlag = 1
 WriteFiles = 1
 BootstrapFlag = 0
