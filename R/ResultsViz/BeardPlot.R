@@ -69,7 +69,7 @@ par(mar=c(2.5,2.5,2,1),mgp=c(1.5,0.5,0),tck=-0.03,cex=0.8)
 xlab = 'Resp/Burial'
 ylab = 'log(Alloch/Autoch)'
 ylim = c(-3,3)
-xlim = c(-2.5,2.5)
+xlim = c(-3,3)
 pch = 19
 
 cols = rainbow(12)[month(Harp$Date)]
