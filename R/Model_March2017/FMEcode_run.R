@@ -141,7 +141,7 @@ fitTest <- function(pars){
   joinDO = inner_join(ValidationDataDO,modeled,by='datetime')
 
   # PLOTTING and GOF
-  # png(paste0('R/FMEresults/',LakeName,'FMEfit.png'),width = 6,height = 8,units = 'in',res = 300)
+  png(paste0('R/FMEresults/',LakeName,'FMEfit.png'),width = 6,height = 8,units = 'in',res = 300)
   par(mar=c(3,3,3,1),mgp=c(1.5,0.5,0),mfrow=c(2,1),cex=0.8)
     plot(joinDOC$datetime,joinDOC$DOC,type='o',xlab='Date',ylab = 'DOC (mg/L)',pch=16,main=LakeName)
     lines(joinDOC$datetime,joinDOC$DOCwc,type='o',col='grey50',pch=16)
@@ -151,7 +151,7 @@ fitTest <- function(pars){
     plot(joinDO$datetime,joinDO$DO_con,xlab='Date',type='o',ylab = 'DO (mg/L)',pch=16,main=LakeName)
     lines(joinDO$datetime,joinDO$MetabOxygen.oxy_conc,type='o',col='red3',pch=16)
     
-  # dev.off()
+  dev.off()
   #Goodness of fit
   library(hydroGOF)
   print(paste('RMSE = ',rmse(c(joinDOC$DOC,joinDO$DO_con), c(joinDOC$DOC_conc,joinDO$MetabOxygen.oxy_conc))))

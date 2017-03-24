@@ -29,7 +29,7 @@ getParameters2 <- function(lakenames) {
   for (n in 1:length(lakenames)) {
     LakeName = lakenames[n]
     ##### READ PARAMETER FILE ##################
-    for (i in 1:3){ # assign parameters
+    for (i in 1){ # assign parameters
       if (i == 1){ParameterFile <- paste('./R/FMEresults/',LakeName,'_fitpars.csv',sep='')}
       if (i == 2) {ParameterFile <- paste('./R/FMEresults/',LakeName,'_fitpars_Burial0.csv',sep='')}
       if (i == 3) {ParameterFile <- paste('./R/FMEresults/',LakeName,'_fitpars_Burial1.csv',sep='')}
