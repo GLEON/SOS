@@ -16,9 +16,3 @@ DOC_precip 2 g/m3
 ObservedMAR_oc 186 g/m2/yr
 ProdStartDay 100 JulianDay
 ProdEndDay 300 JulianDay
-
-#Fit Parameters
-DOCR_RespParam 0.0012299687291234 unitless
-DOCL_RespParam 0.0891577643672559 unitless
-BurialFactor_R 0.999166508564389 1/days
-BurialFactor_L 1 1/day

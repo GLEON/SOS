@@ -9,7 +9,8 @@ timestampFormat =	'%Y-%m-%d'
 ##### INPUT FILE NAMES ################
 TimeSeriesFile <- paste('./',LakeName,'Lake/',LakeName,'TS.csv',sep='')
 RainFile <- paste('./',LakeName,'Lake/',LakeName,'Rain.csv',sep='')
-ParameterFile <- paste('./',LakeName,'Lake/','ConfigurationInputs',LakeName,'.txt',sep='')
+ParameterFile <- paste('./',LakeName,'Lake/','ConfigurationInputs',LakeName,'.txt',sep='')\
+FreeParFile <- paste('./R/FMEresults/',LakeName,'_fitpars.csv',sep='')
 ValidationFileDOC <- paste('./',LakeName,'Lake/',LakeName,'ValidationDOC.csv',sep='')
 ValidationFileDO <- paste('./',LakeName,'Lake/',LakeName,'ValidationDO.csv',sep='')
 
@@ -34,7 +35,11 @@ parameters <- read.table(file = ParameterFile,header=TRUE,comment.char="#",strin
 for (i in 1:nrow(parameters)){ # assign parameters
   assign(parameters[i,1],parameters[i,2])
 }
-
+freeParams <- read.table(file = FreeParFile,header=TRUE,comment.char="#",stringsAsFactors = F)
+freeParamsNames <- c('DOCR_RespParam','DOCL_RespParam','BurialFactor_R','BurialFactor_L')
+for (i in 1:4){ # assign parameters
+  assign(freeParamsNames[i],freeParams[i,1])
+}
 ##### READ MAIN INPUT FILE #################
 RawData <- read.csv(TimeSeriesFile,header=T) #Read main data file with GLM outputs (physical input) and NPP input
 RawData$datetime <- as.POSIXct(strptime(RawData$datetime,timestampFormat),tz="GMT") #Convert time to POSIX

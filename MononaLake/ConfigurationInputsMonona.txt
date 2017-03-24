@@ -15,8 +15,3 @@ PropGW 0 unitless
 DOC_precip 2 g/m3
 DOC_miner_const 0.003 1/days
 ObservedMAR_oc 249 g/m2/y
-
-DOCR_RespParam 0.000308457095139171 unitless
-DOCL_RespParam 0.1 unitless
-BurialFactor_R 0.934728985971142 1/days
-BurialFactor_L 0.999999995827991 1/day
