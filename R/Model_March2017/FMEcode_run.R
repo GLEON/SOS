@@ -93,7 +93,6 @@ DOC_DO_diff <- function(pars){
   joinDO = inner_join(ValidationDataDO,modeled,by='datetime')
   resDO = joinDO$DO_con - joinDO$MetabOxygen.oxy_conc
   lengthScale = length(resDO)/length(resDOC)
-  print(acf(c(resDOC,resDO/lengthScale)))
   return(c(resDOC,resDO/lengthScale))
 }
 testACF <- function(pars){
