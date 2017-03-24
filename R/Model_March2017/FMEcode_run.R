@@ -1,5 +1,5 @@
 setwd("~/Documents/SOS")
-LakeName = 'Vanern'
+LakeName = 'Harp'
 
 ##### LOAD PACKAGES ########################
 library(lubridate)
@@ -93,9 +93,21 @@ DOC_DO_diff <- function(pars){
   joinDO = inner_join(ValidationDataDO,modeled,by='datetime')
   resDO = joinDO$DO_con - joinDO$MetabOxygen.oxy_conc
   lengthScale = length(resDO)/length(resDOC)
+  print(acf(c(resDOC,resDO/lengthScale)))
   return(c(resDOC,resDO/lengthScale))
 }
-
+testACF <- function(pars){
+  # DOC model 
+  modeled = modelDOC(pars[1],pars[2],pars[3],pars[4])
+  joinDOC = inner_join(ValidationDataDOC,modeled,by='datetime')
+  resDOC = joinDOC$DOC - joinDOC$DOC_conc
+  acf(resDOC)
+  joinDO = inner_join(ValidationDataDO,modeled,by='datetime')
+  resDO = joinDO$DO_con - joinDO$MetabOxygen.oxy_conc
+  acf(resDO)
+}
+par(mfrow=c(2,1),mgp=c(1.5,0.5,0))
+testACF(pars)
 ## PLOTTING and GOF
 # modeled = modelDOC(pars[1],pars[2],pars[3],pars[4])
 # par(mfrow=c(2,1),mar=c(3,3,1,1),mgp=c(1.5,0.5,0))

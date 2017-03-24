@@ -12,22 +12,18 @@ library(lubridate)
 clean_shave = function(lakename) {
   
   #read in results csv files of DOC and POC
-  #lakename = lake name
   wd = getwd()
   DOCpath = paste0(wd,'/',lakename,'Lake','/Results/',lakename,'_DOC_Results.csv')
   DOC = read.csv(DOCpath)
   POCpath = paste0(wd,'/',lakename,'Lake','/Results/',lakename,'_POC_Results.csv')
   POC = read.csv(POCpath)
-  
-  # create new data frame with select columns
-  # lake_df = data.frame(Date = DOC$Date, Resp = DOC$respOut_gm2y,
-  #                        Sed = POC$sedOut_gm2y, Alloch = DOC$DOCalloch_g + POC$POCalloch_g,
-  #                        Autoch = DOC$DOCautoch_g + POC$POCautoch_g)
-  
+  Inputpath = paste0(wd,'/',lakename,'Lake','/Results/',lakename,'_InputData.csv')
+  InputData = read.csv(Inputpath)
+
   #IM: redid above lines because had been using cumulative totals for some fluxes; didn't make sense
   lake_df = data.frame(Date = DOC$Date, Resp = DOC$respOut_gm2y,
                        Sed = POC$sedOut_gm2y, Alloch = DOC$FlowIn_gm2y+DOC$leachIn_gm2y+POC$FlowIn_gm2y,
-                       Autoch = POC$NPPin_gm2y+DOC$NPPin_gm2y)
+                       Autoch = POC$NPPin_gm2y+DOC$NPPin_gm2y,Temp = InputData$EpiTemp)
 
   # retain only complete cases
   cc = which(complete.cases(lake_df))
@@ -43,15 +39,10 @@ clean_shave = function(lakename) {
   lake_df$logRS = log10(lake_df$RS)
   lake_df$AA = lake_df$Alloch/lake_df$Autoch
   lake_df$logAA = log10(lake_df$AA)
-  
-  # get rid of NAs produced by log transformation
-  # KF: I am #-ing this command for now; NaNs will automatically be removed when we plot, 
-  #     but if we keep this line here, it will remove lines that are complete cases if using non-logged plotting
-  # IM: OK, thank you KF 
-  #lake_df = na.omit(lake_df)
-  
+
   # Output each lake as a dataframe
-  data.frame(Date = lake_df$Date, RS = lake_df$RS, logRS = lake_df$logRS, AA = lake_df$AA, logAA = lake_df$logAA)
+  data.frame(Date = lake_df$Date, RS = lake_df$RS, logRS = lake_df$logRS, AA = lake_df$AA, logAA = lake_df$logAA,
+             temp = lake_df$Temp)
 }
 
 # run over the lakes
@@ -64,37 +55,36 @@ Harp = clean_shave('Harp')
 
 # plot
 png(paste0('R/ResultsViz/Figures/beardplot.png'),width = 8,height = 4,units = 'in',res=300)
-par(mfrow=c(1,6))
+par(mfrow=c(2,3))
 par(mar=c(2.5,2.5,2,1),mgp=c(1.5,0.5,0),tck=-0.03,cex=0.8)
 xlab = 'Resp/Burial'
 ylab = 'log(Alloch/Autoch)'
-ylim = c(-3,3)
-xlim = c(-3,3)
 pch = 19
 
 cols = rainbow(12)[month(Harp$Date)]
-plot(logAA ~ logRS, Harp, xlab = '', ylab = ylab, main='Harp', pch=pch, col= cols,xlim=xlim,ylim=ylim)
+cols = heat.colors(12)[round(Harp$temp)]
+plot(logAA ~ logRS, Harp, xlab = xlab, ylab = ylab, main='Harp', pch=pch, col= cols)
 mtext(side=3, paste0('n=',nrow(Harp)), cex=0.5)
 abline(h=1,v=1,lty=2,col='red4',lwd=1.5)
 #legend('topleft',legend = month.abb[1:12],ncol=1,fill=rainbow(12),bty='n')
 
 cols = rainbow(12)[month(Monona$Date)]
-plot(logAA ~ logRS, Monona, xlab = '', ylab = '', main='Monona', pch=pch, col= cols,xlim=xlim,ylim=ylim)
+plot(logAA ~ logRS, Monona, xlab = xlab, ylab = ylab, main='Monona', pch=pch, col= cols,xlim=c(-1.5,1.05))
 mtext(side=3, paste0('n=',nrow(Monona)), cex=0.5)
 abline(h=1,v=1,lty=2,col='red4',lwd=1.5)
 
 cols = rainbow(12)[month(Trout$Date)]
-plot(logAA ~ logRS, Trout, xlab = xlab, ylab = '', main='Trout', pch=pch, col= cols,xlim=xlim,ylim=ylim)
+plot(logAA ~ logRS, Trout, xlab = xlab, ylab = ylab, main='Trout', pch=pch, col= cols,ylim=c(-0.2,1.05))
 mtext(side=3, paste0('n=',nrow(Trout)), cex=0.5)
 abline(h=1,v=1,lty=2,col='red4',lwd=1.5)
 
 cols = rainbow(12)[month(Vanern$Date)]
-plot(logAA ~ logRS, Vanern, xlab = '', ylab = '', main='Vanern', pch=pch, col=cols,xlim=xlim,ylim=ylim)
+plot(logAA ~ logRS, Vanern, xlab = xlab, ylab = ylab, main='Vanern', pch=pch, col=cols,xlim=c(-0.25,1.05),ylim=c(-1,1.05))
 mtext(side=3, paste0('n=',nrow(Vanern)), cex=0.5)
-abline(h=1,v=0,lty=2,col='red4',lwd=1.5)
+abline(h=1,v=1,lty=2,col='red4',lwd=1.5)
 
 cols = rainbow(12)[month(Toolik$Date)]
-plot(logAA ~ logRS, Toolik, xlab = '', ylab = '', main='Toolik', pch=19, col= cols,xlim=xlim,ylim=ylim)
+plot(logAA ~ logRS, Toolik, xlab = xlab, ylab = ylab, main='Toolik', pch=19, col= cols)
 mtext(side=3, paste0('n=',nrow(Toolik)), cex=0.5)
 abline(h=1,v=1,lty=2,col='red4',lwd=1.5)
 

@@ -1,7 +1,7 @@
 setwd('C:/Users/hdugan/Documents/Rpackages/SOS/')
 # setwd("~/Documents/Rpackages/SOS")
 #Flags 1 for yes, else no.
-LakeName = 'Vanern'
+LakeName = 'Trout'
 ValidationFlag = 1
 WriteFiles = 1
 BootstrapFlag = 0
@@ -211,7 +211,7 @@ for (i in 1:(steps)) {
     Metabolism$Oxygen_conc[i+1] = Metabolism$Oxygen_conc[i] + Metabolism$Oxygen[i] - Fatm
     
     #Update POC and DOC concentration values (g/m3) for whole lake
-      POC_df$POCL_conc_gm3[i] <-  (POCL_mass - LeachData$POCL_leachOut[i] - SedData$POC_burial_L[i])/LakeVolume #g/m3
+    POC_df$POCL_conc_gm3[i] <-  (POCL_mass - LeachData$POCL_leachOut[i] - SedData$POC_burial_L[i])/LakeVolume #g/m3
     POC_df$POCR_conc_gm3[i] <-  (POCR_mass - LeachData$POCR_leachOut[i] - SedData$POC_burial_R[i])/LakeVolume
     POC_df$POCtotal_conc_gm3[i] = POC_df$POCR_conc_gm3[i] + POC_df$POCL_conc_gm3[i]
 
