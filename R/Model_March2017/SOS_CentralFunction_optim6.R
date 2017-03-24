@@ -1,7 +1,7 @@
 setwd('C:/Users/hdugan/Documents/Rpackages/SOS/')
 # setwd("~/Documents/Rpackages/SOS")
 #Flags 1 for yes, else no.
-LakeName = 'Toolik'
+LakeName = 'Vanern'
 ValidationFlag = 1
 WriteFiles = 1
 BootstrapFlag = 0
@@ -314,8 +314,10 @@ if (ValidationFlag==1){
 }
 
 ################## Calc goodness of fit #################
+CalibrationOutputDOC = CalibrationOutputDOC[complete.cases(CalibrationOutputDOC),]
+CalibrationOutputDO = CalibrationOutputDO[complete.cases(CalibrationOutputDO),]
 
-RMSE_DOC <- sqrt((1/length(CalibrationOutputDOC[,1]))*sum((CalibrationOutputDOC$Measured-CalibrationOutputDOC$Modelled)^2)) #mg^2/L^2
+RMSE_DOC <- sqrt((1/length(CalibrationOutputDOC[,1]))*sum((CalibrationOutputDOC$DOC-CalibrationOutputDOC$Modelled)^2)) #mg^2/L^2
 RMSE_DO <- sqrt((1/length(CalibrationOutputDO[,1]))*sum((CalibrationOutputDO$DO_con - CalibrationOutputDO$Conc_Modelled)^2)) #mg^2/L^2
 print(paste0('RMSE DOC ',RMSE_DOC))
 print(paste0('RMSE DO ',RMSE_DO))
