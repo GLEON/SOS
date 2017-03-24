@@ -91,9 +91,9 @@ SOS_fate = function(LakeName, monthlyFlag){
   
   dStorage = (DeltaPOC/area/(nrow(POC_df)/365)) + (DeltaDOC/area/(nrow(DOC_df)/365)) #g/m2/yr
   
-  PipeProc = ocResp + ocSed
+  PipeProc = ocResp - ocSed
   Budget_left = total_load
-  Budget_right = -ocResp - ocSed + ocExport + dStorage # should equal Budget_left
+  Budget_right = -ocResp - ocSed - ocExport + dStorage # should equal Budget_left
 
   Date = as.Date(DOC_df$Date)
   Year = as.factor(year(Date))
@@ -104,7 +104,7 @@ SOS_fate = function(LakeName, monthlyFlag){
 }
 
 #### run function over lakes ####
-monthlyFlag = 1 #1=monthly, 0=daily
+monthlyFlag = 0 #1=monthly, 0=daily
 Harp = SOS_fate('Harp',monthlyFlag = monthlyFlag) 
 Monona = SOS_fate('Monona',monthlyFlag = monthlyFlag)
 Toolik = SOS_fate('Toolik', monthlyFlag = monthlyFlag)
