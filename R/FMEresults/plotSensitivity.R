@@ -86,8 +86,8 @@ for (LakeName in lakenames) {
   ##------------------------------------------------------------------------------
   ##   Sensitivity range
   ##------------------------------------------------------------------------------
-  lowerBound = c(0.00003,0.03,0,0)
-  upperBound = c(0.03,0.3,1,1)
+  lowerBound = c(0.00003,0.003,0,0)
+  upperBound = c(0.003,0.3,1,1)
   pRange <- data.frame(min = lowerBound, max = upperBound)
   rownames(pRange) = c('DOCR_RespParam','DOCL_RespParam','BurialFactor_R','BurialFactor_L')
   ## 2. Calculate sensitivity: model is solved 10 times, uniform parameter distribution (default)
@@ -135,8 +135,8 @@ getPars <- function(LakeName) {
 
 
 ###### PLOTTING #############
-png(paste0('R/FMEresults/plotSensitivity_all.png'),height = 8,width = 7,units = 'in',res=300)
-  par(mar = c(3,3,2,1),mgp=c(1.5,0.5,0),mfrow=c(3,2))
+png(paste0('R/FMEresults/plotSensitivity_all2.png'),height = 6,width = 8,units = 'in',res=300)
+  par(mar = c(3,3,2,1),mgp=c(1.5,0.5,0),mfrow=c(2,3))
   
   for (LakeName in lakenames) {
 
@@ -210,7 +210,7 @@ png(paste0('R/FMEresults/plotSensitivity_all.png'),height = 8,width = 7,units = 
     modeled = modelDOC(pars[1],pars[2],pars[3],pars[4])
 
     joinDOC = inner_join(ValidationDataDOC,modeled,by='datetime')
-    plot(joinDOC$datetime,joinDOC$DOC,type='o',ylab='DOC',xlab='Date',pch=16,cex=0.7,ylim=c(1,8),main=LakeName)
+    plot(joinDOC$datetime,joinDOC$DOC,type='o',ylab='DOC (mg/L)',xlab='Date',pch=16,cex=0.7,ylim=c(1,8),main=LakeName)
     # lines(joinDOC$datetime,joinDOC$DOC_conc,col='red3',type='o')
     
     # Get Sensitivity Data
@@ -220,9 +220,11 @@ png(paste0('R/FMEresults/plotSensitivity_all.png'),height = 8,width = 7,units = 
       plot.sensRange.HD(Sens[[i]],Select = 2,cols = cols[i])
       lines(as.POSIXlt(ValidationDataDOC$datetime),ValidationDataDOC$DOC,lty=2,pch=16,cex=0.7,type='o')
     }
+    lines(joinDOC$datetime,joinDOC$DOC,type='o',pch=16,cex=0.7)
+    
   }
   plot.new()
-  legend('topleft',legend = c('Observed','Respiration_Alloch (0.00003-0.03)','Respiration_Auto (0.03-0.3)',
+  legend('topleft',legend = c('Observed','Respiration_Alloch (0.00003-0.003)','Respiration_Auto (0.003-0.3)',
                               'Burial_Alloch (0-1)','Burial_Auto (0-1)'),
          fill=c('black',cols),bty='n',cex=1)
 dev.off()
