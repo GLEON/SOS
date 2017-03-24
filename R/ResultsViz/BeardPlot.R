@@ -2,6 +2,7 @@
 # Warning: things could get hairy
 
 library(lubridate)
+library(fields)
 
 #### Set your own working directory #####
 #setwd("C:/Users/Ian/Desktop/GLEON/SOS/")
@@ -54,43 +55,56 @@ Harp = clean_shave('Harp')
 #Annie = clean_shave('Annie')
 
 # plot
-png(paste0('R/ResultsViz/Figures/beardplot.png'),width = 8,height = 4,units = 'in',res=300)
-par(mfrow=c(2,3))
-par(mar=c(2.5,2.5,2,1),mgp=c(1.5,0.5,0),tck=-0.03,cex=0.8)
-xlab = 'Resp/Burial'
-ylab = 'log(Alloch/Autoch)'
-pch = 19
-
-cols = rainbow(12)[month(Harp$Date)]
-cols = heat.colors(12)[round(Harp$temp)]
-plot(logAA ~ logRS, Harp, xlab = xlab, ylab = ylab, main='Harp', pch=pch, col= cols)
-mtext(side=3, paste0('n=',nrow(Harp)), cex=0.5)
-abline(h=1,v=1,lty=2,col='red4',lwd=1.5)
-#legend('topleft',legend = month.abb[1:12],ncol=1,fill=rainbow(12),bty='n')
-
-cols = rainbow(12)[month(Monona$Date)]
-plot(logAA ~ logRS, Monona, xlab = xlab, ylab = ylab, main='Monona', pch=pch, col= cols,xlim=c(-1.5,1.05))
-mtext(side=3, paste0('n=',nrow(Monona)), cex=0.5)
-abline(h=1,v=1,lty=2,col='red4',lwd=1.5)
-
-cols = rainbow(12)[month(Trout$Date)]
-plot(logAA ~ logRS, Trout, xlab = xlab, ylab = ylab, main='Trout', pch=pch, col= cols,ylim=c(-0.2,1.05))
-mtext(side=3, paste0('n=',nrow(Trout)), cex=0.5)
-abline(h=1,v=1,lty=2,col='red4',lwd=1.5)
-
-cols = rainbow(12)[month(Vanern$Date)]
-plot(logAA ~ logRS, Vanern, xlab = xlab, ylab = ylab, main='Vanern', pch=pch, col=cols,xlim=c(-0.25,1.05),ylim=c(-1,1.05))
-mtext(side=3, paste0('n=',nrow(Vanern)), cex=0.5)
-abline(h=1,v=1,lty=2,col='red4',lwd=1.5)
-
-cols = rainbow(12)[month(Toolik$Date)]
-plot(logAA ~ logRS, Toolik, xlab = xlab, ylab = ylab, main='Toolik', pch=19, col= cols)
-mtext(side=3, paste0('n=',nrow(Toolik)), cex=0.5)
-abline(h=1,v=1,lty=2,col='red4',lwd=1.5)
-
-# Plot legend
-plot.new()
-legend('topleft',legend = month.abb[1:12],ncol=1,fill=rainbow(12),bty='n')
+png(paste0('R/ResultsViz/Figures/beardplot2.png'),width = 8,height = 4,units = 'in',res=300)
+  par(mfrow=c(2,3))
+  par(mar=c(2.5,2.5,2.5,1),mgp=c(1.5,0.5,0),tck=-0.03,cex=0.8)
+  xlab = 'log(Resp/Burial)'
+  ylab = 'log(Alloch/Autoch)'
+  pch = 19
+  
+  cols = rev(heat.colors(30))[round(Harp$temp)]
+  plot(logAA ~ logRS, Harp, xlab = xlab, ylab = ylab, main='Harp', pch=pch, col= cols)
+  mtext(side=3, paste0('n=',nrow(Harp)), cex=0.6)
+  abline(h=1,v=1,lty=2,col='navy',lwd=1.5)
+  
+  cols = rev(heat.colors(30))[round(Monona$temp)]
+  plot(logAA ~ logRS, Monona, xlab = xlab, ylab = ylab, main='Monona', pch=pch, col= cols,xlim=c(-1.5,1.05))
+  mtext(side=3, paste0('n=',nrow(Monona)), cex=0.6)
+  abline(h=1,v=1,lty=2,col='navy',lwd=1.5)
+  
+  cols = rev(heat.colors(30))[round(Trout$temp)]
+  plot(logAA ~ logRS, Trout, xlab = xlab, ylab = ylab, main='Trout', pch=pch, col= cols,ylim=c(-0.2,1.05))
+  mtext(side=3, paste0('n=',nrow(Trout)), cex=0.6)
+  abline(h=1,v=1,lty=2,col='navy',lwd=1.5)
+  
+  cols = rev(heat.colors(30))[round(Vanern$temp)]
+  plot(logAA ~ logRS, Vanern, xlab = xlab, ylab = ylab, main='Vanern', pch=pch, col=cols,xlim=c(-0.25,1.05),ylim=c(-1,1.05))
+  mtext(side=3, paste0('n=',nrow(Vanern)), cex=0.6)
+  abline(h=1,v=1,lty=2,col='navy',lwd=1.5)
+  
+  cols = rev(heat.colors(30))[round(Toolik$temp)]
+  plot(logAA ~ logRS, Toolik, xlab = xlab, ylab = ylab, main='Toolik', pch=19, col= cols)
+  mtext(side=3, paste0('n=',nrow(Toolik)), cex=0.6)
+  abline(h=1,v=1,lty=2,col='navy',lwd=1.5)
+  
+  # Plot legend
+  plot.new()
+    # legend('topleft',legend = c(1:30),ncol=1,fill=rev(heat.colors(30)),bty='n')
+    colorbar.plot(0,0.5, strip = c(1:30), strip.width = 0.2, strip.length = 0.5,
+                  adj.x = 0.5, adj.y = 0.5, col = heat.colors(30), 
+                  horizontal = F)
+    text(0.15,0,labels = '30')
+    text(0.15,1,labels = '0')
+    text(0.2,0.5,labels = 'Temperature',srt=90)
+    
+  par(new=T)
+  par(mar=c(2.5,7,2.5,1),mgp=c(0.5,0,0))
+  plot(0:10,0:10,xaxt='n',yaxt='n',pch='',ylab='',xlab='Dominant Process')
+  abline(h=5,v=5,lty=2,col='navy',lwd=1.5)
+  mtext(text = 'Source',side = 4,line = -2,srt=90,cex=0.8,font = 2)
+  mtext(text = 'Sink',side = 2,line = -2,srt=90,cex=0.8,font = 2)
+  mtext(text = 'Autochthony',side = 1,line = -2,srt=90,cex=0.8,font = 2)
+  mtext(text = 'Allochthony',side = 3,line = -2,srt=90,cex=0.8,font = 2)
 dev.off()
 
 
