@@ -8,10 +8,18 @@ library(dplyr)
 library(FME)
 library(zoo)
 library(plyr)
+##### LOAD FUNCTIONS #######################
+source("./R/Model_March2017/SOS_Sedimentation.R")
+source("./R/Model_March2017/SOS_SWGW.R")
+source("./R/Model_March2017/SOS_GPP.R")
+source("./R/Model_March2017/SOS_Resp.R")
+source("./R/Model_March2017/modelDOC_7.R")
+source("./R/Model_March2017/SOS_fixToolik.R")
 ##### INPUT FILE NAMES ################
 TimeSeriesFile <- paste('./',LakeName,'Lake/',LakeName,'TS.csv',sep='')
 RainFile <- paste('./',LakeName,'Lake/',LakeName,'Rain.csv',sep='')
 ParameterFile <- paste('./',LakeName,'Lake/','ConfigurationInputs',LakeName,'.txt',sep='')
+FreeParFile <- paste('./R/FMEresults/',LakeName,'_fitpars.csv',sep='')
 ValidationFileDOC <- paste('./',LakeName,'Lake/',LakeName,'ValidationDOC.csv',sep='')
 ValidationFileDO <- paste('./',LakeName,'Lake/',LakeName,'ValidationDO.csv',sep='')
 timestampFormat =	'%Y-%m-%d'
@@ -33,6 +41,10 @@ InputData$Chla[InputData$Chla == 0] = 0.0001
 RainData <- read.csv(RainFile,header=T,stringsAsFactors = F) #Read daily rain file (units=mm) Read separately and added back to main file to avoid issues of linear interpolation with rain data in length units
 RainData$datetime <- as.POSIXct(strptime(RainData$datetime,timestampFormat,tz='GMT'))
 InputData$Rain <- RainData$Rain[RainData$datetime %in% InputData$datetime] #Plug daily rain data into InputData file to integrate with original code.
+#### For TOOLIK ONLY #### (dealing with ice season)
+if (LakeName=='Toolik') {
+  InputData = fixToolik(InputData)
+}
 
 #DOC Validation Output Setup
 ValidationDataDOC <- read.csv(ValidationFileDOC,header=T,stringsAsFactors = F)
@@ -56,18 +68,15 @@ ValidationDataDO = ValidationDataDO[IndxVal,]
 ValidationDataDO$DO_sat <- o2.at.sat(ValidationDataDO[,1:2])[,2]  
 ValidationDataDO$Flux <- k*(ValidationDataDO$DO_con - ValidationDataDO$DO_sat)/(PhoticDepth$PhoticDepth[IndxPhotic]) #g/m3/d
 
-
-##### LOAD FUNCTIONS #######################
-source("./R/Model_March2017/SOS_Sedimentation.R")
-source("./R/Model_March2017/SOS_SWGW.R")
-source("./R/Model_March2017/SOS_GPP.R")
-source("./R/Model_March2017/SOS_Resp.R")
-source("./R/Model_March2017/modelDOC_7.R")
-
 ##### READ PARAMETER FILE ##################
 parameters <- read.table(file = ParameterFile,header=TRUE,comment.char="#",stringsAsFactors = F)
 for (i in 1:nrow(parameters)){ # assign parameters
   assign(parameters[i,1],parameters[i,2])
+}
+freeParams <- read.table(file = FreeParFile,header=TRUE,comment.char="#",stringsAsFactors = F)
+freeParamsNames <- c('DOCR_RespParam','DOCL_RespParam','BurialFactor_R','BurialFactor_L')
+for (i in 1:4){ # assign parameters
+  assign(freeParamsNames[i],freeParams[i,1])
 }
 ###### Run Period and Time Step Setup #####
 TimeStep <- as.numeric(InputData$datetime[2]-InputData$datetime[1]) #days
@@ -106,8 +115,8 @@ DOC_DO_diff <- function(pars){
 
 # Starting parameters cannot be negative, because of bounds we set 
 parStart = pars
-lowerBound = c(0.00003,0.03,0,0)
-upperBound = c(0.03,0.3,1,1)
+lowerBound = c(0.00003,0.003,0,0)
+upperBound = c(0.003,0.3,1,1)
 parStart[(parStart - lowerBound) < 0] = lowerBound[(parStart - lowerBound) < 0]
 parStart[(upperBound - parStart) < 0] = upperBound[(upperBound - parStart) < 0]
 names(parStart) = c('DOCR_RespParam','DOCL_RespParam','BurialFactor_R','BurialFactor_L')
