@@ -133,7 +133,7 @@ lty = 2
 lwd = 2
 ylab = 'OC (g/m2/yr)'
 xlab = 'Date'
-ylim = c(0,2000)
+ylim = c(0,600)
 cex.main = 2
 cex.axis = 2
 cex.lab = 2
@@ -150,7 +150,7 @@ polygon(x = c(Harp$Date,rev(Harp$Date)),y = c(-Harp$S_gm2y - Harp$R_gm2y,rev(-Ha
 polygon(x = c(Harp$Date,rev(Harp$Date)),y = c(Harp$Budget_left_gm2y - Harp$S_gm2y - Harp$R_gm2y,rev(-Harp$S_gm2y - Harp$R_gm2y)),col = 'grey70')
 
 abline(0,0, lwd=2, lty=2)
-legend('topleft',legend=c('Total Load','Burial','Respiration'), col=c('grey70','black','gold'),lwd=2)
+legend('topright',legend=c('Total Load','Burial','Respiration'), col=c('grey70','black','gold'),lwd=2)
 
 # Monona
 plot(Monona$Budget_left_gm2y~Monona$Date,col='darkblue',type='n',
@@ -280,10 +280,10 @@ All_lakes_annual = rbind.data.frame(Harp_annual, Monona_annual, Toolik_annual, T
 png(paste0('R/ResultsViz/Figures/AnnualNetOCBoxplot.png'),width = 11,height = 9,units = 'in',res=300)
 par(mfrow=c(1,1))
 par(mar=c(2.1, 5.1, 3.1, 2.1)) #bot, left, top, right, def=c(5.1, 4.1, 4.1, 2.1)
-tick_seq = seq(-250,250, by=50)
+tick_seq = seq(-200,50, by=50)
 cex.axis = 1.5
 
-boxplot(mean ~ Lake, data=All_lakes_annual, axes=F, ann=F, main='Annual Net OC (g/m2/yr)', ylim=c(-250,250))
+boxplot(mean ~ Lake, data=All_lakes_annual, axes=F, ann=F, main='Annual Net OC (g/m2/yr)', ylim=c(-200,50))
 mtext(side=3, 'Net = R - S')
 axis(1, at = 1:5, labels = levels(as.factor(All_lakes_annual$Lake)), cex.axis = cex.axis, tick=F)
 axis(2, at=tick_seq, label=rep('',length(tick_seq),cex.axis = cex.axis, tick=F))

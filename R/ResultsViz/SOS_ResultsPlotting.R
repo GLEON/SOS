@@ -75,7 +75,7 @@ flux_plot = function(LakeName, ylim1, ylim2, legend){
   #axis(side = 4)
   #mtext('OC concentration (g/m3)',side = 4,line = 1.5,cex=0.8)
   if (legend==1){
-  legend('bottomleft',legend = c('Alloch','Autoch','Export','Burial','Respiration'),#,'DOC Conc'),
+  legend('topright',legend = c('Alloch','Autoch','Export','Burial','Respiration'),#,'DOC Conc'),
          col = c('darkblue','cyan4','green4','brown','grey50'),#,'black'),
          pch=c(15,15,15,15,15,NA),
          lty=c(0,0,0,0,0,1),lwd=2,ncol=2,cex=1,pt.cex=2,seg.len=1,
@@ -86,12 +86,12 @@ flux_plot = function(LakeName, ylim1, ylim2, legend){
 #### run function over lakes ####
 png(paste0('R/ResultsViz/Figures/OCfates_allLakes.png'),width = 11,height = 9,units = 'in',res=300)
 par(mfrow=c(3,2))
-    #par(mar=c(3,3,3,1),mgp=c(1.5,0.4,0),mfrow=c(3,2),tck=-0.02,cex=1.2) 
-  ylim1= -400
-  ylim2= 400
+  par(mar=c(3,4.5,3,1))#,mgp=c(1.5,0.4,0),mfrow=c(3,2),tck=-0.02,cex=1.2) 
+  ylim1= -250
+  ylim2= 250
   
-  flux_plot('Monona',ylim1=ylim1,ylim2=ylim2,legend=1)
-  flux_plot('Trout',ylim1=ylim1,ylim2=ylim2,legend=0)
+  flux_plot('Monona',ylim1=ylim1,ylim2=ylim2,legend=0)
+  flux_plot('Trout',ylim1=ylim1,ylim2=ylim2,legend=1)
   flux_plot('Toolik',ylim1=ylim1,ylim2=ylim2,legend=0)
   flux_plot('Vanern',ylim1=ylim1,ylim2=ylim2,legend=0)
   flux_plot('Harp',ylim1=ylim1,ylim2=ylim2,legend=0)
