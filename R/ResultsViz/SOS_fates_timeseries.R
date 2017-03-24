@@ -257,19 +257,19 @@ dev.off()
 # 
 
 #### calculate annual statistics ####
-Vanern_annual = aggregate(Vanern$PipeProc_gm2y, by=list(Vanern$Year), FUN='mean')
+Vanern_annual = aggregate(-Vanern$PipeProc_gm2y, by=list(Vanern$Year), FUN='mean')
 colnames(Vanern_annual) = c('Year','mean')
 Vanern_annual$Lake = rep('Vanern',nrow(Vanern_annual))
-Harp_annual = aggregate(Harp$PipeProc_gm2y, by=list(Harp$Year), FUN='mean')
+Harp_annual = aggregate(-Harp$PipeProc_gm2y, by=list(Harp$Year), FUN='mean')
 colnames(Harp_annual) = c('Year','mean')
 Harp_annual$Lake = rep('Harp',nrow(Harp_annual))
-Trout_annual = aggregate(Trout$PipeProc_gm2y, by=list(Trout$Year), FUN='mean')
+Trout_annual = aggregate(-Trout$PipeProc_gm2y, by=list(Trout$Year), FUN='mean')
 colnames(Trout_annual) = c('Year','mean')
 Trout_annual$Lake = rep('Trout',nrow(Trout_annual))
-Toolik_annual = aggregate(Toolik$PipeProc_gm2y, by=list(Toolik$Year), FUN='mean')
+Toolik_annual = aggregate(-Toolik$PipeProc_gm2y, by=list(Toolik$Year), FUN='mean')
 colnames(Toolik_annual) = c('Year','mean')
 Toolik_annual$Lake = rep('Toolik',nrow(Toolik_annual))
-Monona_annual = aggregate(Monona$PipeProc_gm2y, by=list(Monona$Year), FUN='mean')
+Monona_annual = aggregate(-Monona$PipeProc_gm2y, by=list(Monona$Year), FUN='mean')
 colnames(Monona_annual) = c('Year','mean')
 Monona_annual$Lake = rep('Monona',nrow(Monona_annual))
 
@@ -280,11 +280,12 @@ All_lakes_annual = rbind.data.frame(Harp_annual, Monona_annual, Toolik_annual, T
 png(paste0('R/ResultsViz/Figures/AnnualNetOCBoxplot.png'),width = 11,height = 9,units = 'in',res=300)
 par(mfrow=c(1,1))
 par(mar=c(2.1, 5.1, 3.1, 2.1)) #bot, left, top, right, def=c(5.1, 4.1, 4.1, 2.1)
-tick_seq = seq(-200,50, by=50)
+tick_seq = seq(-50,100, by=25)
 cex.axis = 1.5
 
-boxplot(mean ~ Lake, data=All_lakes_annual, axes=F, ann=F, main='Annual Net OC (g/m2/yr)', ylim=c(-200,50))
-mtext(side=3, 'Net = R - S')
+boxplot(mean ~ Lake, data=All_lakes_annual, axes=F, ann=F, main='Annual Net Lake Function', ylim=c(-50,100))
+mtext(side=3, '(g/m2/yr OC)')
+#mtext(side=2, 'OC (g/m2/yr)')
 axis(1, at = 1:5, labels = levels(as.factor(All_lakes_annual$Lake)), cex.axis = cex.axis, tick=F)
 axis(2, at=tick_seq, label=rep('',length(tick_seq),cex.axis = cex.axis, tick=F))
 axis(2, at=tick_seq, line=0.5, lwd=0, cex.axis=1.5, las=2) #las=2 for horizontal y axis label
