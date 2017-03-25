@@ -18,6 +18,7 @@ bootstrapDOC <- function(newObs,num,datetimeDOC,datetimeDO,LakeName,timestampFor
   library(plyr)
   library(dplyr)
   library(parallel)
+  library(FME)
   
   ##### LOAD FUNCTIONS #######################
   source("./R/Model_March2017//SOS_Sedimentation.R")
