@@ -1,7 +1,7 @@
 setwd('C:/Users/hdugan/Documents/Rpackages/SOS/')
 # setwd("~/Documents/Rpackages/SOS")
 #Flags 1 for yes, else no.
-LakeName = 'Toolik'
+LakeName = 'Monona'
 ValidationFlag = 1
 WriteFiles = 1
 BootstrapFlag = 0
@@ -21,6 +21,7 @@ library(lubridate)
 library(LakeMetabolizer)
 library(plyr)
 library(dplyr)
+library(parallel)
 
 ##### LOAD FUNCTIONS #######################
 source("./R/Model_March2017//SOS_Sedimentation.R")
@@ -325,26 +326,16 @@ print(paste0('RMSE DO ',RMSE_DO))
 ################## Bootstrapping of Residuals #################
 if (BootstrapFlag==1){
   #save.image(file = "R/Model/lake.RData")
-  # DOC residuals
-  joinDOC = DOC_df %>% select(datetime = Date,DOC_model = DOCtotal_conc_gm3) %>%
-    mutate(datetime = as.Date(datetime)) %>%
-    right_join(.,ValidationDataDOC)
-    inner_join(ValidationDataDOC,DOC_df,by=c('datetime'='Date'))
-  resDOC = na.omit(joinDOC$DOC - joinDOC$DOC_model)
-  
-  # DO residuals
-  joinDO = Metabolism %>% select(datetime = Date,DO_model = Oxygen_conc) %>%
-    mutate(datetime = as.Date(datetime)) %>%
-    right_join(.,ValidationDataDO)
-  resDO = na.omit(joinDO$DO_con - joinDO$DO_model)
-  
-  lengthScale = length(resDO)/length(resDOC)
-  resids = c(resDOC,resDO/lengthScale)
-  
+  # Calculate residuals
+  resDOC = (CalibrationOutputDOC$DOC - CalibrationOutputDOC$Modelled)
+  resDO = (CalibrationOutputDO$DO_con - CalibrationOutputDO$Conc_Modelled)
+
   set.seed(001) # just to make it reproducible
   #set number of psuedo observations
-  pseudoObs = matrix(replicate(4,sample(resDOC) + CalibrationOutputDOC$DOC),ncol = length(resids)) # matrix of psuedo observations 
-  
+  pseudoObs_DOC = matrix(replicate(100,sample(resDOC) + CalibrationOutputDOC$DOC),ncol = length(resDOC)) # matrix of psuedo observations 
+  pseudoObs_DO = matrix(replicate(100,sample(resDO) + CalibrationOutputDO$DO_con),ncol = length(resDO))
+  pseudoObs = cbind(pseudoObs_DOC,pseudoObs_DO)
+  num = length(resDOC)
   
   library(parallel)
   detectCores() # Calculate the number of cores
@@ -353,7 +344,9 @@ if (BootstrapFlag==1){
   source('R/Model/bootstrapDOC.R')
   # This applies the bootstrap function across multiple cores, works for Mac. 
   bootOut = parApply(cl = cl,MARGIN = 1,X = pseudoObs, FUN = bootstrapDOC,
-                     datetime = CalibrationOutputDOC$datetime, LakeName = LakeName,
+                     datetimeDOC = CalibrationOutputDOC$datetime, 
+                     datetimeDO = CalibrationOutputDO$datetime, 
+                     LakeName = LakeName,
                      timestampFormat = timestampFormat)
   # Output results
   write.csv(bootOut,paste0('./',LakeName,'Lake/','Results/',LakeName,'_boostrapResults.csv'),row.names = F,quote=F)

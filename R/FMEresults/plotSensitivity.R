@@ -9,6 +9,13 @@ for (LakeName in lakenames) {
   library(FME)
   library(zoo)
   library(plyr)
+  ##### LOAD FUNCTIONS #######################
+  source("./R/Model_March2017//SOS_Sedimentation.R")
+  source("./R/Model_March2017/SOS_SWGW.R")
+  source("./R/Model_March2017/SOS_GPP.R")
+  source("./R/Model_March2017/SOS_Resp.R")
+  source("./R/Model_March2017/modelDOC_7.R")
+  source("./R/Model_March2017/SOS_fixToolik.R")
   ##### INPUT FILE NAMES ################
   TimeSeriesFile <- paste('./',LakeName,'Lake/',LakeName,'TS.csv',sep='')
   RainFile <- paste('./',LakeName,'Lake/',LakeName,'Rain.csv',sep='')
@@ -36,7 +43,7 @@ for (LakeName in lakenames) {
   RainData$datetime <- as.POSIXct(strptime(RainData$datetime,timestampFormat,tz='GMT'))
   InputData$Rain <- RainData$Rain[RainData$datetime %in% InputData$datetime] #Plug daily rain data into InputData file to integrate with original code.
   
-  if (LakeName=='Toolik') {
+  if (LakeName == 'Toolik') {
     InputData = fixToolik(InputData,LakeName)
   }
   
@@ -53,15 +60,14 @@ for (LakeName in lakenames) {
   ValidationDataDO <- read.csv(ValidationFileDO,header=T)
   ValidationDataDO$datetime <- as.Date(as.POSIXct(strptime(ValidationDataDO$datetime,timestampFormat),tz="GMT")) #Convert time to POSIX
   ValidationDataDO = ValidationDataDO[complete.cases(ValidationDataDO),]
-  k <- 0.5 #m/d
+  k <- 0.7 #m/d
   PhoticDepth <- data.frame(datetime = InputData$datetime,PhoticDepth = log(100)/(1.7/InputData$Secchi))
   IndxVal = ValidationDataDO$datetime %in% as.Date(PhoticDepth$datetime)
   IndxPhotic = as.Date(PhoticDepth$datetime) %in% ValidationDataDO$datetime
   
   ValidationDataDO = ValidationDataDO[IndxVal,]
   ValidationDataDO$DO_sat <- o2.at.sat(ValidationDataDO[,1:2])[,2]  
-  ValidationDataDO$Flux <- k*(ValidationDataDO$DO_con - ValidationDataDO$DO_sat)/(PhoticDepth$PhoticDepth[IndxPhotic]) #g/m3/d
-  
+  ValidationDataDO$Flux <- k*(ValidationDataDO$DO_con - ValidationDataDO$DO_sat)/(0.5*PhoticDepth$PhoticDepth[IndxPhotic]) #g/m3/d
   
   ##### LOAD FUNCTIONS #######################
   source("./R/Model_March2017/SOS_Sedimentation.R")
