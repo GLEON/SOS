@@ -61,9 +61,9 @@ flux_plot = function(LakeName, ylim1, ylim2, legend){
   
   
   plot(Month_POC$Date,ocInflow + ocGPP,col='dodgerblue',type='l',
-       ylim=c(ylim1,ylim2),ylab='OC flux (gm2/y)',xlab='', main=LakeName, las=2) # Inflow
+       ylim=c(ylim1,ylim2),ylab='OC flux (gm2/y)',xlab='', main=LakeName, las=1) # Inflow
   #tick_seq = seq(ylim1,ylim2, by=75), if want manual y axis, set yaxt='n'
-  #axis(side=2, at=tick_seq, line=0.5, lwd=0, cex.axis=1, las=2, tick = T, labels=T)
+  #axis(side=2, at=tick_seq, line=0.5, lwd=0, cex.axis=1, las=1, tick = T, labels=T)
   
   # Flow 
   # lines(POC_df$Date,ocInflow + ocGPP,col='dodgerblue',type='l') #inflow
@@ -230,7 +230,7 @@ ylim2= 250
 # Harp
 flux_plot('Harp',ylim1=ylim1,ylim2=ylim2,legend=1)
 plot(Harp$Budget_left_gm2y~Harp$Date,col='dodgerblue',type='n',
-     ylim=ylim_fate,ylab='',xlab='',main='Harp',las=2) # Inflow (alloch) 
+     ylim=ylim_fate,ylab='',xlab='',main='Harp',las=1) # Inflow (alloch) 
 
 polygon(x = c(Harp$Date,rev(Harp$Date)),y = c(-Harp$R_gm2y,rep(0,length(-Harp$R_gm2y))),col = 'gold')
 polygon(x = c(Harp$Date,rev(Harp$Date)),y = c(-Harp$S_gm2y - Harp$R_gm2y,rev(-Harp$R_gm2y)),col = 'black')
@@ -241,7 +241,7 @@ legend('topright',legend=c('Alloch + Autoch'), col=c('grey70'), pch=15, pt.cex =
 # Monona
 flux_plot('Monona',ylim1=ylim1,ylim2=ylim2,legend=0)
 plot(Monona$Budget_left_gm2y~Monona$Date,col='dodgerblue',type='n',
-     ylim=ylim_fate,ylab='',xlab='',main='Monona',las=2) # Inflow (alloch) 
+     ylim=ylim_fate,ylab='',xlab='',main='Monona',las=1) # Inflow (alloch) 
 
 polygon(x = c(Monona$Date,rev(Monona$Date)),y = c(-Monona$R_gm2y,rep(0,length(-Monona$R_gm2y))),col = 'gold')
 polygon(x = c(Monona$Date,rev(Monona$Date)),y = c(-Monona$S_gm2y - Monona$R_gm2y,rev(-Monona$R_gm2y)),col = 'black')
@@ -250,7 +250,7 @@ polygon(x = c(Monona$Date,rev(Monona$Date)),y = c(Monona$Budget_left_gm2y - Mono
 # Trout
 flux_plot('Trout',ylim1=ylim1,ylim2=ylim2,legend=0)
 plot(Trout$Budget_left_gm2y~Trout$Date,col='dodgerblue',type='n',
-     ylim=ylim_fate,ylab='',xlab='',main='Trout',las=2) # Inflow (alloch) 
+     ylim=ylim_fate,ylab='',xlab='',main='Trout',las=1) # Inflow (alloch) 
 
 polygon(x = c(Trout$Date,rev(Trout$Date)),y = c(-Trout$R_gm2y,rep(0,length(-Trout$R_gm2y))),col = 'gold')
 polygon(x = c(Trout$Date,rev(Trout$Date)),y = c(-Trout$S_gm2y - Trout$R_gm2y,rev(-Trout$R_gm2y)),col = 'black')
@@ -261,7 +261,7 @@ polygon(x = c(Trout$Date,rev(Trout$Date)),y = c(Trout$Budget_left_gm2y - Trout$S
 # Vanern
 flux_plot('Vanern',ylim1=ylim1,ylim2=ylim2,legend=0)
 plot(Vanern$Budget_left_gm2y~Vanern$Date,col='dodgerblue',type='n',
-     ylim=ylim_fate,ylab='',xlab='',main='Vanern',las=2) # Inflow (alloch) 
+     ylim=ylim_fate,ylab='',xlab='',main='Vanern',las=1) # Inflow (alloch) 
 
 polygon(x = c(Vanern$Date,rev(Vanern$Date)),y = c(-Vanern$R_gm2y,rep(0,length(-Vanern$R_gm2y))),col = 'gold')
 polygon(x = c(Vanern$Date,rev(Vanern$Date)),y = c(-Vanern$S_gm2y - Vanern$R_gm2y,rev(-Vanern$R_gm2y)),col = 'black')
@@ -272,7 +272,7 @@ polygon(x = c(Vanern$Date,rev(Vanern$Date)),y = c(Vanern$Budget_left_gm2y - Vane
 # Toolik
 flux_plot('Toolik',ylim1=-800,ylim2=800,legend=0)
 plot(Toolik$Budget_left_gm2y~Toolik$Date,col='dodgerblue',type='n',
-     ylim=c(),ylab='',xlab='',main='Toolik',las=2) # Inflow (alloch) 
+     ylim=c(),ylab='',xlab='',main='Toolik',las=1) # Inflow (alloch) 
 
 polygon(x = c(Toolik$Date,rev(Toolik$Date)),y = c(-Toolik$R_gm2y,rep(0,length(-Toolik$R_gm2y))),col = 'gold')
 polygon(x = c(Toolik$Date,rev(Toolik$Date)),y = c(-Toolik$S_gm2y - Toolik$R_gm2y,rev(-Toolik$R_gm2y)),col = 'black')
@@ -316,7 +316,7 @@ mtext(side=3, '(g/m2/yr OC)')
 #mtext(side=2, 'OC (g/m2/yr)')
 axis(1, at = 1:5, labels = levels(as.factor(All_lakes_annual$Lake)), cex.axis = cex.axis, tick=F)
 axis(2, at=tick_seq, label=rep('',length(tick_seq),cex.axis = cex.axis, tick=F))
-axis(2, at=tick_seq, line=0.5, lwd=0, cex.axis=1.5, las=2) #las=2 for horizontal y axis label
+axis(2, at=tick_seq, line=0.5, lwd=0, cex.axis=1.5, las=1) #las=1 for horizontal y axis label
 box()
 abline(0,0, lty=2, lwd=1.5)
 dev.off()
