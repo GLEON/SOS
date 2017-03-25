@@ -59,14 +59,14 @@ ValidationDataDOC = ddply(ValidationDataDOC,'datetime',summarize,DOC=mean(DOC),D
 ValidationDataDO <- read.csv(ValidationFileDO,header=T)
 ValidationDataDO$datetime <- as.Date(as.POSIXct(strptime(ValidationDataDO$datetime,timestampFormat),tz="GMT")) #Convert time to POSIX
 ValidationDataDO = ValidationDataDO[complete.cases(ValidationDataDO),]
-k <- 0.5 #m/d
+k <- 0.7 #m/d
 PhoticDepth <- data.frame(datetime = InputData$datetime,PhoticDepth = log(100)/(1.7/InputData$Secchi))
 IndxVal = ValidationDataDO$datetime %in% as.Date(PhoticDepth$datetime)
 IndxPhotic = as.Date(PhoticDepth$datetime) %in% ValidationDataDO$datetime
 
 ValidationDataDO = ValidationDataDO[IndxVal,]
 ValidationDataDO$DO_sat <- o2.at.sat(ValidationDataDO[,1:2])[,2]  
-ValidationDataDO$Flux <- k*(ValidationDataDO$DO_con - ValidationDataDO$DO_sat)/(PhoticDepth$PhoticDepth[IndxPhotic]) #g/m3/d
+ValidationDataDO$Flux <- k*(ValidationDataDO$DO_con - ValidationDataDO$DO_sat)/(0.5*PhoticDepth$PhoticDepth[IndxPhotic]) #g/m3/d
 
 ##### READ PARAMETER FILE ##################
 parameters <- read.table(file = ParameterFile,header=TRUE,comment.char="#",stringsAsFactors = F)
@@ -108,17 +108,6 @@ testACF <- function(pars){
 par(mfrow=c(2,1),mgp=c(1.5,0.5,0))
 testACF(pars)
 ## PLOTTING and GOF
-# modeled = modelDOC(pars[1],pars[2],pars[3],pars[4])
-# par(mfrow=c(2,1),mar=c(3,3,1,1),mgp=c(1.5,0.5,0))
-# joinDOC = inner_join(ValidationDataDOC,modeled,by='datetime')
-# plot(joinDOC$datetime,joinDOC$DOC,type='o',xlab='',ylab='DOC')
-# lines(joinDOC$datetime,joinDOC$DOCwc,type='o',col='grey50')
-# lines(joinDOC$datetime,joinDOC$DOC_conc,type='o',col='red3')
-# 
-# joinDO = inner_join(ValidationDataDO,modeled,by='datetime')
-# plot(joinDO$datetime,joinDO$DO_con,type='o',xlab='',ylab='DO')
-# lines(joinDO$datetime,joinDO$MetabOxygen.oxy_conc,type='o',col='red3')
-
 # #Goodness of fit
 # library(hydroGOF)
 # rmse(c(joinDOC$DOC,joinDO$DO_con), c(joinDOC$DOC_conc,joinDO$MetabOxygen.oxy_conc)) #Harp 0.43 Trout 0.427 Monona 0.62 Vanern 0.32
@@ -181,8 +170,8 @@ fitTest <- function(pars,plot=F){
   print(paste('NSE = ',NSE(c(joinDOC$DOC,joinDO$DO_con), c(joinDOC$DOC_conc,joinDO$MetabOxygen.oxy_conc))))
 }
 
-fitTest(pars)
-fitTest(Fit2$par,plot=T)
+fitTest(pars,plot=T)
+fitTest(Fit2$par,plot=F)
 fitTest(Fit3$par)
 
 summary(Fit2)

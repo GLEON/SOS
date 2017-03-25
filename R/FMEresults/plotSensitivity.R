@@ -139,90 +139,20 @@ getPars <- function(LakeName) {
 
 
 ###### PLOTTING #############
-png(paste0('R/FMEresults/plotSensitivity_all2.png'),height = 6,width = 8,units = 'in',res=300)
+png(paste0('R/FMEresults/plotSensitivity_all3.png'),height = 6,width = 8,units = 'in',res=300)
   par(mar = c(3,3,2,1),mgp=c(1.5,0.5,0),mfrow=c(2,3))
   
   for (LakeName in lakenames) {
 
-    ##### INPUT FILE NAMES ################
-    TimeSeriesFile <- paste('./',LakeName,'Lake/',LakeName,'TS.csv',sep='')
-    RainFile <- paste('./',LakeName,'Lake/',LakeName,'Rain.csv',sep='')
-    ParameterFile <- paste('./',LakeName,'Lake/','ConfigurationInputs',LakeName,'.txt',sep='')
-    ValidationFileDOC <- paste('./',LakeName,'Lake/',LakeName,'ValidationDOC.csv',sep='')
-    ValidationFileDO <- paste('./',LakeName,'Lake/',LakeName,'ValidationDO.csv',sep='')
-    timestampFormat =	'%Y-%m-%d'
-    
-    ##### READ MAIN INPUT FILE #################
-    RawData <- read.csv(TimeSeriesFile,header=T) #Read main data file with GLM outputs (physical input) and NPP input
-    RawData$datetime <- as.POSIXct(strptime(RawData$datetime,timestampFormat),tz="GMT") #Convert time to POSIX
-    cc = which(complete.cases(RawData))
-    RawData = RawData[cc[1]:tail(cc,1),]
-    
-    # Fill time-series gaps (linear interpolation)
-    ts_new <- data.frame(datetime = seq(RawData$datetime[1],RawData$datetime[nrow(RawData)],by="day")) #Interpolate gapless time-series
-    InputData <- merge(RawData,ts_new,all=T)
-    for (col in 2:ncol(InputData)){
-      InputData[,col] <- na.approx(InputData[,col],na.rm = T)}
-    InputData$Chla[InputData$Chla == 0] = 0.0001
-    
-    ##### READ RAIN FILE #######################
-    RainData <- read.csv(RainFile,header=T,stringsAsFactors = F) #Read daily rain file (units=mm) Read separately and added back to main file to avoid issues of linear interpolation with rain data in length units
-    RainData$datetime <- as.POSIXct(strptime(RainData$datetime,timestampFormat,tz='GMT'))
-    InputData$Rain <- RainData$Rain[RainData$datetime %in% InputData$datetime] #Plug daily rain data into InputData file to integrate with original code.
-    
-    #DOC Validation Output Setup
-    ValidationDataDOC <- read.csv(ValidationFileDOC,header=T,stringsAsFactors = F)
-    ValidationDataDOC$datetime <- as.Date(as.POSIXct(strptime(ValidationDataDOC$datetime,timestampFormat),tz="GMT")) #Convert time to POSIX
-    ValidationDataDOC = ValidationDataDOC[complete.cases(ValidationDataDOC),]
-    outlier.limit = (mean(ValidationDataDOC$DOC) + 3*(sd(ValidationDataDOC$DOC))) # Calculate mean + 3 SD of DOC column
-    ValidationDataDOC = ValidationDataDOC[ValidationDataDOC$DOC <= outlier.limit,] # Remove rows where DOC > outlier.limit
-    ValidationDataDOC = ddply(ValidationDataDOC,'datetime',summarize,DOC=mean(DOC),DOCwc=mean(DOCwc))
-    
-    #DO Validation 
-    #DO Validation Output Setup
-    ValidationDataDO <- read.csv(ValidationFileDO,header=T)
-    ValidationDataDO$datetime <- as.Date(as.POSIXct(strptime(ValidationDataDO$datetime,timestampFormat),tz="GMT")) #Convert time to POSIX
-    ValidationDataDO = ValidationDataDO[complete.cases(ValidationDataDO),]
-    k <- 0.5 #m/d
-    PhoticDepth <- data.frame(datetime = InputData$datetime,PhoticDepth = log(100)/(1.7/InputData$Secchi))
-    IndxVal = ValidationDataDO$datetime %in% as.Date(PhoticDepth$datetime)
-    IndxPhotic = as.Date(PhoticDepth$datetime) %in% ValidationDataDO$datetime
-    
-    ValidationDataDO = ValidationDataDO[IndxVal,]
-    ValidationDataDO$DO_sat <- o2.at.sat(ValidationDataDO[,1:2])[,2]  
-    ValidationDataDO$Flux <- k*(ValidationDataDO$DO_con - ValidationDataDO$DO_sat)/(PhoticDepth$PhoticDepth[IndxPhotic]) #g/m3/d
-    
-    
-    ##### LOAD FUNCTIONS #######################
-    source("./R/Model_March2017/SOS_Sedimentation.R")
-    source("./R/Model_March2017/SOS_SWGW.R")
-    source("./R/Model_March2017/SOS_GPP.R")
-    source("./R/Model_March2017/SOS_Resp.R")
-    source("./R/Model_March2017/modelDOC_7.R")
-    
-    ##### READ PARAMETER FILE ##################
-    parameters <- read.table(file = ParameterFile,header=TRUE,comment.char="#",stringsAsFactors = F)
-    for (i in 1:nrow(parameters)){ # assign parameters
-      assign(parameters[i,1],parameters[i,2])
-    }
-    ###### Run Period and Time Step Setup #####
-    TimeStep <- as.numeric(InputData$datetime[2]-InputData$datetime[1]) #days
-    steps <- nrow(InputData)
-    #################### OPTIMIZATION ROUTINE ############################################
-    
-    pars = getPars(LakeName)[,1]
-    modeled = modelDOC(pars[1],pars[2],pars[3],pars[4])
-
-    joinDOC = inner_join(ValidationDataDOC,modeled,by='datetime')
+    joinDOC = read.csv(paste0('./',LakeName,'Lake','/Results/',LakeName,'_DOCvalidation.csv'),stringsAsFactors = F)
+    joinDOC$datetime = as.Date(strptime(joinDOC$datetime,'%Y-%m-%d'))
     plot(joinDOC$datetime,joinDOC$DOC,type='o',ylab='DOC (mg/L)',xlab='Date',pch=16,cex=0.7,ylim=c(1,8),main=LakeName)
-    # lines(joinDOC$datetime,joinDOC$DOC_conc,col='red3',type='o')
-    
     # Get Sensitivity Data
     Sens = get(paste0(LakeName,'_Sens'))
     cols = c('navy','red3','darkgreen','gold')
     for (i in 1:4){
       plot.sensRange.HD(Sens[[i]],Select = 2,cols = cols[i])
-      lines(as.POSIXlt(ValidationDataDOC$datetime),ValidationDataDOC$DOC,lty=2,pch=16,cex=0.7,type='o')
+      lines(as.POSIXlt(joinDOC$datetime),joinDOC$DOC,lty=2,pch=16,cex=0.7,type='o')
     }
     lines(joinDOC$datetime,joinDOC$DOC,type='o',pch=16,cex=0.7)
     

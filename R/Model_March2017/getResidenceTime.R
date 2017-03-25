@@ -79,6 +79,10 @@ getRT <- function (LakeName){
   print(paste0('GW % ',round(mean(df$GW_m3_d)/totalIn,2)))
   print(paste0('Precip % ',round(mean(df$Precip_m3_d)/totalIn,2)))
   print(paste0('RT = ',LakeVolume/(mean(df$Flow_m3_d)+mean(df$GW_m3_d)+mean(df$Precip_m3_d))))
+  
+  df2 = InputData %>% select(Secchi,Chla,TP,SW_DOC) %>%
+    summarise_each(.,funs(mean(.,na.rm=T))) 
+  print(df2)
 }
 
 getRT('Trout')
