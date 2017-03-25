@@ -1,14 +1,99 @@
-################################################################
-# Time series plots of SOS fates 
-# Date: 1-3-17
-# Updated: 3-22-17 to include monthly aggregations
-# Author: Ian McC, adapted from Hilary's SOS_mean.R code (HD makes some mean R code)
-################################################################
+##################################################################################
+# Single plot of fluxes and fates over time 
+# Combo of the colored flux plot and the black/gold "steeler" plot showing SOS
+# Date: 3-25-17 by Ian McC
+# Updated:
+##################################################################################
+
+setwd('C:/Users/immcc/Desktop/SOS/')
 
 library(lubridate)
 library(dplyr)
 
-#### define function ####
+#### define functions ####
+# plot fluxes over time
+flux_plot = function(LakeName, ylim1, ylim2, legend){
+  #LakeName = quoted lake name
+  #ylim1 = bottom y axis bound
+  #ylim2 = high y axis bound
+  #legend = 1 if want legend
+  
+  #Read in results data from SOS Carbon Flux Model
+  DOC_results_filename = paste('./',LakeName,'Lake/','Results/',LakeName,'_DOC_Results.csv',sep='')
+  POC_results_filename = paste('./',LakeName,'Lake/','Results/',LakeName,'_POC_Results.csv',sep='')
+  SOS_results_filename = paste('./',LakeName,'Lake/','Results/',LakeName,'_SOS_Results.csv',sep='')
+  DOC_df <- read.csv(DOC_results_filename)
+  POC_df <- read.csv(POC_results_filename)
+  
+  ### aggregate daily to monthly
+  DOC_df$Date = as.Date(DOC_df$Date)
+  POC_df$Date = as.Date(POC_df$Date)
+  
+  #poc
+  Month_POC = POC_df %>%
+    mutate(month = as.numeric(format(Date, "%m")), year = as.numeric(format(Date, "%Y")), day = 1) %>%
+    group_by(month, year) %>%
+    summarise_each(funs(mean(., na.rm = TRUE))) %>%
+    ungroup() %>% mutate(month_day_year = as.Date(paste0(month,'/',day,'/',year), format = "%m/%d/%Y")) %>%
+    select(Date,FlowIn_gm2y,NPPin_gm2y,FlowOut_gm2y,sedOut_gm2y) %>%
+    arrange(Date)
+  
+  #DOC
+  Month_DOC = DOC_df %>%
+    mutate(month = as.numeric(format(Date, "%m")), year = as.numeric(format(Date, "%Y")), day = 1) %>%
+    group_by(month, year) %>%
+    summarise_each(funs(mean(., na.rm = TRUE))) %>%
+    ungroup() %>% mutate(month_day_year = as.Date(paste0(month,'/',day,'/',year), format = "%m/%d/%Y")) %>%
+    select(Date,FlowIn_gm2y,NPPin_gm2y,FlowOut_gm2y,respOut_gm2y) %>%
+    arrange(Date)
+  
+  #SOS <- read.csv(SOS_results_filename) #file no longer exists
+  #ParameterFile <- read.csv(paste('./',LakeName,'Lake/','ConfigurationInputs',LakeName,'.txt',sep=''),sep='\t')
+  ParameterFile <- paste('./',LakeName,'Lake/','ConfigurationInputs',LakeName,'.txt',sep='')
+  parameters <- read.table(file = ParameterFile,header=TRUE,comment.char="#",stringsAsFactors = F)
+  for (i in 1:nrow(parameters)){ # assign parameters
+    assign(parameters[i,1],parameters[i,2])
+  } # reads in unnecessary parameters, but not a big deal
+  
+  # Fluxes in
+  ocInflow = Month_POC$FlowIn_gm2y + Month_DOC$FlowIn_gm2y
+  ocGPP = Month_POC$NPPin_gm2y + Month_DOC$NPPin_gm2y
+  
+  
+  plot(Month_POC$Date,ocInflow + ocGPP,col='dodgerblue',type='l',
+       ylim=c(ylim1,ylim2),ylab='OC flux (gm2/y)',xlab='', main=LakeName, las=1) # Inflow
+  #tick_seq = seq(ylim1,ylim2, by=75), if want manual y axis, set yaxt='n'
+  #axis(side=2, at=tick_seq, line=0.5, lwd=0, cex.axis=1, las=1, tick = T, labels=T)
+  
+  # Flow 
+  # lines(POC_df$Date,ocInflow + ocGPP,col='dodgerblue',type='l') #inflow
+  # lines(POC_df$Date,ocGPP,type='l',col='firebrick') # GPP in
+  polygon(x = c(Month_POC$Date,rev(Month_POC$Date)),y = c(ocGPP,rep(0,length(ocGPP))),col = 'firebrick')
+  polygon(x = c(Month_POC$Date,rev(Month_POC$Date)),y = c(ocInflow + ocGPP,rev(ocGPP)),col = 'dodgerblue')
+  
+  # Fluxes out 
+  ocOutflow = -Month_POC$FlowOut_gm2y -Month_DOC$FlowOut_gm2y
+  ocSed = -Month_POC$sedOut_gm2y
+  ocResp = -Month_DOC$respOut_gm2y
+  
+  polygon(x = c(Month_POC$Date,rev(Month_POC$Date)),y = c(ocResp,rep(0,length(ocResp))),col = 'gold')
+  polygon(x = c(Month_POC$Date,rev(Month_POC$Date)),y = c(ocSed + ocResp,rev(ocResp)),col = 'black')
+  polygon(x = c(Month_POC$Date,rev(Month_POC$Date)),y = c(ocOutflow + ocSed + ocResp,rev(ocSed + ocResp)),col = 'green4')
+  abline(0,0, lwd=2, lty=2)
+  
+  #par(new=T) # Plot OC concentration on separate yaxis 
+  #plot(DOC_df$Date,DOC_df$DOCtotal_conc_gm3+POC_df$POCtotal_conc_gm3,type='l',yaxt='n',ylab='',xlab='',lwd=1.5)
+  #axis(side = 4)
+  #mtext('OC concentration (g/m3)',side = 4,line = 1.5,cex=0.8)
+  if (legend==1){
+    legend('bottomleft',legend = c('Alloch','Autoch  ','Export','Burial','Resp'),
+           col = c('dodgerblue','firebrick','green4','black','gold'), horiz=T,
+           pch=c(15,15,15,15,15),
+           lty=c(0,0,0,0,0,0),lwd=2,cex=1,pt.cex=2,seg.len=1)} #ncol=2
+  
+}
+
+# calculate fates
 SOS_fate = function(LakeName, monthlyFlag){
   #Lakename = lake name in quotes
   #monthlyFlag = 1 if want to aggregate to monthly data,0 for daily
@@ -53,7 +138,7 @@ SOS_fate = function(LakeName, monthlyFlag){
       select(Date,FlowIn_gm2y,NPPin_gm2y,FlowOut_gm2y,respOut_gm2y,DOCtotal_conc_gm3,DOCload_g,DOCout_g) %>%
       arrange(Date)
   }
- 
+  
   # Fluxes in
   alloch<-DOC_df$FlowIn_gm2y+POC_df$FlowIn_gm2y
   autoch<-POC_df$NPPin_gm2y+DOC_df$NPPin_gm2y
@@ -64,13 +149,13 @@ SOS_fate = function(LakeName, monthlyFlag){
   ocSed = -POC_df$sedOut_gm2y
   ocResp = -DOC_df$respOut_gm2y
   
-  # plot(POC_df$Date,alloch + autoch,col='darkblue',type='n',
+  # plot(POC_df$Date,alloch + autoch,col='dodgerblue',type='n',
   #      ylim=c(ylim1,ylim2),ylab='OC flux (gm2/y)',xlab='',main=LakeName) # Inflow (alloch) 
   # 
   # polygon(x = c(POC_df$Date,rev(POC_df$Date)),y = c(ocResp,rep(0,length(ocResp))),col = 'black')
   # polygon(x = c(POC_df$Date,rev(POC_df$Date)),y = c(ocSed + ocResp,rev(ocResp)),col = 'gold')
   # polygon(x = c(POC_df$Date,rev(POC_df$Date)),y = c(total_load,rep(0,length(total_load))),col = 'grey70')
-
+  
   # From Paul Hanson, Jedi master, 1-6-17
   # Pipe: fOut > R + S
   # Processor: fOut < R + S
@@ -82,7 +167,7 @@ SOS_fate = function(LakeName, monthlyFlag){
   # Calculate Change to total carbon stocks (pulled code from optim6)
   FinalPOC <- POC_df$POCtotal_conc_gm3 + (POC_df$POCload_g - POC_df$POCout_g)/volume #g/m3
   FinalDOC <- DOC_df$DOCtotal_conc_gm3 + (DOC_df$DOCload_g - DOC_df$DOCout_g)/volume #g/m3
- 
+  
   DeltaPOC <- FinalPOC*volume - POC_df$POCtotal_conc_gm3[1]*volume #g
   DeltaDOC <- FinalDOC*volume - DOC_df$DOCtotal_conc_gm3[1]*volume #g
   #Mass balance check (should be near zero)
@@ -94,7 +179,7 @@ SOS_fate = function(LakeName, monthlyFlag){
   PipeProc = ocResp - ocSed
   Budget_left = total_load
   Budget_right = -ocResp - ocSed - ocExport + dStorage # should equal Budget_left
-
+  
   Date = as.Date(DOC_df$Date)
   Year = as.factor(year(Date))
   summary = data.frame(Date=Date,Year=Year,Alloch_gm2y=alloch,Autoch_gm2y=autoch,
@@ -104,15 +189,15 @@ SOS_fate = function(LakeName, monthlyFlag){
 }
 
 #### run function over lakes ####
-monthlyFlag = 0 #1=monthly, 0=daily
+monthlyFlag = 1 #1=monthly, 0=daily
 Harp = SOS_fate('Harp',monthlyFlag = monthlyFlag) 
 Monona = SOS_fate('Monona',monthlyFlag = monthlyFlag)
 Toolik = SOS_fate('Toolik', monthlyFlag = monthlyFlag)
 Trout = SOS_fate('Trout',monthlyFlag = monthlyFlag)
 Vanern = SOS_fate('Vanern',monthlyFlag = monthlyFlag)
 
-#### generate summary table of fates by lake ####
-# recommend using daily
+#generate summary table of fates by lake
+# recommend using daily (monthlyFlag=0)
 Harp_means = colMeans(Harp[,3:11],na.rm=T)
 Monona_means = colMeans(Monona[,3:11],na.rm=T)
 Toolik_means = colMeans(Toolik[,3:11],na.rm=T)
@@ -124,139 +209,82 @@ fate_means = rbind.data.frame(Harp_means,Monona_means,Toolik_means,Trout_means,V
 colnames(fate_means) = table_heads
 rownames(fate_means) = c('Harp','Monona','Toolik','Trout','Vanern')
 #write.csv(fate_means,'FateOutputs_byLake.csv')
-  
-############# plotting time series ##########
-# compare R to S
-# Source: R > S, Sink: R < S
 
+##### plotting ######
+# static plot parameters
 lty = 2
 lwd = 2
 ylab = 'OC (g/m2/yr)'
 xlab = 'Date'
-ylim = c(0,600)
+ylim_fate = c(0,400)
 cex.main = 2
 cex.axis = 2
 cex.lab = 2
 
-png(paste0('R/ResultsViz/Figures/SOSfates.png'),width = 11,height = 9,units = 'in',res=300)
-par(mar=c(3,3,3,1),mgp=c(1.5,0.4,0),mfrow=c(3,2),tck=-0.02,cex=1.2) 
+png(paste0('R/ResultsViz/Figures/OCfates_fluxesAllLakes.png'),width = 9,height = 11,units = 'in',res=300)
+par(mfrow=c(5,2))
+par(mar=c(3,4.5,3,1))
+ylim1= -250
+ylim2= 250
 
 # Harp
-plot(Harp$Budget_left_gm2y~Harp$Date,col='darkblue',type='n',
-     ylim=ylim,ylab='OC flux (gm2/y)',xlab='',main='Harp') # Inflow (alloch) 
+flux_plot('Harp',ylim1=ylim1,ylim2=ylim2,legend=1)
+plot(Harp$Budget_left_gm2y~Harp$Date,col='dodgerblue',type='n',
+     ylim=ylim_fate,ylab='',xlab='',main='Harp',las=1) # Inflow (alloch) 
 
 polygon(x = c(Harp$Date,rev(Harp$Date)),y = c(-Harp$R_gm2y,rep(0,length(-Harp$R_gm2y))),col = 'gold')
 polygon(x = c(Harp$Date,rev(Harp$Date)),y = c(-Harp$S_gm2y - Harp$R_gm2y,rev(-Harp$R_gm2y)),col = 'black')
 polygon(x = c(Harp$Date,rev(Harp$Date)),y = c(Harp$Budget_left_gm2y - Harp$S_gm2y - Harp$R_gm2y,rev(-Harp$S_gm2y - Harp$R_gm2y)),col = 'grey70')
 
-abline(0,0, lwd=2, lty=2)
-legend('topright',legend=c('Total Load','Burial','Respiration'), col=c('grey70','black','gold'),lwd=2)
+legend('topright',legend=c('Alloch + Autoch'), col=c('grey70'), pch=15, pt.cex = 2)
 
 # Monona
-plot(Monona$Budget_left_gm2y~Monona$Date,col='darkblue',type='n',
-     ylim=ylim,ylab='OC flux (gm2/y)',xlab='',main='Monona') # Inflow (alloch) 
+flux_plot('Monona',ylim1=ylim1,ylim2=ylim2,legend=0)
+plot(Monona$Budget_left_gm2y~Monona$Date,col='dodgerblue',type='n',
+     ylim=ylim_fate,ylab='',xlab='',main='Monona',las=1) # Inflow (alloch) 
 
 polygon(x = c(Monona$Date,rev(Monona$Date)),y = c(-Monona$R_gm2y,rep(0,length(-Monona$R_gm2y))),col = 'gold')
 polygon(x = c(Monona$Date,rev(Monona$Date)),y = c(-Monona$S_gm2y - Monona$R_gm2y,rev(-Monona$R_gm2y)),col = 'black')
 polygon(x = c(Monona$Date,rev(Monona$Date)),y = c(Monona$Budget_left_gm2y - Monona$S_gm2y - Monona$R_gm2y,rev(-Monona$S_gm2y - Monona$R_gm2y)),col = 'grey70')
 
-abline(0,0, lwd=2, lty=2)
-#legend('topleft',legend=c('Total Load','Burial','Respiration'), col=c('grey70','black','gold'),lwd=2)
-
-# Toolik
-plot(Toolik$Budget_left_gm2y~Toolik$Date,col='darkblue',type='n',
-     ylim=ylim,ylab='OC flux (gm2/y)',xlab='',main='Toolik') # Inflow (alloch) 
-
-polygon(x = c(Toolik$Date,rev(Toolik$Date)),y = c(-Toolik$R_gm2y,rep(0,length(-Toolik$R_gm2y))),col = 'gold')
-polygon(x = c(Toolik$Date,rev(Toolik$Date)),y = c(-Toolik$S_gm2y - Toolik$R_gm2y,rev(-Toolik$R_gm2y)),col = 'black')
-polygon(x = c(Toolik$Date,rev(Toolik$Date)),y = c(Toolik$Budget_left_gm2y - Toolik$S_gm2y - Toolik$R_gm2y,rev(-Toolik$S_gm2y - Toolik$R_gm2y)),col = 'grey70')
-
-abline(0,0, lwd=2, lty=2)
-#legend('topleft',legend=c('Total Load','Burial','Respiration'), col=c('grey70','black','gold'),lwd=2)
-
 # Trout
-plot(Trout$Budget_left_gm2y~Trout$Date,col='darkblue',type='n',
-     ylim=ylim,ylab='OC flux (gm2/y)',xlab='',main='Trout') # Inflow (alloch) 
+flux_plot('Trout',ylim1=ylim1,ylim2=ylim2,legend=0)
+plot(Trout$Budget_left_gm2y~Trout$Date,col='dodgerblue',type='n',
+     ylim=ylim_fate,ylab='',xlab='',main='Trout',las=1) # Inflow (alloch) 
 
 polygon(x = c(Trout$Date,rev(Trout$Date)),y = c(-Trout$R_gm2y,rep(0,length(-Trout$R_gm2y))),col = 'gold')
 polygon(x = c(Trout$Date,rev(Trout$Date)),y = c(-Trout$S_gm2y - Trout$R_gm2y,rev(-Trout$R_gm2y)),col = 'black')
 polygon(x = c(Trout$Date,rev(Trout$Date)),y = c(Trout$Budget_left_gm2y - Trout$S_gm2y - Trout$R_gm2y,rev(-Trout$S_gm2y - Trout$R_gm2y)),col = 'grey70')
 
-abline(0,0, lwd=2, lty=2)
 #legend('topleft',legend=c('Total Load','Burial','Respiration'), col=c('grey70','black','gold'),lwd=2)
 
 # Vanern
-plot(Vanern$Budget_left_gm2y~Vanern$Date,col='darkblue',type='n',
-     ylim=ylim,ylab='OC flux (gm2/y)',xlab='',main='Vanern') # Inflow (alloch) 
+flux_plot('Vanern',ylim1=ylim1,ylim2=ylim2,legend=0)
+plot(Vanern$Budget_left_gm2y~Vanern$Date,col='dodgerblue',type='n',
+     ylim=ylim_fate,ylab='',xlab='',main='Vanern',las=1) # Inflow (alloch) 
 
 polygon(x = c(Vanern$Date,rev(Vanern$Date)),y = c(-Vanern$R_gm2y,rep(0,length(-Vanern$R_gm2y))),col = 'gold')
 polygon(x = c(Vanern$Date,rev(Vanern$Date)),y = c(-Vanern$S_gm2y - Vanern$R_gm2y,rev(-Vanern$R_gm2y)),col = 'black')
 polygon(x = c(Vanern$Date,rev(Vanern$Date)),y = c(Vanern$Budget_left_gm2y - Vanern$S_gm2y - Vanern$R_gm2y,rev(-Vanern$S_gm2y - Vanern$R_gm2y)),col = 'grey70')
 
-abline(0,0, lwd=2, lty=2)
-#legend('topleft',legend=c('Total Load','Burial','Respiration'), col=c('grey70','black','gold'),lwd=2)
+#legend('topleft',lecgend=c('Total Load','Burial','Respiration'), col=c('grey70','black','gold'),lwd=2)
 
+# Toolik
+flux_plot('Toolik',ylim1=-800,ylim2=800,legend=0)
+plot(Toolik$Budget_left_gm2y~Toolik$Date,col='dodgerblue',type='n',
+     ylim=c(),ylab='',xlab='',main='Toolik',las=1) # Inflow (alloch) 
+
+polygon(x = c(Toolik$Date,rev(Toolik$Date)),y = c(-Toolik$R_gm2y,rep(0,length(-Toolik$R_gm2y))),col = 'gold')
+polygon(x = c(Toolik$Date,rev(Toolik$Date)),y = c(-Toolik$S_gm2y - Toolik$R_gm2y,rev(-Toolik$R_gm2y)),col = 'black')
+polygon(x = c(Toolik$Date,rev(Toolik$Date)),y = c(Toolik$Budget_left_gm2y - Toolik$S_gm2y - Toolik$R_gm2y,rev(-Toolik$S_gm2y - Toolik$R_gm2y)),col = 'grey70')
+
+#legend('topleft',legend=c('Total Load','Burial','Respiration'), col=c('grey70','black','gold'),lwd=2)
 dev.off()
 
-# compare export to difference between R and S to determine pipe or processor of OC
-# # Pipe: Export > R + S | Processor: Export < R + S
-# png(paste0('R/ResultsViz/Figures/POPfates.png'),width = 11,height = 9,units = 'in',res=300)
-# par(mar=c(5.1, 5.1, 4.1, 2.1)) #bot, left, top, right, def=c(5.1, 4.1, 4.1, 2.1)
-# #par(mfrow=c(1,1))
-# par(mfrow=c(3,2))
-# lty = 2
-# lwd = 2
-# ylab = 'OC (g/m2/yr)'
-# xlab = 'Date'
-# ylim = c(-50,200)
-# cex.main = 2
-# cex.axis = 2
-# cex.lab = 2
-# colors=c('black','gold')
-# 
-# # Harp
-# plot(PipeProc_gm2y ~ Date, Harp, type='l', main='Harp', ylim=ylim, ylab=ylab, col=colors[1], cex.main=cex.main, cex.axis=cex.axis, cex.lab=cex.lab)
-# #abline(0,0,lty=lty, lwd=lwd)
-# par(new=T)
-# plot(Out_gm2y ~ Date, Harp, type='l', yaxt='n', xaxt='n', xlab='', ylab='', col=colors[2])
-# legend('topright', lwd=lwd, legend=c('R + S','Export'), col=colors)
-# #mtext(side=3, 'Pipe: Export > R + S | Processor: Export < R + S')
-# 
-# # Monona
-# plot(PipeProc_gm2y ~ Date, Monona, type='l', main='Monona', ylim=ylim, ylab=ylab, col=colors[1], cex.main=cex.main, cex.axis=cex.axis, cex.lab=cex.lab)
-# #abline(0,0,lty=lty, lwd=lwd)
-# par(new=T)
-# plot(Out_gm2y ~ Date, Monona, type='l', yaxt='n', xaxt='n', xlab='', ylab='', col=colors[2])
-# legend('topright', lwd=lwd, legend=c('R + S','Export'), col=colors)
-# #mtext(side=3, 'Pipe: Export > R + S | Processor: Export < R + S')
-# 
-# # Toolik
-# plot(PipeProc_gm2y ~ Date, Toolik, type='l', main='Toolik', ylim=ylim, ylab=ylab, col=colors[1], cex.main=cex.main, cex.axis=cex.axis, cex.lab=cex.lab)
-# #abline(0,0,lty=lty, lwd=lwd)
-# par(new=T)
-# plot(Out_gm2y ~ Date, Toolik, type='l', yaxt='n', xaxt='n', xlab='', ylab='', col=colors[2])
-# legend('topright', lwd=lwd, legend=c('R + S','Export'), col=colors)
-# #mtext(side=3, 'Pipe: Export > R + S | Processor: Export < R + S')
-# 
-# # Trout
-# plot(PipeProc_gm2y ~ Date, Trout, type='l', main='Trout', ylim=ylim, ylab=ylab, col=colors[1], cex.main=cex.main, cex.axis=cex.axis, cex.lab=cex.lab)
-# #abline(0,0,lty=lty, lwd=lwd)
-# par(new=T)
-# plot(Out_gm2y ~ Date, Trout, type='l', yaxt='n', xaxt='n', xlab='', ylab='', col=colors[2])
-# legend('topright', lwd=lwd, legend=c('R + S','Export'), col=colors)
-# #mtext(side=3, 'Pipe: Export > R + S | Processor: Export < R + S')
-# 
-# # Vanern
-# plot(PipeProc_gm2y ~ Date, Vanern, type='l', main='Vanern', ylim=ylim, ylab=ylab, col=colors[1], cex.main=cex.main, cex.axis=cex.axis, cex.lab=cex.lab)
-# #abline(0,0,lty=lty, lwd=lwd)
-# par(new=T)
-# plot(Out_gm2y ~ Date, Vanern, type='l', yaxt='n', xaxt='n', xlab='', ylab='', col=colors[2])
-# legend('topright', lwd=lwd, legend=c('R + S','Export'), col=colors)
-# #mtext(side=3, 'Pipe: Export > R + S | Processor: Export < R + S')
-# dev.off()
-# 
+####################################333
+### boxplot of SOS status across years
 
-#### calculate annual statistics ####
+# calculate annual statistics
 Vanern_annual = aggregate(-Vanern$PipeProc_gm2y, by=list(Vanern$Year), FUN='mean')
 colnames(Vanern_annual) = c('Year','mean')
 Vanern_annual$Lake = rep('Vanern',nrow(Vanern_annual))
@@ -276,7 +304,7 @@ Monona_annual$Lake = rep('Monona',nrow(Monona_annual))
 # merge into single data frame
 All_lakes_annual = rbind.data.frame(Harp_annual, Monona_annual, Toolik_annual, Trout_annual, Vanern_annual)
 
-#### boxplot of annual mean OC by lake ####
+#boxplot of annual mean OC by lake
 png(paste0('R/ResultsViz/Figures/AnnualNetOCBoxplot.png'),width = 11,height = 9,units = 'in',res=300)
 par(mfrow=c(1,1))
 par(mar=c(2.1, 5.1, 3.1, 2.1)) #bot, left, top, right, def=c(5.1, 4.1, 4.1, 2.1)
@@ -288,7 +316,8 @@ mtext(side=3, '(g/m2/yr OC)')
 #mtext(side=2, 'OC (g/m2/yr)')
 axis(1, at = 1:5, labels = levels(as.factor(All_lakes_annual$Lake)), cex.axis = cex.axis, tick=F)
 axis(2, at=tick_seq, label=rep('',length(tick_seq),cex.axis = cex.axis, tick=F))
-axis(2, at=tick_seq, line=0.5, lwd=0, cex.axis=1.5, las=2) #las=2 for horizontal y axis label
+axis(2, at=tick_seq, line=0.5, lwd=0, cex.axis=1.5, las=1) #las=1 for horizontal y axis label
 box()
 abline(0,0, lty=2, lwd=1.5)
 dev.off()
+
