@@ -13,19 +13,13 @@ PropWetlands	0.133	unitless
 AerialLoad	1	gPOC/m/d
 WetlandLoad	1	gDOC/m/d
 DOC_gw	10	g/m3
-PropGW	0.19	unitless
+PropGW	0	unitless
 DOC_sw	6.64	g/m3		
 DOC_precip	2	g/m3
 	
 #Sedimentation		
 ObservedMAR_oc	153.36	g/m2/yr
-		
+	
 #ProductionPeriod		
 ProdStartDay	135	JulianDay
 ProdEndDay	258	JulianDay
-
-#Fit Parameters
-DOCR_RespParam 0.00498979750366545 unitless
-DOCL_RespParam 0.0961492868119331 unitless
-BurialFactor_R 0.0865504823236653 1/days
-BurialFactor_L 0.898800820641779 1/day

@@ -43,7 +43,7 @@ RainData$datetime <- as.POSIXct(strptime(RainData$datetime,timestampFormat,tz='G
 InputData$Rain <- RainData$Rain[RainData$datetime %in% InputData$datetime] #Plug daily rain data into InputData file to integrate with original code.
 #### For TOOLIK ONLY #### (dealing with ice season)
 if (LakeName=='Toolik') {
-  InputData = fixToolik(InputData)
+  InputData = fixToolik(InputData,LakeName)
 }
 
 #DOC Validation Output Setup

@@ -55,7 +55,7 @@ Harp = clean_shave('Harp')
 #Annie = clean_shave('Annie')
 
 # plot
-png(paste0('R/ResultsViz/Figures/beardplot2.png'),width = 8,height = 4,units = 'in',res=300)
+png(paste0('R/ResultsViz/Figures/beardplot3.png'),width = 8,height = 4,units = 'in',res=300)
   par(mfrow=c(2,3))
   par(mar=c(2.5,2.5,2.5,1),mgp=c(1.5,0.5,0),tck=-0.03,cex=0.8)
   xlab = 'log(Resp/Burial)'
@@ -65,27 +65,27 @@ png(paste0('R/ResultsViz/Figures/beardplot2.png'),width = 8,height = 4,units = '
   cols = rev(heat.colors(30))[round(Harp$temp)]
   plot(logAA ~ logRS, Harp, xlab = xlab, ylab = ylab, main='Harp', pch=pch, col= cols)
   mtext(side=3, paste0('n=',nrow(Harp)), cex=0.6)
-  abline(h=1,v=1,lty=2,col='navy',lwd=1.5)
+  abline(h=0,v=0,lty=2,col='navy',lwd=1.5)
   
   cols = rev(heat.colors(30))[round(Monona$temp)]
-  plot(logAA ~ logRS, Monona, xlab = xlab, ylab = ylab, main='Monona', pch=pch, col= cols,xlim=c(-1.5,1.05))
+  plot(logAA ~ logRS, Monona, xlab = xlab, ylab = ylab, main='Monona', pch=pch, col= cols)
   mtext(side=3, paste0('n=',nrow(Monona)), cex=0.6)
-  abline(h=1,v=1,lty=2,col='navy',lwd=1.5)
+  abline(h=0,v=0,lty=2,col='navy',lwd=1.5)
   
   cols = rev(heat.colors(30))[round(Trout$temp)]
-  plot(logAA ~ logRS, Trout, xlab = xlab, ylab = ylab, main='Trout', pch=pch, col= cols,ylim=c(-0.2,1.05))
+  plot(logAA ~ logRS, Trout, xlab = xlab, ylab = ylab, main='Trout', pch=pch, col= cols,xlim=c(-0.1,2.2))
   mtext(side=3, paste0('n=',nrow(Trout)), cex=0.6)
-  abline(h=1,v=1,lty=2,col='navy',lwd=1.5)
+  abline(h=0,v=0,lty=2,col='navy',lwd=1.5)
   
   cols = rev(heat.colors(30))[round(Vanern$temp)]
-  plot(logAA ~ logRS, Vanern, xlab = xlab, ylab = ylab, main='Vanern', pch=pch, col=cols,xlim=c(-0.25,1.05),ylim=c(-1,1.05))
+  plot(logAA ~ logRS, Vanern, xlab = xlab, ylab = ylab, main='Vanern', pch=pch, col=cols)
   mtext(side=3, paste0('n=',nrow(Vanern)), cex=0.6)
-  abline(h=1,v=1,lty=2,col='navy',lwd=1.5)
+  abline(h=0,v=0,lty=2,col='navy',lwd=1.5)
   
   cols = rev(heat.colors(30))[round(Toolik$temp)]
   plot(logAA ~ logRS, Toolik, xlab = xlab, ylab = ylab, main='Toolik', pch=19, col= cols)
   mtext(side=3, paste0('n=',nrow(Toolik)), cex=0.6)
-  abline(h=1,v=1,lty=2,col='navy',lwd=1.5)
+  abline(h=0,v=0,lty=2,col='navy',lwd=1.5)
   
   # Plot legend
   plot.new()

@@ -36,6 +36,10 @@ for (LakeName in lakenames) {
   RainData$datetime <- as.POSIXct(strptime(RainData$datetime,timestampFormat,tz='GMT'))
   InputData$Rain <- RainData$Rain[RainData$datetime %in% InputData$datetime] #Plug daily rain data into InputData file to integrate with original code.
   
+  if (LakeName=='Toolik') {
+    InputData = fixToolik(InputData,LakeName)
+  }
+  
   #DOC Validation Output Setup
   ValidationDataDOC <- read.csv(ValidationFileDOC,header=T,stringsAsFactors = F)
   ValidationDataDOC$datetime <- as.Date(as.POSIXct(strptime(ValidationDataDOC$datetime,timestampFormat),tz="GMT")) #Convert time to POSIX
@@ -86,7 +90,7 @@ for (LakeName in lakenames) {
   ##------------------------------------------------------------------------------
   ##   Sensitivity range
   ##------------------------------------------------------------------------------
-  lowerBound = c(0.00003,0.003,0,0)
+  lowerBound = c(0.0003,0.003,0,0)
   upperBound = c(0.003,0.3,1,1)
   pRange <- data.frame(min = lowerBound, max = upperBound)
   rownames(pRange) = c('DOCR_RespParam','DOCL_RespParam','BurialFactor_R','BurialFactor_L')
@@ -106,7 +110,7 @@ for (LakeName in lakenames) {
   for (i in 1:4){
     print(i)
     Sens[[i]] <- sensRange(parms=pars[i], func=DOCsens, 
-                             num=20, parRange=pRange[i,])
+                             num=50, parRange=pRange[i,])
     }
     assign(x = paste0(LakeName,'_Sens'),value = Sens)
 }

@@ -60,7 +60,10 @@ getRT <- function (LakeName){
   RainData$datetime <- as.POSIXct(strptime(RainData$datetime,timestampFormat,tz='GMT'))
   
   InputData$Rain <- RainData$Rain[RainData$datetime %in% InputData$datetime] #Plug daily rain data into InputData file to integrate with original code.
-  
+  #### For TOOLIK ONLY #### (dealing with ice season)
+  if (LakeName=='Toolik') {
+    InputData = fixToolik(InputData,LakeName)
+  }
   
   df = InputData %>% select(datetime,FlowIn,Rain) %>%
     mutate(Year = year(datetime), Flow_m3_d = FlowIn * 3600*24,

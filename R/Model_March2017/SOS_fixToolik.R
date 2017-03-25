@@ -1,5 +1,5 @@
 
-fixToolik <- function(InputData) {
+fixToolik <- function(InputData,LakeName) {
   # Set FlowIn to 0 for ice-on periods for Toolik Inlet, based on historical data: 
   # http://toolik.alaska.edu/edc/journal/annual_summaries.php?summary=inlet
   # Used average ice on/off dates from 2006-2010 for 2001-2005 (no data available those years)

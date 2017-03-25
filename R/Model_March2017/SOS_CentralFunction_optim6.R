@@ -1,9 +1,9 @@
 setwd('C:/Users/hdugan/Documents/Rpackages/SOS/')
 # setwd("~/Documents/Rpackages/SOS")
 #Flags 1 for yes, else no.
-LakeName = 'Trout'
+LakeName = 'Vanern'
 ValidationFlag = 1
-WriteFiles = 1
+WriteFiles = 0
 BootstrapFlag = 0
 timestampFormat =	'%Y-%m-%d'
 ##### INPUT FILE NAMES ################
@@ -61,7 +61,7 @@ InputData$Rain <- RainData$Rain[RainData$datetime %in% InputData$datetime] #Plug
 
 #### For TOOLIK ONLY #### (dealing with ice season)
 if (LakeName=='Toolik') {
-  InputData = fixToolik(InputData)
+  InputData = fixToolik(InputData,LakeName)
 }
 
 ###### Run Period and Time Step Setup #####
@@ -325,11 +325,26 @@ print(paste0('RMSE DO ',RMSE_DO))
 ################## Bootstrapping of Residuals #################
 if (BootstrapFlag==1){
   #save.image(file = "R/Model/lake.RData")
+  # DOC residuals
+  joinDOC = DOC_df %>% select(datetime = Date,DOC_model = DOCtotal_conc_gm3) %>%
+    mutate(datetime = as.Date(datetime)) %>%
+    right_join(.,ValidationDataDOC)
+    inner_join(ValidationDataDOC,DOC_df,by=c('datetime'='Date'))
+  resDOC = na.omit(joinDOC$DOC - joinDOC$DOC_model)
   
-  resids <- CalibrationOutputDOC[,4]-CalibrationOutputDOC[,2]
+  # DO residuals
+  joinDO = Metabolism %>% select(datetime = Date,DO_model = Oxygen_conc) %>%
+    mutate(datetime = as.Date(datetime)) %>%
+    right_join(.,ValidationDataDO)
+  resDO = na.omit(joinDO$DO_con - joinDO$DO_model)
+  
+  lengthScale = length(resDO)/length(resDOC)
+  resids = c(resDOC,resDO/lengthScale)
+  
   set.seed(001) # just to make it reproducible
   #set number of psuedo observations
-  pseudoObs = matrix(replicate(4,sample(resids) + CalibrationOutputDOC$Measured),ncol = length(resids)) # matrix of psuedo observations 
+  pseudoObs = matrix(replicate(4,sample(resDOC) + CalibrationOutputDOC$DOC),ncol = length(resids)) # matrix of psuedo observations 
+  
   
   library(parallel)
   detectCores() # Calculate the number of cores
