@@ -170,7 +170,7 @@ fitTest <- function(pars,plot=F){
   print(paste('NSE = ',NSE(c(joinDOC$DOC,joinDO$DO_con), c(joinDOC$DOC_conc,joinDO$MetabOxygen.oxy_conc))))
 }
 
-fitTest(pars,plot=T)
+fitTest(pars,plot=F)
 fitTest(Fit2$par,plot=F)
 fitTest(Fit3$par)
 

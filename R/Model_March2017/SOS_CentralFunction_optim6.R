@@ -1,9 +1,9 @@
 setwd('C:/Users/hdugan/Documents/Rpackages/SOS/')
 # setwd("~/Documents/Rpackages/SOS")
 #Flags 1 for yes, else no.
-LakeName = 'Vanern'
+LakeName = 'Toolik'
 ValidationFlag = 1
-WriteFiles = 0
+WriteFiles = 1
 BootstrapFlag = 0
 timestampFormat =	'%Y-%m-%d'
 ##### INPUT FILE NAMES ################

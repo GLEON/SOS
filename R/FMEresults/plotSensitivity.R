@@ -128,7 +128,7 @@ plot.sensRange.HD <- function (x,Select = 2,cols){
   lines(X, rowMeans(y), col = add.alpha(cols,0), lwd = 2,type='l') 
   min = apply(y,1,min)
   max = apply(y,1,max)
-  polygon(x = c(X,rev(X)),y = c(min,rev(max)),col= add.alpha(cols,0.6),border = add.alpha(cols,0.6))
+  polygon(x = c(X,rev(X)),y = c(min,rev(max)),col= add.alpha(cols,0.4),border = add.alpha(cols,0.4))
 }
 
 getPars <- function(LakeName) {
@@ -139,14 +139,15 @@ getPars <- function(LakeName) {
 
 
 ###### PLOTTING #############
-png(paste0('R/FMEresults/plotSensitivity_all3.png'),height = 6,width = 8,units = 'in',res=300)
+png(paste0('R/ResultsViz/Figures/plotSensitivity_all3.png'),height = 5,width = 8,units = 'in',res=300)
   par(mar = c(3,3,2,1),mgp=c(1.5,0.5,0),mfrow=c(2,3))
   
   for (LakeName in lakenames) {
 
     joinDOC = read.csv(paste0('./',LakeName,'Lake','/Results/',LakeName,'_DOCvalidation.csv'),stringsAsFactors = F)
     joinDOC$datetime = as.Date(strptime(joinDOC$datetime,'%Y-%m-%d'))
-    plot(joinDOC$datetime,joinDOC$DOC,type='o',ylab='DOC (mg/L)',xlab='Date',pch=16,cex=0.7,ylim=c(1,8),main=LakeName)
+    plot(joinDOC$datetime,joinDOC$DOC,type='o',ylab=expression(paste("DO (mg L"^"-1",")"))
+         ,xlab='Date',pch=16,cex=0.7,ylim=c(1,9),main=LakeName)
     # Get Sensitivity Data
     Sens = get(paste0(LakeName,'_Sens'))
     cols = c('navy','red3','darkgreen','gold')
@@ -154,11 +155,11 @@ png(paste0('R/FMEresults/plotSensitivity_all3.png'),height = 6,width = 8,units =
       plot.sensRange.HD(Sens[[i]],Select = 2,cols = cols[i])
       lines(as.POSIXlt(joinDOC$datetime),joinDOC$DOC,lty=2,pch=16,cex=0.7,type='o')
     }
-    lines(joinDOC$datetime,joinDOC$DOC,type='o',pch=16,cex=0.7)
+    lines(joinDOC$datetime,joinDOC$DOC,type='o',pch=16,cex=0.8,lwd=1.5)
     
   }
   plot.new()
-  legend('topleft',legend = c('Observed','Respiration_Alloch (0.00003-0.003)','Respiration_Auto (0.003-0.3)',
+  legend('topleft',legend = c('Observed','Respiration_Alloch (0.0003-0.003)','Respiration_Auto (0.003-0.3)',
                               'Burial_Alloch (0-1)','Burial_Auto (0-1)'),
-         fill=c('black',cols),bty='n',cex=1)
+         fill=c('black',cols),bty='n',cex=1,)
 dev.off()
