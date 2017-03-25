@@ -1,6 +1,5 @@
 setwd("~/Documents/SOS")
 
-lakenames = c('Monona','Trout','Harp','Vanern','Toolik')
 for (LakeName in lakenames) {
   ##### LOAD PACKAGES ########################
   library(lubridate)
@@ -148,6 +147,8 @@ getPars <- function(LakeName) {
 png(paste0('R/ResultsViz/Figures/plotSensitivity_all3.png'),height = 5,width = 8,units = 'in',res=300)
   par(mar = c(3,3,2,1),mgp=c(1.5,0.5,0),mfrow=c(2,3))
   
+  lakenames = c('Monona','Trout','Harp','Vanern','Toolik')
+  
   for (LakeName in lakenames) {
 
     joinDOC = read.csv(paste0('./',LakeName,'Lake','/Results/',LakeName,'_DOCvalidation.csv'),stringsAsFactors = F)
@@ -167,5 +168,5 @@ png(paste0('R/ResultsViz/Figures/plotSensitivity_all3.png'),height = 5,width = 8
   plot.new()
   legend('topleft',legend = c('Observed','Respiration_Alloch (0.0003-0.003)','Respiration_Auto (0.003-0.3)',
                               'Burial_Alloch (0-1)','Burial_Auto (0-1)'),
-         fill=c('black',cols),bty='n',cex=1,)
+         fill=c('black',cols),bty='n',cex=1)
 dev.off()
