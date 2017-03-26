@@ -10,14 +10,10 @@ PropWetlands 0.011 unitless
 AerialLoad 1 gPOC/m/d
 WetlandLoad 1 gDOC/m/d
 DOC_gw 10 g/m3
-PropGW 0.19 unitless
+PropGW 0 unitless
 DOC_precip 2 g/m3
 ObservedMAR_oc 27 g/m2/yr
 ProdStartDay 105 JulianDay
 ProdEndDay 330 JulianDay
 
-#Fit Parameters
-DOCR_RespParam 0.00116494458643663 unitless
-DOCL_RespParam 0.0663237338659996 unitless
-BurialFactor_R 1 1/days
-BurialFactor_L 0 1/day
+

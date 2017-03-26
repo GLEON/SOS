@@ -1,5 +1,5 @@
 setwd("~/Documents/SOS")
-LakeName = 'Harp'
+LakeName = 'Toolik'
 
 ##### LOAD PACKAGES ########################
 library(lubridate)
@@ -116,7 +116,7 @@ testACF(pars)
 # Starting parameters cannot be negative, because of bounds we set 
 parStart = pars
 lowerBound = c(0.00003,0.003,0,0)
-upperBound = c(0.003,0.3,1,1)
+upperBound = c(0.003,0.5,1,1)
 parStart[(parStart - lowerBound) < 0] = lowerBound[(parStart - lowerBound) < 0]
 parStart[(upperBound - parStart) < 0] = upperBound[(upperBound - parStart) < 0]
 names(parStart) = c('DOCR_RespParam','DOCL_RespParam','BurialFactor_R','BurialFactor_L')
