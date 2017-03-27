@@ -1,7 +1,7 @@
 
 lakenames = c('Harp','Monona','Trout','Vanern','Toolik')
 
-png(paste0('R/ResultsViz/Figures/FMEfit_all.png'),width = 8,height = 11,units = 'in',res = 300)
+png(paste0('R/ResultsViz/Figures/FMEfit_all2.png'),width = 8,height = 11,units = 'in',res = 300)
   
   par(mar=c(2,3,2,1),mgp=c(1.5,0.5,0),mfrow=c(5,2),cex=1,tck=-0.03)
   for (l in 1:5) {
