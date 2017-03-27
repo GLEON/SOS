@@ -144,8 +144,8 @@ getPars <- function(LakeName) {
 
 
 ###### PLOTTING #############
-png(paste0('R/ResultsViz/Figures/plotSensitivity_all3.png'),height = 5,width = 8,units = 'in',res=300)
-  par(mar = c(3,3,2,1),mgp=c(1.5,0.5,0),mfrow=c(2,3))
+png(paste0('R/ResultsViz/Figures/plotSensitivity_all2.png'),width = 4,height = 10,units = 'in',res = 300)
+  par(mar=c(1,3,1,1),mgp=c(1.5,0.5,0),mfrow=c(6,1),cex=1,tck=-0.03)
   
   lakenames = c('Monona','Trout','Harp','Vanern','Toolik')
   
@@ -153,8 +153,9 @@ png(paste0('R/ResultsViz/Figures/plotSensitivity_all3.png'),height = 5,width = 8
 
     joinDOC = read.csv(paste0('./',LakeName,'Lake','/Results/',LakeName,'_DOCvalidation.csv'),stringsAsFactors = F)
     joinDOC$datetime = as.Date(strptime(joinDOC$datetime,'%Y-%m-%d'))
-    plot(joinDOC$datetime,joinDOC$DOC,type='o',ylab=expression(paste("DO (mg L"^"-1",")"))
-         ,xlab='Date',pch=16,cex=0.7,ylim=c(1,9),main=LakeName)
+    plot(joinDOC$datetime,joinDOC$DOC,type='o',ylab=expression(paste("DOC (mg L"^"-1",")"))
+         ,xlab='',pch=16,cex=0.7,ylim=c(1,9))
+    mtext(text = paste0('  ',LakeName),side = 3,line=-1,adj = 0,font = 2)
     # Get Sensitivity Data
     Sens = get(paste0(LakeName,'_Sens'))
     cols = c('navy','red3','darkgreen','gold')
@@ -163,10 +164,15 @@ png(paste0('R/ResultsViz/Figures/plotSensitivity_all3.png'),height = 5,width = 8
       lines(as.POSIXlt(joinDOC$datetime),joinDOC$DOC,lty=2,pch=16,cex=0.7,type='o')
     }
     lines(joinDOC$datetime,joinDOC$DOC,type='o',pch=16,cex=0.8,lwd=1.5)
-    
   }
+  par(mar=c(0,3,0,0))
   plot.new()
-  legend('topleft',legend = c('Observed','Respiration_Alloch (0.0003-0.003)','Respiration_Auto (0.003-0.3)',
+  legend('topleft',legend = c('Observed','Resp_Alloch (0.0003-0.003)','Resp_Auto (0.003-0.3)',
                               'Burial_Alloch (0-1)','Burial_Auto (0-1)'),
-         fill=c('black',cols),bty='n',cex=1)
+         fill=c('black',cols),bty='n',cex=1,ncol=1,y.intersp = 0.8)
+  # 
+  # legend('topleft',legend = c('Observed','Resp_Alloch \n(0.0003-0.003)','Resp_Auto \n(0.003-0.3)',
+  #                             'Burial_Alloch \n(0-1)','Burial_Auto \n(0-1)'),
+  #        fill=c('black',cols),bty='n',cex=1,ncol=2,y.intersp = 1.2)
+
 dev.off()
