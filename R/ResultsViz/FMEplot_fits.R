@@ -11,18 +11,18 @@ png(paste0('R/ResultsViz/Figures/FMEfit_all2.png'),width = 8,height = 11,units =
     modelDO$datetime = strptime(modelDO$datetime,'%Y-%m-%d')
     
     plot(modelDOC$datetime,modelDOC$DOC,type='o',xlab='',ylab = expression(paste("DOC (mg L"^"-1",")")),pch=16,
-         col='slategray4',main=lakenames[l])
+         col='cyan4',main=lakenames[l])
     # lines(modelDOC$datetime,modelDOC$DOCwc,type='o',col='grey50',pch=16)
-    lines(modelDOC$datetime,modelDOC$Modelled,type='o',col='red4',pch=16)
+    lines(modelDOC$datetime,modelDOC$Modelled,type='o',col='firebrick',pch=16)
 
     abline(v = seq.POSIXt(as.POSIXct('1990-01-01'),as.POSIXct('2015-01-01'),by='year'),col='grey80',lty=2)
     if (l == 1){
-      legend('topleft',legend = c('Observed','Modeled'),col=c('slategray4','red4'),pch=16,cex=0.8,lwd = 1,bg = 'white')
+      legend('topleft',legend = c('Observed','Modeled'),col=c('cyan4','firebrick'),pch=16,cex=0.8,lwd = 1,bg = 'white')
     }
     
     plot(modelDO$datetime,modelDO$DO_con,xlab='',type='o',ylab = expression(paste("DO (mg L"^"-1",")")),pch=16,main=lakenames[l],
-         ylim = range(modelDO[,c(3,7)]),col='slategray4')
-    lines(modelDO$datetime,modelDO$Conc_Modelled,type='o',col='red4',pch=16)
+         ylim = range(modelDO[,c(3,7)]),col='cyan4')
+    lines(modelDO$datetime,modelDO$Conc_Modelled,type='o',col='firebrick',pch=16)
     abline(v = seq.POSIXt(as.POSIXct('1990-01-01'),as.POSIXct('2015-01-01'),by='year'),col='grey80',lty=2)
     
   }
