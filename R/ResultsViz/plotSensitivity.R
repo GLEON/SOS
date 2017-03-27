@@ -147,7 +147,7 @@ getPars <- function(LakeName) {
 png(paste0('R/ResultsViz/Figures/plotSensitivity_all2.png'),width = 4,height = 10,units = 'in',res = 300)
   par(mar=c(1,3,1,1),mgp=c(1.5,0.5,0),mfrow=c(6,1),cex=1,tck=-0.03)
   
-  lakenames = c('Monona','Trout','Harp','Vanern','Toolik')
+  lakenames = c('Harp','Monona','Trout','Vanern','Toolik')
   
   for (LakeName in lakenames) {
 
