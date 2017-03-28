@@ -341,9 +341,10 @@ if (BootstrapFlag==1){
   detectCores() # Calculate the number of cores
   cl <- makeCluster(4) # SET THIS NUMBER EQUAL TO OR LESS THAN THE CORES YOU HAVE
   
-  source('R/Model/bootstrapDOC.R')
+  source('R/Model_March2017//bootstrapDOC.R')
   # This applies the bootstrap function across multiple cores, works for Mac. 
   bootOut = parApply(cl = cl,MARGIN = 1,X = pseudoObs, FUN = bootstrapDOC,
+                     num =num,
                      datetimeDOC = CalibrationOutputDOC$datetime, 
                      datetimeDO = CalibrationOutputDO$datetime, 
                      LakeName = LakeName,
