@@ -133,7 +133,7 @@ fate_plot <- function(LakeName){
 flux_plot <- function(LakeName,ylim1=NULL,ylim2=NULL,legend=1){
     lake = get(LakeName)
     plot(lake$Date,lake$Alloch_gm2y + lake$Autoch_gm2y,col='dodgerblue',type='l',
-         ylim=c(ylim1,ylim2),ylab='OC flux (gm2/y)',xlab='', main=LakeName, las=1) # Inflow
+         ylim=c(ylim1,ylim2),ylab=ylabs,xlab='', main=LakeName, las=1) # Inflow
     # Fluxes in 
     polygon(x = c(lake$Date,rev(lake$Date)),y = c(lake$Autoch_gm2y,rep(0,length(lake$Autoch_gm2y))),col = 'firebrick')
     polygon(x = c(lake$Date,rev(lake$Date)),y = c(lake$Alloch_gm2y + lake$Autoch_gm2y,rev(lake$Autoch_gm2y)),col = 'dodgerblue')
@@ -151,11 +151,12 @@ flux_plot <- function(LakeName,ylim1=NULL,ylim2=NULL,legend=1){
 }
 
 # static plot parameters
-ylabs = 'OC (g/m2/yr)'
+ylabs = expression(paste("g m"^"-2"," yr"^"-1"))
+#ylab = expression(paste("DO (mg L"^"-1",")"))
 xlabs = 'Date'
 ylim_fate = c(0,400)
 png(paste0('R/ResultsViz/Figures/OCfates_fluxesAllLakes2.png'),width = 8,height = 11,units = 'in',res=300)
-  par(mar=c(1.5,3,2,1),mgp=c(2,0.3,0),mfrow=c(5,2),cex=1,tck=-0.03)
+  par(mar=c(1.5,4,2,1),mgp=c(2,0.3,0),mfrow=c(5,2),cex=1,tck=-0.03)
   ylim1= -300
   ylim2= 300
   
