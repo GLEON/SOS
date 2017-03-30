@@ -156,8 +156,8 @@ xlabs = 'Date'
 ylim_fate = c(0,400)
 png(paste0('R/ResultsViz/Figures/OCfates_fluxesAllLakes2.png'),width = 8,height = 11,units = 'in',res=300)
   par(mar=c(1.5,3,2,1),mgp=c(2,0.3,0),mfrow=c(5,2),cex=1,tck=-0.03)
-  ylim1= -250
-  ylim2= 250
+  ylim1= -300
+  ylim2= 300
   
   # Harp
   flux_plot('Harp',ylim1=ylim1,ylim2=ylim2,legend=1)
@@ -177,7 +177,7 @@ png(paste0('R/ResultsViz/Figures/OCfates_fluxesAllLakes2.png'),width = 8,height 
   fate_plot('Vanern')
   
    # Toolik
-  flux_plot('Toolik',ylim1=-800,ylim2=800,legend=0)
+  flux_plot('Toolik',ylim1=ylim1,ylim2=ylim2,legend=0)
   fate_plot('Toolik')
   
 dev.off()
