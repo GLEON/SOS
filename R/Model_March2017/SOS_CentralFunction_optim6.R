@@ -1,10 +1,10 @@
 # setwd('C:/Users/hdugan/Documents/Rpackages/SOS/')
 # setwd("~/Documents/Rpackages/SOS")
 #Flags 1 for yes, else no.
-LakeName = 'Trout'
+LakeName = 'Toolik'
 ValidationFlag = 1
 WriteFiles = 0
-BootstrapFlag = 0
+BootstrapFlag = 1
 timestampFormat =	'%Y-%m-%d'
 ##### INPUT FILE NAMES ################
 TimeSeriesFile <- paste('./',LakeName,'Lake/',LakeName,'TS.csv',sep='')
@@ -337,32 +337,34 @@ if (BootstrapFlag==1){
   pseudoObs = cbind(pseudoObs_DOC,pseudoObs_DO)
   num = length(resDOC)
   
-  library(parallel)
-  detectCores() # Calculate the number of cores
-  cl <- makeCluster(4) # SET THIS NUMBER EQUAL TO OR LESS THAN THE CORES YOU HAVE
-  
   source('R/Model_March2017//bootstrapDOC.R')
-  # This applies the bootstrap function across multiple cores, works for Mac. 
-  bootOut = parApply(cl = cl,MARGIN = 1,X = pseudoObs, FUN = bootstrapDOC,
-                     num =num,
-                     datetimeDOC = CalibrationOutputDOC$datetime, 
-                     datetimeDO = CalibrationOutputDO$datetime, 
-                     LakeName = LakeName,
-                     timestampFormat = timestampFormat)
-  # Output results
-  write.csv(bootOut,paste0('./',LakeName,'Lake/','Results/',LakeName,'_boostrapResults.csv'),row.names = F,quote=F)
+  # library(parallel)
+  # detectCores() # Calculate the number of cores
+  # cl <- makeCluster(4) # SET THIS NUMBER EQUAL TO OR LESS THAN THE CORES YOU HAVE
+  # # This applies the bootstrap function across multiple cores
+  # bootOut = parApply(cl = cl,MARGIN = 1,X = pseudoObs, FUN = bootstrapDOC,
+  #                    num =num,
+  #                    datetimeDOC = CalibrationOutputDOC$datetime, 
+  #                    datetimeDO = CalibrationOutputDO$datetime, 
+  #                    LakeName = LakeName,
+  #                    timestampFormat = timestampFormat)
+  # # Output results
+  # write.csv(bootOut,paste0('./',LakeName,'Lake/','Results/',LakeName,'_boostrapResults.csv'),row.names = F,quote=F)
+  # 
   
   ###### This code be written as a loop instead. 
-  bootParams = data.frame(DOCR_RespParam=NA,DOCL_RespParam=NA,R_auto=NA,BurialFactor_R=NA,
-                          BurialFactor_L=NA,POC_lcR=NA,POC_lcL=NA,NLL = NA, Convergence = NA)
+  bootParams = data.frame(DOCR_RespParam=NA,DOCL_RespParam=NA,BurialFactor_R=NA,BurialFactor_L=NA)
   for (b in 1:100) {
+    print(paste0('running b = ',b,', time = ',Sys.time()))
     pseudoDOC = data.frame(datetime = CalibrationOutputDOC$datetime, DOC = pseudoObs[b,], DOCwc = pseudoObs[b,])
 
-    loopOut = bootstrapDOC(pseudoObs[1,],datetime = CalibrationOutputDOC$datetime, LakeName = LakeName,
-                 timestampFormat = timestampFormat)
+    loopOut = bootstrapDOC(pseudoObs[b,],num = num, datetimeDOC = CalibrationOutputDOC$datetime,
+                           datetimeDO = CalibrationOutputDO$datetime, LakeName = LakeName,
+                          timestampFormat = timestampFormat)
     ## New parameters from optimization output
     bootParams[b,] <- loopOut
   } # Loop instead?
+  write.csv(bootParams,paste0('./',LakeName,'Lake/','Results/',LakeName,'_boostrapResults.csv'),row.names = F,quote=F)
 }
 
 ################## Write results files ##################
