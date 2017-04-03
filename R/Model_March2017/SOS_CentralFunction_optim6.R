@@ -1,7 +1,7 @@
 # setwd('C:/Users/hdugan/Documents/Rpackages/SOS/')
 # setwd("~/Documents/Rpackages/SOS")
 #Flags 1 for yes, else no.
-LakeName = 'Toolik'
+LakeName = 'Monona'
 ValidationFlag = 1
 WriteFiles = 0
 BootstrapFlag = 1
@@ -356,8 +356,6 @@ if (BootstrapFlag==1){
   bootParams = data.frame(DOCR_RespParam=NA,DOCL_RespParam=NA,BurialFactor_R=NA,BurialFactor_L=NA)
   for (b in 1:100) {
     print(paste0('running b = ',b,', time = ',Sys.time()))
-    pseudoDOC = data.frame(datetime = CalibrationOutputDOC$datetime, DOC = pseudoObs[b,], DOCwc = pseudoObs[b,])
-
     loopOut = bootstrapDOC(pseudoObs[b,],num = num, datetimeDOC = CalibrationOutputDOC$datetime,
                            datetimeDO = CalibrationOutputDO$datetime, LakeName = LakeName,
                           timestampFormat = timestampFormat)
