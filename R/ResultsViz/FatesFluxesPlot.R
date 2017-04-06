@@ -2,7 +2,7 @@
 # Single plot of fluxes and fates over time 
 # Combo of the colored flux plot and the black/gold "steeler" plot showing SOS
 # Date: 3-25-17 by Ian McC
-# Updated: 3-27-2017 by HD
+# Updated: 4-6-2017 by Ian McC
 ##################################################################################
 
 setwd('C:/Users/immcc/Desktop/SOS/')
@@ -221,5 +221,52 @@ png(paste0('R/ResultsViz/Figures/AnnualNetOCBoxplot.png'),width = 11,height = 9,
   axis(2, at=tick_seq, line=0.5, lwd=0, cex.axis=1.5, las=1) #las=1 for horizontal y axis label
   box()
   abline(0,0, lty=2, lwd=1.5)
+dev.off()
+
+#### boxplot of sub-annual mean OC by lake ####
+
+# subset to specific months
+first_month = 5 #e.g., 5=May
+last_month = 8
+Vanern_subannual = subset(Vanern, as.numeric(format(Date, "%m")) %in% first_month:last_month) #e.g., 5:8 is May-Aug
+Trout_subannual = subset(Trout, as.numeric(format(Date, "%m")) %in% first_month:last_month)
+Harp_subannual = subset(Harp, as.numeric(format(Date, "%m")) %in% first_month:last_month)
+Toolik_subannual = subset(Toolik, as.numeric(format(Date, "%m")) %in% first_month:last_month)
+Monona_subannual = subset(Monona, as.numeric(format(Date, "%m")) %in% first_month:last_month)
+
+# calculate sub-annual statistics
+Vanern_subannual = aggregate(-Vanern_subannual$PipeProc_gm2y, by=list(Vanern_subannual$Year), FUN='mean')
+colnames(Vanern_subannual) = c('Year','mean')
+Vanern_subannual$Lake = rep('Vanern',nrow(Vanern_subannual))
+Harp_subannual = aggregate(-Harp_subannual$PipeProc_gm2y, by=list(Harp_subannual$Year), FUN='mean')
+colnames(Harp_subannual) = c('Year','mean')
+Harp_subannual$Lake = rep('Harp',nrow(Harp_subannual))
+Trout_subannual = aggregate(-Trout_subannual$PipeProc_gm2y, by=list(Trout_subannual$Year), FUN='mean')
+colnames(Trout_subannual) = c('Year','mean')
+Trout_subannual$Lake = rep('Trout',nrow(Trout_subannual))
+Toolik_subannual = aggregate(-Toolik_subannual$PipeProc_gm2y, by=list(Toolik_subannual$Year), FUN='mean')
+colnames(Toolik_subannual) = c('Year','mean')
+Toolik_subannual$Lake = rep('Toolik',nrow(Toolik_subannual))
+Monona_subannual = aggregate(-Monona_subannual$PipeProc_gm2y, by=list(Monona_subannual$Year), FUN='mean')
+colnames(Monona_subannual) = c('Year','mean')
+Monona_subannual$Lake = rep('Monona',nrow(Monona_subannual))
+
+# merge into single data frame
+All_lakes_subannual = rbind.data.frame(Harp_subannual, Monona_subannual, Toolik_subannual, Trout_subannual, Vanern_annual)
+
+png(paste0('R/ResultsViz/Figures/SubAnnualNetOCBoxplot.png'),width = 11,height = 9,units = 'in',res=300)
+par(mfrow=c(1,1))
+par(mar=c(2.1, 5.1, 3.1, 2.1)) #bot, left, top, right, def=c(5.1, 4.1, 4.1, 2.1)
+tick_seq = seq(-50,100, by=25)
+cex.axis = 1.5
+
+boxplot(mean ~ Lake, data=All_lakes_subannual, axes=F, ann=F, main='Subannual Net Lake Function: May-Aug', ylim=c(-50,100))
+mtext(side=3, '(g/m2/yr OC)')
+#mtext(side=2, 'OC (g/m2/yr)')
+axis(1, at = 1:5, labels = levels(as.factor(All_lakes_subannual$Lake)), cex.axis = cex.axis, tick=F)
+axis(2, at=tick_seq, label=rep('',length(tick_seq),cex.axis = cex.axis, tick=F))
+axis(2, at=tick_seq, line=0.5, lwd=0, cex.axis=1.5, las=1) #las=1 for horizontal y axis label
+box()
+abline(0,0, lty=2, lwd=1.5)
 dev.off()
 
