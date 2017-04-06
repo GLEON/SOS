@@ -201,8 +201,8 @@ png(paste0('R/ResultsViz/Figures/OCfates_fluxesAllLakes2.png'),width = 8,height 
   
 dev.off()
 
-####################################333
-### boxplot of SOS status across years
+####################################
+#### boxplot of SOS status across years ####
 
 # calculate annual statistics
 Vanern_annual = aggregate(-Vanern_fullyears$PipeProc_gm2y, by=list(Vanern_fullyears$Year), FUN='mean')
@@ -297,3 +297,29 @@ comparison = data.frame(Lake=full_year_sampling$`All_lakes_annual$Lake`,
                         part_year=part_year_sampling$`All_lakes_subannual$mean`)
 comparison$Diff = comparison$part_year - comparison$full_year
 comparison$PctDiff = 100- ((comparison$full_year/comparison$part_year)*100)
+
+png(paste0('R/ResultsViz/Figures/AnnualNetOCBoxplot_panel.png'),width = 11,height = 9,units = 'in',res=300)
+  par(mfrow=c(1,2))
+  par(mar=c(2.1, 5.1, 3.1, 2.1)) #bot, left, top, right, def=c(5.1, 4.1, 4.1, 2.1)
+  tick_seq = seq(-50,100, by=25)
+  cex.axis = 1.5
+
+  boxplot(mean ~ Lake, data=All_lakes_annual, axes=F, ann=F, main='Annual Net Lake Function', ylim=c(-50,100))
+  mtext(side=3, '(g/m2/yr OC)')
+  #mtext(side=2, 'OC (g/m2/yr)')
+  axis(1, at = 1:5, labels = c('H','M','TO','TR','V'), cex.axis = cex.axis, tick=F)
+  axis(2, at=tick_seq, label=rep('',length(tick_seq),cex.axis = cex.axis, tick=F))
+  axis(2, at=tick_seq, line=0.5, lwd=0, cex.axis=1.5, las=1) #las=1 for horizontal y axis label
+  box()
+  abline(0,0, lty=2, lwd=1.5)
+  
+  boxplot(mean ~ Lake, data=All_lakes_subannual, axes=F, ann=F, main='May-Aug Net Lake Function', ylim=c(-50,100))
+  mtext(side=3, '(g/m2/yr OC)')
+  #mtext(side=2, 'OC (g/m2/yr)')
+  axis(1, at = 1:5, labels = c('H','M','TO','TR','V'), cex.axis = cex.axis, tick=F)
+  axis(2, at=tick_seq, label=rep('',length(tick_seq),cex.axis = cex.axis, tick=F))
+  axis(2, at=tick_seq, line=0.5, lwd=0, cex.axis=1.5, las=1) #las=1 for horizontal y axis label
+  box()
+  abline(0,0, lty=2, lwd=1.5)
+  
+dev.off()
