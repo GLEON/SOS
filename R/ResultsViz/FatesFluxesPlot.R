@@ -252,7 +252,7 @@ colnames(Monona_subannual) = c('Year','mean')
 Monona_subannual$Lake = rep('Monona',nrow(Monona_subannual))
 
 # merge into single data frame
-All_lakes_subannual = rbind.data.frame(Harp_subannual, Monona_subannual, Toolik_subannual, Trout_subannual, Vanern_annual)
+All_lakes_subannual = rbind.data.frame(Harp_subannual, Monona_subannual, Toolik_subannual, Trout_subannual, Vanern_subannual)
 
 png(paste0('R/ResultsViz/Figures/SubAnnualNetOCBoxplot.png'),width = 11,height = 9,units = 'in',res=300)
 par(mfrow=c(1,1))
@@ -270,3 +270,12 @@ box()
 abline(0,0, lty=2, lwd=1.5)
 dev.off()
 
+
+#### calculate differences in net source/sink by annual vs. subannual
+full_year_sampling = aggregate(All_lakes_annual$mean~All_lakes_annual$Lake, FUN=mean)
+part_year_sampling = aggregate(All_lakes_subannual$mean~All_lakes_subannual$Lake, FUN=mean)
+comparison = data.frame(Lake=full_year_sampling$`All_lakes_annual$Lake`,
+                        full_year=full_year_sampling$`All_lakes_annual$mean`,
+                        part_year=part_year_sampling$`All_lakes_subannual$mean`)
+comparison$Diff = comparison$part_year - comparison$full_year
+comparison$PctDiff = 100- ((comparison$full_year/comparison$part_year)*100)
