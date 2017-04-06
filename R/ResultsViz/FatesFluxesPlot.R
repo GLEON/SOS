@@ -107,17 +107,35 @@ Vanern = SOS_fate('Vanern',monthlyFlag = monthlyFlag)
 
 #generate summary table of fates by lake
 # recommend using daily (monthlyFlag=0)
-Harp_means = colMeans(Harp[,3:11],na.rm=T)
-Monona_means = colMeans(Monona[,3:11],na.rm=T)
-Toolik_means = colMeans(Toolik[,3:11],na.rm=T)
-Trout_means = colMeans(Trout[,3:11],na.rm=T)
-Vanern_means = colMeans(Vanern[,3:11],na.rm=T)
+
+# get rid of first year; artifact of excluding cold season burial (emphasizes summer respiration)
+Harp$Year = as.numeric(as.character(Harp$Year))
+Harp_fullyears = subset(Harp, Year > Harp$Year[1])
+
+Monona$Year = as.numeric(as.character(Monona$Year))
+Monona_fullyears = subset(Monona, Year > Monona$Year[1])
+
+Trout$Year = as.numeric(as.character(Trout$Year))
+Trout_fullyears = subset(Trout, Year > Trout$Year[1])
+
+Toolik$Year = as.numeric(as.character(Toolik$Year))
+Toolik_fullyears = subset(Toolik, Year > Toolik$Year[1])
+
+Vanern$Year = as.numeric(as.character(Vanern$Year))
+Vanern_fullyears = subset(Vanern, Year > Vanern$Year[1])
+
+Harp_means = colMeans(Harp_fullyears[,3:11],na.rm=T)
+Monona_means = colMeans(Monona_fullyears[,3:11],na.rm=T)
+Toolik_means = colMeans(Toolik_fullyears[,3:11],na.rm=T)
+Trout_means = colMeans(Trout_fullyears[,3:11],na.rm=T)
+Vanern_means = colMeans(Vanern_fullyears[,3:11],na.rm=T)
 
 table_heads = names(Harp_means)
 fate_means = rbind.data.frame(Harp_means,Monona_means,Toolik_means,Trout_means,Vanern_means)
 colnames(fate_means) = table_heads
 rownames(fate_means) = c('Harp','Monona','Toolik','Trout','Vanern')
 #write.csv(fate_means,'FateOutputs_byLake.csv')
+#write.csv(fate_means,'FateOutputs_byLake_full_years_only.csv')
 
 ##### plotting ######
 fate_plot <- function(LakeName){
@@ -187,19 +205,19 @@ dev.off()
 ### boxplot of SOS status across years
 
 # calculate annual statistics
-Vanern_annual = aggregate(-Vanern$PipeProc_gm2y, by=list(Vanern$Year), FUN='mean')
+Vanern_annual = aggregate(-Vanern_fullyears$PipeProc_gm2y, by=list(Vanern_fullyears$Year), FUN='mean')
 colnames(Vanern_annual) = c('Year','mean')
 Vanern_annual$Lake = rep('Vanern',nrow(Vanern_annual))
-Harp_annual = aggregate(-Harp$PipeProc_gm2y, by=list(Harp$Year), FUN='mean')
+Harp_annual = aggregate(-Harp_fullyears$PipeProc_gm2y, by=list(Harp_fullyears$Year), FUN='mean')
 colnames(Harp_annual) = c('Year','mean')
 Harp_annual$Lake = rep('Harp',nrow(Harp_annual))
-Trout_annual = aggregate(-Trout$PipeProc_gm2y, by=list(Trout$Year), FUN='mean')
+Trout_annual = aggregate(-Trout_fullyears$PipeProc_gm2y, by=list(Trout_fullyears$Year), FUN='mean')
 colnames(Trout_annual) = c('Year','mean')
 Trout_annual$Lake = rep('Trout',nrow(Trout_annual))
-Toolik_annual = aggregate(-Toolik$PipeProc_gm2y, by=list(Toolik$Year), FUN='mean')
+Toolik_annual = aggregate(-Toolik_fullyears$PipeProc_gm2y, by=list(Toolik_fullyears$Year), FUN='mean')
 colnames(Toolik_annual) = c('Year','mean')
 Toolik_annual$Lake = rep('Toolik',nrow(Toolik_annual))
-Monona_annual = aggregate(-Monona$PipeProc_gm2y, by=list(Monona$Year), FUN='mean')
+Monona_annual = aggregate(-Monona_fullyears$PipeProc_gm2y, by=list(Monona_fullyears$Year), FUN='mean')
 colnames(Monona_annual) = c('Year','mean')
 Monona_annual$Lake = rep('Monona',nrow(Monona_annual))
 
@@ -228,11 +246,11 @@ dev.off()
 # subset to specific months
 first_month = 5 #e.g., 5=May
 last_month = 8
-Vanern_subannual = subset(Vanern, as.numeric(format(Date, "%m")) %in% first_month:last_month) #e.g., 5:8 is May-Aug
-Trout_subannual = subset(Trout, as.numeric(format(Date, "%m")) %in% first_month:last_month)
-Harp_subannual = subset(Harp, as.numeric(format(Date, "%m")) %in% first_month:last_month)
-Toolik_subannual = subset(Toolik, as.numeric(format(Date, "%m")) %in% first_month:last_month)
-Monona_subannual = subset(Monona, as.numeric(format(Date, "%m")) %in% first_month:last_month)
+Vanern_subannual = subset(Vanern_fullyears, as.numeric(format(Date, "%m")) %in% first_month:last_month) #e.g., 5:8 is May-Aug
+Trout_subannual = subset(Trout_fullyears, as.numeric(format(Date, "%m")) %in% first_month:last_month)
+Harp_subannual = subset(Harp_fullyears, as.numeric(format(Date, "%m")) %in% first_month:last_month)
+Toolik_subannual = subset(Toolik_fullyears, as.numeric(format(Date, "%m")) %in% first_month:last_month)
+Monona_subannual = subset(Monona_fullyears, as.numeric(format(Date, "%m")) %in% first_month:last_month)
 
 # calculate sub-annual statistics
 Vanern_subannual = aggregate(-Vanern_subannual$PipeProc_gm2y, by=list(Vanern_subannual$Year), FUN='mean')
@@ -255,19 +273,19 @@ Monona_subannual$Lake = rep('Monona',nrow(Monona_subannual))
 All_lakes_subannual = rbind.data.frame(Harp_subannual, Monona_subannual, Toolik_subannual, Trout_subannual, Vanern_subannual)
 
 png(paste0('R/ResultsViz/Figures/SubAnnualNetOCBoxplot.png'),width = 11,height = 9,units = 'in',res=300)
-par(mfrow=c(1,1))
-par(mar=c(2.1, 5.1, 3.1, 2.1)) #bot, left, top, right, def=c(5.1, 4.1, 4.1, 2.1)
-tick_seq = seq(-50,100, by=25)
-cex.axis = 1.5
+  par(mfrow=c(1,1))
+  par(mar=c(2.1, 5.1, 3.1, 2.1)) #bot, left, top, right, def=c(5.1, 4.1, 4.1, 2.1)
+  tick_seq = seq(-50,100, by=25)
+  cex.axis = 1.5
 
-boxplot(mean ~ Lake, data=All_lakes_subannual, axes=F, ann=F, main='Subannual Net Lake Function: May-Aug', ylim=c(-50,100))
-mtext(side=3, '(g/m2/yr OC)')
-#mtext(side=2, 'OC (g/m2/yr)')
-axis(1, at = 1:5, labels = levels(as.factor(All_lakes_subannual$Lake)), cex.axis = cex.axis, tick=F)
-axis(2, at=tick_seq, label=rep('',length(tick_seq),cex.axis = cex.axis, tick=F))
-axis(2, at=tick_seq, line=0.5, lwd=0, cex.axis=1.5, las=1) #las=1 for horizontal y axis label
-box()
-abline(0,0, lty=2, lwd=1.5)
+  boxplot(mean ~ Lake, data=All_lakes_subannual, axes=F, ann=F, main='Subannual Net Lake Function: May-Aug', ylim=c(-50,100))
+  mtext(side=3, '(g/m2/yr OC)')
+  #mtext(side=2, 'OC (g/m2/yr)')
+  axis(1, at = 1:5, labels = levels(as.factor(All_lakes_subannual$Lake)), cex.axis = cex.axis, tick=F)
+  axis(2, at=tick_seq, label=rep('',length(tick_seq),cex.axis = cex.axis, tick=F))
+  axis(2, at=tick_seq, line=0.5, lwd=0, cex.axis=1.5, las=1) #las=1 for horizontal y axis label
+  box()
+  abline(0,0, lty=2, lwd=1.5)
 dev.off()
 
 
