@@ -110,19 +110,24 @@ Vanern = SOS_fate('Vanern',monthlyFlag = monthlyFlag)
 
 # get rid of first year; artifact of excluding cold season burial (emphasizes summer respiration)
 Harp$Year = as.numeric(as.character(Harp$Year))
-Harp_fullyears = subset(Harp, Year > Harp$Year[1])
+Harp_fullyears = subset(Harp, Year > Harp$Year[1]) #remove first year, which is incomplete
+Harp_fullyears = subset(Harp_fullyears, Year <  Harp_fullyears$Year[nrow(Harp_fullyears)]) #remove last year, which is incomplete
 
 Monona$Year = as.numeric(as.character(Monona$Year))
 Monona_fullyears = subset(Monona, Year > Monona$Year[1])
+Monona_fullyears = subset(Monona_fullyears, Year <  Monona_fullyears$Year[nrow(Monona_fullyears)])
 
 Trout$Year = as.numeric(as.character(Trout$Year))
 Trout_fullyears = subset(Trout, Year > Trout$Year[1])
+Trout_fullyears = subset(Trout_fullyears, Year <  Trout_fullyears$Year[nrow(Trout_fullyears)])
 
 Toolik$Year = as.numeric(as.character(Toolik$Year))
 Toolik_fullyears = subset(Toolik, Year > Toolik$Year[1])
+Toolik_fullyears = subset(Toolik_fullyears, Year <  Toolik_fullyears$Year[nrow(Toolik_fullyears)])
 
 Vanern$Year = as.numeric(as.character(Vanern$Year))
 Vanern_fullyears = subset(Vanern, Year > Vanern$Year[1])
+Vanern_fullyears = subset(Vanern_fullyears, Year <  Vanern_fullyears$Year[nrow(Vanern_fullyears)])
 
 Harp_means = colMeans(Harp_fullyears[,3:11],na.rm=T)
 Monona_means = colMeans(Monona_fullyears[,3:11],na.rm=T)
@@ -304,7 +309,7 @@ png(paste0('R/ResultsViz/Figures/AnnualNetOCBoxplot_panel.png'),width = 11,heigh
   tick_seq = seq(-50,100, by=25)
   cex.axis = 1.5
 
-  boxplot(mean ~ Lake, data=All_lakes_annual, axes=F, ann=F, main='Annual Net Lake Function', ylim=c(-50,100))
+  boxplot(mean ~ Lake, data=All_lakes_annual, axes=F, ann=F, main='a) Annual Net Lake Function', ylim=c(-50,100))
   mtext(side=3, '(g/m2/yr OC)')
   #mtext(side=2, 'OC (g/m2/yr)')
   axis(1, at = 1:5, labels = c('H','M','TO','TR','V'), cex.axis = cex.axis, tick=F)
@@ -313,7 +318,7 @@ png(paste0('R/ResultsViz/Figures/AnnualNetOCBoxplot_panel.png'),width = 11,heigh
   box()
   abline(0,0, lty=2, lwd=1.5)
   
-  boxplot(mean ~ Lake, data=All_lakes_subannual, axes=F, ann=F, main='May-Aug Net Lake Function', ylim=c(-50,100))
+  boxplot(mean ~ Lake, data=All_lakes_subannual, axes=F, ann=F, main='b) May-Aug Net Lake Function', ylim=c(-50,100))
   mtext(side=3, '(g/m2/yr OC)')
   #mtext(side=2, 'OC (g/m2/yr)')
   axis(1, at = 1:5, labels = c('H','M','TO','TR','V'), cex.axis = cex.axis, tick=F)
