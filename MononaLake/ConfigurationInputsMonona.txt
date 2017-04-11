@@ -15,3 +15,6 @@ PropGW 0 unitless
 DOC_precip 2 g/m3
 DOC_miner_const 0.003 1/days
 ObservedMAR_oc 249 g/m2/y
+
+ProdStartDay 90 JulianDay
+ProdEndDay 330 JulianDay
