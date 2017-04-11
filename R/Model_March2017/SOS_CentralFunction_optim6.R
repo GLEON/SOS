@@ -1,7 +1,7 @@
 # setwd('C:/Users/hdugan/Documents/Rpackages/SOS/')
 # setwd("~/Documents/Rpackages/SOS")
 #Flags 1 for yes, else no.
-LakeName = 'Monona'
+LakeName = 'Trout'
 ValidationFlag = 1
 WriteFiles = 0
 BootstrapFlag = 1
@@ -290,12 +290,12 @@ if (ValidationFlag==1){
   
   #DOC Validation Output Setup
   ModelDOC = DOC_df %>% mutate(datetime = as.Date(Date)) %>%
-    select(datetime, Modelled = DOCtotal_conc_gm3)
+    dplyr::select(datetime, Modelled = DOCtotal_conc_gm3)
   CalibrationOutputDOC = left_join(ValidationDataDOC,ModelDOC) 
   
   #DO Validation Output Setup
   ModelO2 = Metabolism %>% mutate(datetime = as.Date(Date)) %>%
-    select(datetime,Flux_Modelled=Oxygen,Conc_Modelled=Oxygen_conc)
+    dplyr::select(datetime,Flux_Modelled=Oxygen,Conc_Modelled=Oxygen_conc)
   CalibrationOutputDO = left_join(ValidationDataDO,ModelO2)
   
   #Plot Calibration DOC
@@ -337,6 +337,8 @@ if (BootstrapFlag==1){
   pseudoObs = cbind(pseudoObs_DOC,pseudoObs_DO)
   num = length(resDOC)
   
+  write.csv(pseudoObs,paste0('./',LakeName,'Lake/','Results/',LakeName,'_pseudoObs.csv'),row.names = F,quote=F)
+  
   source('R/Model_March2017//bootstrapDOC.R')
   # library(parallel)
   # detectCores() # Calculate the number of cores
@@ -354,14 +356,16 @@ if (BootstrapFlag==1){
   
   ###### This code be written as a loop instead. 
   bootParams = data.frame(DOCR_RespParam=NA,DOCL_RespParam=NA,BurialFactor_R=NA,BurialFactor_L=NA)
-  for (b in 1:100) {
+  for (b in 65:100) {
     print(paste0('running b = ',b,', time = ',Sys.time()))
     loopOut = bootstrapDOC(pseudoObs[b,],num = num, datetimeDOC = CalibrationOutputDOC$datetime,
                            datetimeDO = CalibrationOutputDO$datetime, LakeName = LakeName,
                           timestampFormat = timestampFormat)
     ## New parameters from optimization output
     bootParams[b,] <- loopOut
+    write.csv(bootParams,paste0('./',LakeName,'Lake/','Results/',LakeName,'_boostrapResults2.csv'),row.names = F,quote=F)
   } # Loop instead?
+  
   write.csv(bootParams,paste0('./',LakeName,'Lake/','Results/',LakeName,'_boostrapResults.csv'),row.names = F,quote=F)
 }
 
