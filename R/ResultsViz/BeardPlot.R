@@ -60,7 +60,7 @@ png(paste0('R/ResultsViz/Figures/beardplot2.png'),width = 8,height = 4,units = '
   par(mar=c(2.5,2.5,2.5,1),mgp=c(1.5,0.5,0),tck=-0.03,cex=0.8)
   xlab = 'log(Resp/Burial)'
   ylab = 'log(Alloch/Autoch)'
-  pch = 19
+  pch = 20
   
   cr = colorRampPalette(c('slategray1','firebrick1','firebrick4'))
   cols = rev(heat.colors(27))[round(Harp$temp)]
@@ -85,7 +85,7 @@ png(paste0('R/ResultsViz/Figures/beardplot2.png'),width = 8,height = 4,units = '
   abline(h=0,v=0,lty=2,col='navy',lwd=1.5)
   
   cols = rev(heat.colors(27))[round(Toolik$temp)]
-  plot(logAA ~ logRS, Toolik, xlab = xlab, ylab = ylab, main='Toolik', pch=19, col= cols)
+  plot(logAA ~ logRS, Toolik, xlab = xlab, ylab = ylab, main='Toolik', pch=pch, col= cols)
   mtext(side=3, paste0('n=',nrow(Toolik)), cex=0.6)
   abline(h=0,v=0,lty=2,col='navy',lwd=1.5)
   
