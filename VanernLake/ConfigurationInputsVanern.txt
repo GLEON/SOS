@@ -9,7 +9,7 @@ PropCanopy 0.6147 unitless
 PropWetlands 0.037 unitless
 AerialLoad 1 gPOC/m/d
 WetlandLoad 1 gDOC/m/d
-PropGW 0.2 unitless
+PropGW 0.0 unitless
 DOC_gw 10 g/m3
 DOC_sw 9 g/m3
 DOC_precip 2 g/m3
