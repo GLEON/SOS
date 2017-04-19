@@ -5,3 +5,14 @@ Harp on 1993-04-28 and 1993-05-20 has chlorophyll listed as 0. Therefore
 the lake basically has no authochtony. The problem is there is a huge
 difference between chl = 0 and chl = 0.1 in the resulting levels of
 authochtony. Changed value to 0.1.
+
+*******************************
+From email 4-19-17 from FS to IMM
+*******************************
+
+The file Jim (contact person for Harp) sent to me already have inflow volume (Flow) for various tributaries.
+
+
+I calculated the proportion of inflow represented by each of the  various tributaries (the sum of all the proportions = 1) then multiplied the proportion represented by each tributary by the DOC concentration of that tributary. Finally I sum all the values for each tributary. 
+
+Validation DOC = to DOC measure at the lake water (which was sent to me by Jim too).
