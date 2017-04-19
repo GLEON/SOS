@@ -2,6 +2,7 @@ setwd('~/Documents/Rpackages/SOS/MononaLake/Staging Files/')
 setwd('MononaLake/Staging Files/')
 library(dplyr)
 library(tidyr)
+library(rLakeAnalyzer)
 ### Lake Monona ####
 vol = 110*10^6 #m3
 
