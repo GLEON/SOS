@@ -9,6 +9,7 @@ setwd('C:/Users/immcc/Desktop/SOS/')
 
 library(lubridate)
 library(dplyr)
+library(psych)
 
 #### define functions ####
 # calculate fates
@@ -88,12 +89,16 @@ SOS_fate = function(LakeName, monthlyFlag){
   PipeProc = ocResp - ocSed
   Budget_left = total_load
   Budget_right = -ocResp - ocSed - ocExport + dStorage # should equal Budget_left
+  Net = PipeProc
+  TotalLoad = alloch + autoch
+  Processed = TotalLoad - abs(ocExport)
   
   Date = as.Date(DOC_df$Date)
   Year = as.factor(year(Date))
   summary = data.frame(Date=Date,Year=Year,Alloch_gm2y=alloch,Autoch_gm2y=autoch,
                        R_gm2y=ocResp,S_gm2y=ocSed,Out_gm2y=ocExport,PipeProc_gm2y=PipeProc,dStorage_gm2y=dStorage,
-                       Budget_left_gm2y=Budget_left,Budget_right_gm2y=Budget_right)
+                       Budget_left_gm2y=Budget_left,Budget_right_gm2y=Budget_right,Net_gm2y=Net,TotalLoad_gm2y=TotalLoad,
+                       Processed_gm2y=Processed)
   return(summary)
 }
 
@@ -228,6 +233,19 @@ Monona_annual$Lake = rep('Monona',nrow(Monona_annual))
 
 # merge into single data frame
 All_lakes_annual = rbind.data.frame(Harp_annual, Monona_annual, Toolik_annual, Trout_annual, Vanern_annual)
+
+# get standard deviations for all fates
+Harp_sd = describe(aggregate(Harp_fullyears, by=list(Harp_fullyears$Year), FUN='mean'))
+Monona_sd = describe(aggregate(Monona_fullyears, by=list(Monona_fullyears$Year), FUN='mean'))
+Toolik_sd = describe(aggregate(Toolik_fullyears, by=list(Toolik_fullyears$Year), FUN='mean'))
+Trout_sd = describe(aggregate(Trout_fullyears, by=list(Trout_fullyears$Year), FUN='mean'))
+Vanern_sd = describe(aggregate(Vanern_fullyears, by=list(Vanern_fullyears$Year), FUN='mean'))
+
+All_lakes_sd = cbind.data.frame(Harp_sd$sd, Monona_sd$sd, Toolik_sd$sd, Trout_sd$sd, Vanern_sd$sd)
+colnames(All_lakes_sd) = c('Harp','Monona','Toolik','Trout','Vanern')
+rownames(All_lakes_sd) = rownames(Harp_sd)
+All_lakes_sd = as.data.frame(t(All_lakes_sd))
+All_lakes_sd = round(All_lakes_sd, 2)
 
 # #boxplot of annual mean OC by lake
 # png(paste0('R/ResultsViz/Figures/AnnualNetOCBoxplot.png'),width = 11,height = 9,units = 'in',res=300)
