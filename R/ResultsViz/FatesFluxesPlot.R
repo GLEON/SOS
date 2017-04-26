@@ -9,7 +9,6 @@ setwd('C:/Users/immcc/Desktop/SOS/')
 
 library(lubridate)
 library(dplyr)
-library(psych)
 
 #### define functions ####
 # calculate fates
@@ -248,21 +247,14 @@ All_lakes_sd = as.data.frame(t(All_lakes_sd))
 All_lakes_sd = round(All_lakes_sd, 2)
 
 # #boxplot of annual mean OC by lake
-# png(paste0('R/ResultsViz/Figures/AnnualNetOCBoxplot.png'),width = 11,height = 9,units = 'in',res=300)
-#   par(mfrow=c(1,1))
-#   par(mar=c(2.1, 5.1, 3.1, 2.1)) #bot, left, top, right, def=c(5.1, 4.1, 4.1, 2.1)
-#   tick_seq = seq(-50,100, by=25)
-#   cex.axis = 1.5
-#   
-#   boxplot(mean ~ Lake, data=All_lakes_annual, axes=F, ann=F, main='Annual Net Lake Function', ylim=c(-50,100))
-#   mtext(side=3, '(g/m2/yr OC)')
-#   #mtext(side=2, 'OC (g/m2/yr)')
-#   axis(1, at = 1:5, labels = levels(as.factor(All_lakes_annual$Lake)), cex.axis = cex.axis, tick=F)
-#   axis(2, at=tick_seq, label=rep('',length(tick_seq),cex.axis = cex.axis, tick=F))
-#   axis(2, at=tick_seq, line=0.5, lwd=0, cex.axis=1.5, las=1) #las=1 for horizontal y axis label
-#   box()
-#   abline(0,0, lty=2, lwd=1.5)
-# dev.off()
+png(paste0('R/ResultsViz/Figures/AnnualNetOCBoxplot.png'),width = 5,height = 5,units = 'in',res=300)
+  par(mar=c(2.1, 4.1, 3.1, 1.1)) #bot, left, top, right, def=c(5.1, 4.1, 4.1, 2.1)
+  boxplot(mean ~ Lake, data=All_lakes_annual, las=1, ylab='Respiration - Burial, OC (g/m2/yr)',main='Lake function across years', ylim=c(-50,100))
+  #mtext(side=3, 'Burial-Respiration')
+  abline(0,0, lty=2, lwd=2)
+  text(x=1,y=4,'Source',font=2)
+  text(x=1,y=-4,'Sink',font=2)
+dev.off()
 
 #### boxplot of sub-annual mean OC by lake ####
 
@@ -312,28 +304,28 @@ All_lakes_subannual = rbind.data.frame(Harp_subannual, Monona_subannual, Toolik_
 # dev.off()
 
 
-#### calculate differences in net source/sink by annual vs. subannual
-full_year_sampling = aggregate(All_lakes_annual$mean~All_lakes_annual$Lake, FUN=mean)
-part_year_sampling = aggregate(All_lakes_subannual$mean~All_lakes_subannual$Lake, FUN=mean)
-comparison = data.frame(Lake=full_year_sampling$`All_lakes_annual$Lake`,
-                        full_year=full_year_sampling$`All_lakes_annual$mean`,
-                        part_year=part_year_sampling$`All_lakes_subannual$mean`)
-comparison$Diff = comparison$part_year - comparison$full_year
-comparison$PctDiff = 100- ((comparison$full_year/comparison$part_year)*100)
-
-png(paste0('R/ResultsViz/Figures/AnnualNetOCBoxplot_panel.png'),width = 11,height = 9,units = 'in',res=300)
-  par(mfrow=c(1,2))
-  par(mar=c(2.1, 4.1, 3.1, 1.1)) #bot, left, top, right, def=c(5.1, 4.1, 4.1, 2.1)
-  boxplot(mean ~ Lake, data=All_lakes_annual, las=1, ylab='Respiration - Burial, OC (g/m2/yr)',main='a) Annual', ylim=c(-50,100))
-  #mtext(side=3, 'Burial-Respiration')
-  abline(0,0, lty=2, lwd=2)
-  text(x=1,y=4,'Source',font=2)
-  text(x=1,y=-4,'Sink',font=2)
-
-  boxplot(mean ~ Lake, data=All_lakes_subannual, las=1, ylab='Respiration - Burial, OC (g/m2/yr)', main='b) May-Aug', ylim=c(-50,100))
-  #mtext(side=2, 'OC (g/m2/yr)')
-  abline(0,0, lty=2, lwd=2)
-  text(x=1,y=4,'Source',font=2)
-  text(x=1,y=-4,'Sink',font=2)
-  
-dev.off()
+# #### calculate differences in net source/sink by annual vs. subannual
+# full_year_sampling = aggregate(All_lakes_annual$mean~All_lakes_annual$Lake, FUN=mean)
+# part_year_sampling = aggregate(All_lakes_subannual$mean~All_lakes_subannual$Lake, FUN=mean)
+# comparison = data.frame(Lake=full_year_sampling$`All_lakes_annual$Lake`,
+#                         full_year=full_year_sampling$`All_lakes_annual$mean`,
+#                         part_year=part_year_sampling$`All_lakes_subannual$mean`)
+# comparison$Diff = comparison$part_year - comparison$full_year
+# comparison$PctDiff = 100- ((comparison$full_year/comparison$part_year)*100)
+# 
+# png(paste0('R/ResultsViz/Figures/AnnualNetOCBoxplot_panel.png'),width = 11,height = 9,units = 'in',res=300)
+#   par(mfrow=c(1,2))
+#   par(mar=c(2.1, 4.1, 3.1, 1.1)) #bot, left, top, right, def=c(5.1, 4.1, 4.1, 2.1)
+#   boxplot(mean ~ Lake, data=All_lakes_annual, las=1, ylab='Respiration - Burial, OC (g/m2/yr)',main='a) Annual', ylim=c(-50,100))
+#   #mtext(side=3, 'Burial-Respiration')
+#   abline(0,0, lty=2, lwd=2)
+#   text(x=1,y=4,'Source',font=2)
+#   text(x=1,y=-4,'Sink',font=2)
+# 
+#   boxplot(mean ~ Lake, data=All_lakes_subannual, las=1, ylab='Respiration - Burial, OC (g/m2/yr)', main='b) May-Aug', ylim=c(-50,100))
+#   #mtext(side=2, 'OC (g/m2/yr)')
+#   abline(0,0, lty=2, lwd=2)
+#   text(x=1,y=4,'Source',font=2)
+#   text(x=1,y=-4,'Sink',font=2)
+#   
+# dev.off()
