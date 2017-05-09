@@ -1,34 +1,20 @@
-setwd('C:/Users/hdugan/Documents/Rpackages/SOS/')
-setwd("~/Documents/SOS")
+setwd("~/Rpackages/SOS/")
 
-##### READ IN BOOTSTRAPPING RESULTS ################
-readFile <- function(LakeName){
-  Results <- paste('./',LakeName,'Lake/Results/',LakeName,'_boostrapResults.csv',sep='')
-  df = read.csv(Results,stringsAsFactors = F)
-  return(df)
-}
-vanern = readFile('Vanern')
-mon = readFile('Monona')
-trout = readFile('Trout')
-toolik = readFile('Toolik')
-harp = readFile('Harp')
+trout = read.csv('TroutLake/Results/Trout_boostrapResults.csv',stringsAsFactors = F)
+harp = read.csv('HarpLake//Results/Harp_boostrapResults.csv',stringsAsFactors = F)
+mon = read.csv('MononaLake/Results/Monona_boostrapResults.csv',stringsAsFactors = F)
+too = read.csv('ToolikLake/Results/Toolik_boostrapResults.csv',stringsAsFactors = F)
+van = read.csv('VanernLake/Results/Vanern_boostrapResults.csv',stringsAsFactors = F)
+van = t(van)
+colnames(van) = colnames(trout)
 
-png('R/ResultsViz/Figures/bootstrappingResults.png',width=6,height = 6,units='in',res=300)
-names = c('DOCR_RespParam','DOCL_RespParam','R_auto','BurialFactor_R','BurialFactor_L','POC_lcR','POC_lcL','NLL')
-par(mfrow=c(3,2),mar=c(2,2,2,1),mgp=c(1.3,0.4,0),tck=-0.02)
-#bootstrapping results
-for (i in 1:6){
-  df = data.frame(a = t(trout[i,]),b = t(vanern[i,]),c = t(mon[i,]))
-  boxplot(df,names = c('Trout','Vanern','Monona'), main = names[i])
-}
-dev.off()
-
-png('R/ResultsViz/Figures/bootstrappingResults2.png',width=6,height = 6,units='in',res=300)
-  names = c('DOCR_RespParam','DOCL_RespParam','R_auto','BurialFactor_R','BurialFactor_L','POC_lcR','POC_lcL','NLL')
-  par(mfrow=c(3,2),mar=c(2,2,2,1),mgp=c(1.3,0.4,0),tck=-0.02)
-  #bootstrapping results
-  for (i in 1:6){
-    df = data.frame(a = t(trout[i,]),b = t(vanern[i,]),c = t(mon[i,]), d=t(toolik[i,]))
-    boxplot(df,names = c('Trout','Vanern','Monona','Toolik'), main = names[i])
+cols = viridis(5)
+ylabs = colnames(trout)
+png('r/ResultsViz/Figures/bootstrapping.png',width = 5,height = 5,units = 'in',res = 300)
+  par(mfrow = c(2,2),mar=c(3,3,0.5,0.5),mgp=c(1.5,0.5,0),tck=-0.03)
+  for (i in 1:4) {
+    boxplot(cbind(harp[,i],mon[,i],trout[,i],van[,i],too[,i]),col=adjustcolor(cols,0.7),
+            names = c('Ha','Mo','Tr','Va','To'),
+            ylab = ylabs[i],pch=21,outbg=adjustcolor(cols,0.7),outcol='black')
   }
 dev.off()

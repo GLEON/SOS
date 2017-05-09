@@ -356,7 +356,7 @@ if (BootstrapFlag==1){
   
   ###### This code be written as a loop instead. 
   bootParams = data.frame(DOCR_RespParam=NA,DOCL_RespParam=NA,BurialFactor_R=NA,BurialFactor_L=NA)
-  for (b in 65:100) {
+  for (b in 1:100) {
     print(paste0('running b = ',b,', time = ',Sys.time()))
     loopOut = bootstrapDOC(pseudoObs[b,],num = num, datetimeDOC = CalibrationOutputDOC$datetime,
                            datetimeDO = CalibrationOutputDO$datetime, LakeName = LakeName,
