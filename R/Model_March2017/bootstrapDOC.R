@@ -207,8 +207,10 @@ bootstrapDOC <- function(newObs,num,datetimeDOC,datetimeDO,LakeName,timestampFor
   
   # Starting parameters cannot be negative, because of bounds we set 
   parStart = c(DOCR_RespParam,DOCL_RespParam,BurialFactor_R,BurialFactor_L)
-  lowerBound = c(0.0003,0.003,0,0)
-  upperBound = c(0.003,0.3,1,1)
+  # lowerBound = c(0.0003,0.003,0,0)
+  # upperBound = c(0.003,0.3,1,1)
+  lowerBound = c(0.00003,0.0003,0,0)
+  upperBound = c(0.03,3,1,1)
   names(parStart) = c('DOCR_RespParam','DOCL_RespParam','BurialFactor_R','BurialFactor_L')
   
   # For difficult problems it may be efficient to perform some iterations with Pseudo, which will bring the algorithm 
