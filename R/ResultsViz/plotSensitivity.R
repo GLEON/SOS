@@ -1,5 +1,7 @@
 setwd("~/Documents/SOS")
 
+lakenames = c('Harp','Monona','Trout','Vanern','Toolik')
+
 for (LakeName in lakenames) {
   ##### LOAD PACKAGES ########################
   library(lubridate)
@@ -120,6 +122,8 @@ for (LakeName in lakenames) {
     assign(x = paste0(LakeName,'_Sens'),value = Sens)
 }
 
+saveRDS(Sens,file = 'R/Model_March2017/sensAnalysis.Rds')
+
 plot.sensRange.HD <- function (x,Select = 2,cols){
   npar <- attr(x, "npar")
   nx <- attr(x, "nx")
@@ -144,13 +148,14 @@ getPars <- function(LakeName) {
 
 
 ###### PLOTTING #############
+loadSens = readRDS('R/Model_March2017/sensAnalysis.Rds')
+
 png(paste0('R/ResultsViz/Figures/plotSensitivity_all2.png'),width = 4,height = 10,units = 'in',res = 300)
   par(mar=c(1,3,1,1),mgp=c(1.5,0.5,0),mfrow=c(6,1),cex=1,tck=-0.03)
   
   lakenames = c('Harp','Monona','Trout','Vanern','Toolik')
   
   for (LakeName in lakenames) {
-
     joinDOC = read.csv(paste0('./',LakeName,'Lake','/Results/',LakeName,'_DOCvalidation.csv'),stringsAsFactors = F)
     joinDOC$datetime = as.Date(strptime(joinDOC$datetime,'%Y-%m-%d'))
     plot(joinDOC$datetime,joinDOC$DOC,type='o',ylab=expression(paste("DOC (mg L"^"-1",")"))
@@ -165,11 +170,12 @@ png(paste0('R/ResultsViz/Figures/plotSensitivity_all2.png'),width = 4,height = 1
     }
     lines(joinDOC$datetime,joinDOC$DOC,type='o',pch=16,cex=0.8,lwd=1.5)
   }
-  par(mar=c(0,3,0,0))
+  par(mar=c(0,3,0.5,0))
   plot.new()
   legend('topleft',legend = c('Observed','Resp_Alloch (0.0003-0.003)','Resp_Auto (0.003-0.3)',
-                              'Burial_Alloch (0-1)','Burial_Auto (0-1)'),
-         fill=c('black',cols),bty='n',cex=1,ncol=1,y.intersp = 0.8)
+                              'Burial_Alloch (0-1)','Burial_Auto (0-1)'),pch=c(21,22,22,22,22),
+         pt.bg=c('black',adjustcolor(cols,0.5)),bty='n',cex=1,ncol=1,y.intersp = 0.8,
+         pt.cex = 1.5)
   # 
   # legend('topleft',legend = c('Observed','Resp_Alloch \n(0.0003-0.003)','Resp_Auto \n(0.003-0.3)',
   #                             'Burial_Alloch \n(0-1)','Burial_Auto \n(0-1)'),
