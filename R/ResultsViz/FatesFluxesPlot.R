@@ -5,11 +5,13 @@
 # Updated: 4-6-2017 by Ian McC
 ##################################################################################
 
-setwd('C:/Users/immcc/Desktop/SOS/')
+# setwd('C:/Users/immcc/Desktop/SOS/')
 
 library(lubridate)
 library(dplyr)
 
+cols = viridis(5)
+cols[1] = 'red4'
 #### define functions ####
 # calculate fates
 SOS_fate = function(LakeName, monthlyFlag){
@@ -42,7 +44,7 @@ SOS_fate = function(LakeName, monthlyFlag){
       group_by(month, year) %>%
       summarise_each(funs(mean(., na.rm = TRUE))) %>%
       ungroup() %>% mutate(month_day_year = as.Date(paste0(month,'/',day,'/',year), format = "%m/%d/%Y")) %>%
-      select(Date,FlowIn_gm2y,NPPin_gm2y,FlowOut_gm2y,sedOut_gm2y,POCtotal_conc_gm3,POCload_g,POCout_g) %>%
+      dplyr::select(Date,FlowIn_gm2y,NPPin_gm2y,FlowOut_gm2y,sedOut_gm2y,POCtotal_conc_gm3,POCload_g,POCout_g) %>%
       arrange(Date)
     
     ## doc
@@ -51,7 +53,7 @@ SOS_fate = function(LakeName, monthlyFlag){
       group_by(month, year) %>%
       summarise_each(funs(mean(., na.rm = TRUE))) %>%
       ungroup() %>% mutate(month_day_year = as.Date(paste0(month,'/',day,'/',year), format = "%m/%d/%Y")) %>%
-      select(Date,FlowIn_gm2y,NPPin_gm2y,FlowOut_gm2y,respOut_gm2y,DOCtotal_conc_gm3,DOCload_g,DOCout_g) %>%
+      dplyr::select(Date,FlowIn_gm2y,NPPin_gm2y,FlowOut_gm2y,respOut_gm2y,DOCtotal_conc_gm3,DOCload_g,DOCout_g) %>%
       arrange(Date)
   }
   
@@ -149,31 +151,31 @@ rownames(fate_means) = c('Harp','Monona','Toolik','Trout','Vanern')
 ##### plotting ######
 fate_plot <- function(LakeName){
   lake = get(LakeName)
-  plot(lake$Budget_left_gm2y~lake$Date,col='dodgerblue',type='n',
+  plot(lake$Budget_left_gm2y~lake$Date,col=cols[1],type='n',
        ylim=ylim_fate,ylab=ylabs,xlab='',main= LakeName,las=1) # Inflow (alloch) 
   
-  polygon(x = c(lake$Date,rev(lake$Date)),y = c(-lake$R_gm2y,rep(0,length(-lake$R_gm2y))),col = 'gold')
+  polygon(x = c(lake$Date,rev(lake$Date)),y = c(-lake$R_gm2y,rep(0,length(-lake$R_gm2y))),col = cols[3])
   polygon(x = c(lake$Date,rev(lake$Date)),y = c(-lake$S_gm2y - lake$R_gm2y,rev(-lake$R_gm2y)),col = 'black')
   polygon(x = c(lake$Date,rev(lake$Date)),y = c(lake$Budget_left_gm2y - lake$S_gm2y - lake$R_gm2y,rev(-lake$S_gm2y - lake$R_gm2y)),col = 'grey70')
 }
 
 flux_plot <- function(LakeName,ylim1=NULL,ylim2=NULL,legend=1){
     lake = get(LakeName)
-    plot(lake$Date,lake$Alloch_gm2y + lake$Autoch_gm2y,col='dodgerblue',type='l',
+    plot(lake$Date,lake$Alloch_gm2y + lake$Autoch_gm2y,col=cols[1],type='l',
          ylim=c(ylim1,ylim2),ylab=ylabs,xlab='', main=LakeName, las=1) # Inflow
     # Fluxes in 
-    polygon(x = c(lake$Date,rev(lake$Date)),y = c(lake$Autoch_gm2y,rep(0,length(lake$Autoch_gm2y))),col = 'firebrick')
-    polygon(x = c(lake$Date,rev(lake$Date)),y = c(lake$Alloch_gm2y + lake$Autoch_gm2y,rev(lake$Autoch_gm2y)),col = 'dodgerblue')
+    polygon(x = c(lake$Date,rev(lake$Date)),y = c(lake$Autoch_gm2y,rep(0,length(lake$Autoch_gm2y))),col = cols[2])
+    polygon(x = c(lake$Date,rev(lake$Date)),y = c(lake$Alloch_gm2y + lake$Autoch_gm2y,rev(lake$Autoch_gm2y)),col = cols[1])
     # Fluxes Out
-    polygon(x = c(lake$Date,rev(lake$Date)),y = c(lake$R_gm2y,rep(0,length(lake$R_gm2y))),col = 'gold')
-    polygon(x = c(lake$Date,rev(lake$Date)),y = c(lake$S_gm2y + lake$R_gm2y,rev(lake$R_gm2y)),col = 'black')
-    polygon(x = c(lake$Date,rev(lake$Date)),y = c(lake$Out_gm2y + lake$S_gm2y + lake$R_gm2y,rev(lake$S_gm2y + lake$R_gm2y)),col = 'green4')
+    polygon(x = c(lake$Date,rev(lake$Date)),y = c(lake$R_gm2y,rep(0,length(lake$R_gm2y))),col = cols[3])
+    polygon(x = c(lake$Date,rev(lake$Date)),y = c(lake$S_gm2y + lake$R_gm2y,rev(lake$R_gm2y)),col = cols[5])
+    polygon(x = c(lake$Date,rev(lake$Date)),y = c(lake$Out_gm2y + lake$S_gm2y + lake$R_gm2y,rev(lake$S_gm2y + lake$R_gm2y)),col = cols[4])
     abline(0,0, lwd=2, lty=2)
     
     if (legend==1){
-      legend('bottomleft',legend = c('Export','Burial','Resp'),fill = c('green4','black','gold'), horiz=T,
+      legend('bottomleft',legend = c('Export','Burial','Resp'),fill = c(cols[4],cols[5],cols[3]), horiz=T,
              seg.len=0.3,bty = 'n',x.intersp = 0.5)
-      legend('topleft',legend = c('Alloch','Autoch'),fill = c('dodgerblue','firebrick'), horiz=T,
+      legend('topleft',legend = c('Alloch','Autoch'),fill = c(cols[1],cols[2]), horiz=T,
              seg.len=0.3,bty = 'n',x.intersp = 0.5)}
 }
 
@@ -182,6 +184,7 @@ ylabs = expression(paste("g m"^"-2"," yr"^"-1"))
 #ylab = expression(paste("DO (mg L"^"-1",")"))
 xlabs = 'Date'
 ylim_fate = c(0,400)
+
 png(paste0('R/ResultsViz/Figures/OCfates_fluxesAllLakes2.png'),width = 8,height = 11,units = 'in',res=300)
   par(mar=c(1.5,4,2,1),mgp=c(2,0.3,0),mfrow=c(5,2),cex=1,tck=-0.03)
   ylim1= -300
@@ -189,7 +192,9 @@ png(paste0('R/ResultsViz/Figures/OCfates_fluxesAllLakes2.png'),width = 8,height 
   
   # Harp
   flux_plot('Harp',ylim1=ylim1,ylim2=ylim2,legend=1)
+  mtext('a)',side = 3,line = 0.5,adj=0,cex=1)
   fate_plot('Harp')
+  mtext('b)',side = 3,line = 0.5,adj=0,cex=1)
   legend('topright',legend=c('Alloch + Autoch'), fill=c('grey70'), bty = 'n')
   
   # Monona
