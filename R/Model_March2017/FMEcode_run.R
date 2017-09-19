@@ -173,13 +173,15 @@ fitTest <- function(pars,plot=F){
 }
 
 fitTest(pars,plot=T)
-fitTest(Fit2$par,plot=F)
+fitTest(Fit2$par,plot=T)
 fitTest(Fit3$par)
 
+# Save summary Data
 summary(Fit2)
-summary(Fit3)
+write.csv(summary(Fit2),paste0('R/FMEresults/',LakeName,'_fitsummary.csv'))
+capture.output(summary(Fit2), file = paste0('R/FMEresults/',LakeName,'_fitsummary.csv'))
+
 Fit2$par
-Fit3$par
 # Save Fit data
 save(Fit2,file=paste0('R/FMEresults/',LakeName,'_fitresults.RData'))
 write.csv(Fit2$par,paste0('R/FMEresults/',LakeName,'_fitpars.csv'),row.names = F)
@@ -190,13 +192,14 @@ names(newPars) = c('DOCR_RespParam','DOCL_RespParam','BurialFactor_R','BurialFac
 covar <- solve(0.5 * Fit2$hessian)
 
 # Sensitivity of parameters
-sF <- sensFun(DOC_DO_diff,parms = newPars,tiny = 1e-2)
+sF <- sensFun(DOC_DO_diff,parms = newPars,tiny = 1e-2,varscale = 1,parscale = 1)
 plot(sF)
 summary(sF)
 plot(summary(sF))
 collin(sF)
 plot(collin(sF), log="y")
 write.csv(collin(sF),paste0('R/FMEresults/',LakeName,'_collinearity.csv'),row.names = F)
+
 ##------------------------------------------------------------------------------
 ##   Sensitivity range
 ##------------------------------------------------------------------------------

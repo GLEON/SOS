@@ -134,10 +134,10 @@ plot.sensRange.HD <- function (x,Select = 2,cols){
   
   ii <- ((Select - 1) * nx + 1):(Select * nx)
   y = t(sens[,ii])
-  lines(X, rowMeans(y), col = add.alpha(cols,0), lwd = 2,type='l') 
+  lines(X, rowMeans(y), col = adjustcolor(cols,0), lwd = 2,type='l') 
   min = apply(y,1,min)
   max = apply(y,1,max)
-  polygon(x = c(X,rev(X)),y = c(min,rev(max)),col= add.alpha(cols,0.4),border = add.alpha(cols,0.4))
+  polygon(x = c(X,rev(X)),y = c(min,rev(max)),col= adjustcolor(cols,0.4),border = adjustcolor(cols,0.4))
 }
 
 getPars <- function(LakeName) {
@@ -172,8 +172,8 @@ png(paste0('R/ResultsViz/Figures/plotSensitivity_all2.png'),width = 4,height = 1
   }
   par(mar=c(0,3,0.5,0))
   plot.new()
-  legend('topleft',legend = c('Observed','Resp_Alloch (0.0003-0.003)','Resp_Auto (0.003-0.3)',
-                              'Burial_Alloch (0-1)','Burial_Auto (0-1)'),pch=c(21,22,22,22,22),
+  legend('topleft',legend = c('Observed','RDOCalloch (0.0003-0.003)','RDOCauto (0.003-0.3)',
+                              'BPOCalloch (0-1)','BPOCauto (0-1)'),pch=c(21,22,22,22,22),
          pt.bg=c('black',adjustcolor(cols,0.5)),bty='n',cex=1,ncol=1,y.intersp = 0.8,
          pt.cex = 1.5)
   # 
