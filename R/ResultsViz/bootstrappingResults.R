@@ -5,8 +5,6 @@ harp = read.csv('HarpLake//Results/Harp_boostrapResults.csv',stringsAsFactors = 
 mon = read.csv('MononaLake/Results/Monona_boostrapResults.csv',stringsAsFactors = F)
 too = read.csv('ToolikLake/Results/Toolik_boostrapResults.csv',stringsAsFactors = F)
 van = read.csv('VanernLake/Results/Vanern_boostrapResults.csv',stringsAsFactors = F)
-van = t(van)
-colnames(van) = colnames(trout)
 
 cols = viridis(5)
 ylabs = colnames(trout)
