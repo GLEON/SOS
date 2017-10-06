@@ -1,4 +1,5 @@
 setwd("~/Rpackages/SOS/")
+library(viridis)
 
 trout = read.csv('TroutLake/Results/Trout_boostrapResults.csv',stringsAsFactors = F)
 harp = read.csv('HarpLake//Results/Harp_boostrapResults.csv',stringsAsFactors = F)
