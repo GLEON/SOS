@@ -1,4 +1,4 @@
-setwd("~/Documents/SOS")
+setwd("~/Documents/Rpackages/SOS")
 
 lakenames = c('Harp','Monona','Trout','Vanern','Toolik')
 
@@ -116,7 +116,7 @@ for (LakeName in lakenames) {
   Sens <- list()
   for (i in 1:4){
     print(i)
-    Sens[[i]] <- sensRange(parms=pars[i], func=DOCsens, 
+    Sens[[i]] <- sensRange(parms=pars[i], func=DOCsens,
                              num=50, parRange=pRange[i,])
     }
     assign(x = paste0(LakeName,'_Sens'),value = Sens)
@@ -148,7 +148,7 @@ getPars <- function(LakeName) {
 
 
 ###### PLOTTING #############
-loadSens = readRDS('R/Model_March2017/sensAnalysis.Rds')
+Sens = readRDS('R/Model_March2017/sensAnalysis.Rds')
 
 png(paste0('R/ResultsViz/Figures/plotSensitivity_all2.png'),width = 4,height = 10,units = 'in',res = 300)
   par(mar=c(1,3,1,1),mgp=c(1.5,0.5,0),mfrow=c(6,1),cex=1,tck=-0.03)
@@ -172,8 +172,8 @@ png(paste0('R/ResultsViz/Figures/plotSensitivity_all2.png'),width = 4,height = 1
   }
   par(mar=c(0,3,0.5,0))
   plot.new()
-  legend('topleft',legend = c('Observed','RDOCalloch (0.0003-0.003)','RDOCauto (0.003-0.3)',
-                              'BPOCalloch (0-1)','BPOCauto (0-1)'),pch=c(21,22,22,22,22),
+  legend('topleft',legend = c('Observed','RDOCalloch (0.0003-0.003)','RDOCautoch (0.003-0.3)',
+                              'BPOCalloch (0-1)','BPOCautoch (0-1)'),pch=c(21,22,22,22,22),
          pt.bg=c('black',adjustcolor(cols,0.5)),bty='n',cex=1,ncol=1,y.intersp = 0.8,
          pt.cex = 1.5)
   # 
