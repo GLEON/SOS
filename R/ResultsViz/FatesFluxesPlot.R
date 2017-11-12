@@ -9,9 +9,16 @@
 
 library(lubridate)
 library(dplyr)
+#library(viridis)
 
-cols = viridis(5)
-cols[1] = 'red4'
+alloch_col = 'red3'
+autoch_col = 'royalblue3'
+resp_col = 'black'
+export_col = 'green4'
+burial_col = 'gold'
+
+#cols = viridis(5)
+#cols[1] = 'red4'
 #### define functions ####
 # calculate fates
 SOS_fate = function(LakeName, monthlyFlag){
@@ -151,31 +158,31 @@ rownames(fate_means) = c('Harp','Monona','Toolik','Trout','Vanern')
 ##### plotting ######
 fate_plot <- function(LakeName){
   lake = get(LakeName)
-  plot(lake$Budget_left_gm2y~lake$Date,col=cols[1],type='n',
+  plot(lake$Budget_left_gm2y~lake$Date,col=alloch_col,type='n',
        ylim=ylim_fate,ylab=ylabs,xlab='',main= LakeName,las=1) # Inflow (alloch) 
   
-  polygon(x = c(lake$Date,rev(lake$Date)),y = c(-lake$R_gm2y,rep(0,length(-lake$R_gm2y))),col = cols[3])
+  polygon(x = c(lake$Date,rev(lake$Date)),y = c(-lake$R_gm2y,rep(0,length(-lake$R_gm2y))),col = burial_col)
   polygon(x = c(lake$Date,rev(lake$Date)),y = c(-lake$S_gm2y - lake$R_gm2y,rev(-lake$R_gm2y)),col = 'black')
   polygon(x = c(lake$Date,rev(lake$Date)),y = c(lake$Budget_left_gm2y - lake$S_gm2y - lake$R_gm2y,rev(-lake$S_gm2y - lake$R_gm2y)),col = 'grey70')
 }
 
 flux_plot <- function(LakeName,ylim1=NULL,ylim2=NULL,legend=1){
     lake = get(LakeName)
-    plot(lake$Date,lake$Alloch_gm2y + lake$Autoch_gm2y,col=cols[1],type='l',
+    plot(lake$Date,lake$Alloch_gm2y + lake$Autoch_gm2y,col=alloch_col,type='l',
          ylim=c(ylim1,ylim2),ylab=ylabs,xlab='', main=LakeName, las=1) # Inflow
     # Fluxes in 
-    polygon(x = c(lake$Date,rev(lake$Date)),y = c(lake$Autoch_gm2y,rep(0,length(lake$Autoch_gm2y))),col = cols[2])
-    polygon(x = c(lake$Date,rev(lake$Date)),y = c(lake$Alloch_gm2y + lake$Autoch_gm2y,rev(lake$Autoch_gm2y)),col = cols[1])
+    polygon(x = c(lake$Date,rev(lake$Date)),y = c(lake$Autoch_gm2y,rep(0,length(lake$Autoch_gm2y))),col = autoch_col)
+    polygon(x = c(lake$Date,rev(lake$Date)),y = c(lake$Alloch_gm2y + lake$Autoch_gm2y,rev(lake$Autoch_gm2y)),col = alloch_col)
     # Fluxes Out
-    polygon(x = c(lake$Date,rev(lake$Date)),y = c(lake$R_gm2y,rep(0,length(lake$R_gm2y))),col = cols[3])
-    polygon(x = c(lake$Date,rev(lake$Date)),y = c(lake$S_gm2y + lake$R_gm2y,rev(lake$R_gm2y)),col = cols[5])
-    polygon(x = c(lake$Date,rev(lake$Date)),y = c(lake$Out_gm2y + lake$S_gm2y + lake$R_gm2y,rev(lake$S_gm2y + lake$R_gm2y)),col = cols[4])
+    polygon(x = c(lake$Date,rev(lake$Date)),y = c(lake$R_gm2y,rep(0,length(lake$R_gm2y))),col = resp_col)
+    polygon(x = c(lake$Date,rev(lake$Date)),y = c(lake$S_gm2y + lake$R_gm2y,rev(lake$R_gm2y)),col = burial_col)
+    polygon(x = c(lake$Date,rev(lake$Date)),y = c(lake$Out_gm2y + lake$S_gm2y + lake$R_gm2y,rev(lake$S_gm2y + lake$R_gm2y)),col = export_col)
     abline(0,0, lwd=2, lty=2)
     
     if (legend==1){
-      legend('bottomleft',legend = c('Export','Burial','Resp'),fill = c(cols[4],cols[5],cols[3]), horiz=T,
+      legend('bottomleft',legend = c('Export','Burial','Resp'),fill = c(export_col,burial_col,resp_col), horiz=T,
              seg.len=0.3,bty = 'n',x.intersp = 0.5)
-      legend('topleft',legend = c('Alloch','Autoch'),fill = c(cols[1],cols[2]), horiz=T,
+      legend('topleft',legend = c('Alloch','Autoch'),fill = c(alloch_col,autoch_col), horiz=T,
              seg.len=0.3,bty = 'n',x.intersp = 0.5)}
 }
 
@@ -218,79 +225,79 @@ dev.off()
 ####################################
 #### boxplot of SOS status across years ####
 
-# calculate annual statistics
-Vanern_annual = aggregate(-Vanern_fullyears$PipeProc_gm2y, by=list(Vanern_fullyears$Year), FUN='mean')
-colnames(Vanern_annual) = c('Year','mean')
-Vanern_annual$Lake = rep('Vanern',nrow(Vanern_annual))
-Harp_annual = aggregate(-Harp_fullyears$PipeProc_gm2y, by=list(Harp_fullyears$Year), FUN='mean')
-colnames(Harp_annual) = c('Year','mean')
-Harp_annual$Lake = rep('Harp',nrow(Harp_annual))
-Trout_annual = aggregate(-Trout_fullyears$PipeProc_gm2y, by=list(Trout_fullyears$Year), FUN='mean')
-colnames(Trout_annual) = c('Year','mean')
-Trout_annual$Lake = rep('Trout',nrow(Trout_annual))
-Toolik_annual = aggregate(-Toolik_fullyears$PipeProc_gm2y, by=list(Toolik_fullyears$Year), FUN='mean')
-colnames(Toolik_annual) = c('Year','mean')
-Toolik_annual$Lake = rep('Toolik',nrow(Toolik_annual))
-Monona_annual = aggregate(-Monona_fullyears$PipeProc_gm2y, by=list(Monona_fullyears$Year), FUN='mean')
-colnames(Monona_annual) = c('Year','mean')
-Monona_annual$Lake = rep('Monona',nrow(Monona_annual))
-
-# merge into single data frame
-All_lakes_annual = rbind.data.frame(Harp_annual, Monona_annual, Toolik_annual, Trout_annual, Vanern_annual)
-
-# get standard deviations for all fates
-Harp_sd = describe(aggregate(Harp_fullyears, by=list(Harp_fullyears$Year), FUN='mean'))
-Monona_sd = describe(aggregate(Monona_fullyears, by=list(Monona_fullyears$Year), FUN='mean'))
-Toolik_sd = describe(aggregate(Toolik_fullyears, by=list(Toolik_fullyears$Year), FUN='mean'))
-Trout_sd = describe(aggregate(Trout_fullyears, by=list(Trout_fullyears$Year), FUN='mean'))
-Vanern_sd = describe(aggregate(Vanern_fullyears, by=list(Vanern_fullyears$Year), FUN='mean'))
-
-All_lakes_sd = cbind.data.frame(Harp_sd$sd, Monona_sd$sd, Toolik_sd$sd, Trout_sd$sd, Vanern_sd$sd)
-colnames(All_lakes_sd) = c('Harp','Monona','Toolik','Trout','Vanern')
-rownames(All_lakes_sd) = rownames(Harp_sd)
-All_lakes_sd = as.data.frame(t(All_lakes_sd))
-All_lakes_sd = round(All_lakes_sd, 2)
-
-# #boxplot of annual mean OC by lake
-png(paste0('R/ResultsViz/Figures/AnnualNetOCBoxplot.png'),width = 5,height = 5,units = 'in',res=300)
-  par(mar=c(2.1, 4.1, 3.1, 1.1)) #bot, left, top, right, def=c(5.1, 4.1, 4.1, 2.1)
-  boxplot(mean ~ Lake, data=All_lakes_annual, las=1, ylab='Respiration - Burial, OC (g/m2/yr)',main='Lake function across years', ylim=c(-50,100))
-  #mtext(side=3, 'Burial-Respiration')
-  abline(0,0, lty=2, lwd=2)
-  text(x=1,y=4,'Source',font=2)
-  text(x=1,y=-4,'Sink',font=2)
-dev.off()
+# # calculate annual statistics
+# Vanern_annual = aggregate(-Vanern_fullyears$PipeProc_gm2y, by=list(Vanern_fullyears$Year), FUN='mean')
+# colnames(Vanern_annual) = c('Year','mean')
+# Vanern_annual$Lake = rep('Vanern',nrow(Vanern_annual))
+# Harp_annual = aggregate(-Harp_fullyears$PipeProc_gm2y, by=list(Harp_fullyears$Year), FUN='mean')
+# colnames(Harp_annual) = c('Year','mean')
+# Harp_annual$Lake = rep('Harp',nrow(Harp_annual))
+# Trout_annual = aggregate(-Trout_fullyears$PipeProc_gm2y, by=list(Trout_fullyears$Year), FUN='mean')
+# colnames(Trout_annual) = c('Year','mean')
+# Trout_annual$Lake = rep('Trout',nrow(Trout_annual))
+# Toolik_annual = aggregate(-Toolik_fullyears$PipeProc_gm2y, by=list(Toolik_fullyears$Year), FUN='mean')
+# colnames(Toolik_annual) = c('Year','mean')
+# Toolik_annual$Lake = rep('Toolik',nrow(Toolik_annual))
+# Monona_annual = aggregate(-Monona_fullyears$PipeProc_gm2y, by=list(Monona_fullyears$Year), FUN='mean')
+# colnames(Monona_annual) = c('Year','mean')
+# Monona_annual$Lake = rep('Monona',nrow(Monona_annual))
+# 
+# # merge into single data frame
+# All_lakes_annual = rbind.data.frame(Harp_annual, Monona_annual, Toolik_annual, Trout_annual, Vanern_annual)
+# 
+# # get standard deviations for all fates
+# Harp_sd = describe(aggregate(Harp_fullyears, by=list(Harp_fullyears$Year), FUN='mean'))
+# Monona_sd = describe(aggregate(Monona_fullyears, by=list(Monona_fullyears$Year), FUN='mean'))
+# Toolik_sd = describe(aggregate(Toolik_fullyears, by=list(Toolik_fullyears$Year), FUN='mean'))
+# Trout_sd = describe(aggregate(Trout_fullyears, by=list(Trout_fullyears$Year), FUN='mean'))
+# Vanern_sd = describe(aggregate(Vanern_fullyears, by=list(Vanern_fullyears$Year), FUN='mean'))
+# 
+# All_lakes_sd = cbind.data.frame(Harp_sd$sd, Monona_sd$sd, Toolik_sd$sd, Trout_sd$sd, Vanern_sd$sd)
+# colnames(All_lakes_sd) = c('Harp','Monona','Toolik','Trout','Vanern')
+# rownames(All_lakes_sd) = rownames(Harp_sd)
+# All_lakes_sd = as.data.frame(t(All_lakes_sd))
+# All_lakes_sd = round(All_lakes_sd, 2)
+# 
+# # #boxplot of annual mean OC by lake
+# png(paste0('R/ResultsViz/Figures/AnnualNetOCBoxplot.png'),width = 5,height = 5,units = 'in',res=300)
+#   par(mar=c(2.1, 4.1, 3.1, 1.1)) #bot, left, top, right, def=c(5.1, 4.1, 4.1, 2.1)
+#   boxplot(mean ~ Lake, data=All_lakes_annual, las=1, ylab='Respiration - Burial, OC (g/m2/yr)',main='Lake function across years', ylim=c(-50,100))
+#   #mtext(side=3, 'Burial-Respiration')
+#   abline(0,0, lty=2, lwd=2)
+#   text(x=1,y=4,'Source',font=2)
+#   text(x=1,y=-4,'Sink',font=2)
+# dev.off()
 
 #### boxplot of sub-annual mean OC by lake ####
-
-# subset to specific months
-first_month = 5 #e.g., 5=May
-last_month = 8
-Vanern_subannual = subset(Vanern_fullyears, as.numeric(format(Date, "%m")) %in% first_month:last_month) #e.g., 5:8 is May-Aug
-Trout_subannual = subset(Trout_fullyears, as.numeric(format(Date, "%m")) %in% first_month:last_month)
-Harp_subannual = subset(Harp_fullyears, as.numeric(format(Date, "%m")) %in% first_month:last_month)
-Toolik_subannual = subset(Toolik_fullyears, as.numeric(format(Date, "%m")) %in% first_month:last_month)
-Monona_subannual = subset(Monona_fullyears, as.numeric(format(Date, "%m")) %in% first_month:last_month)
-
-# calculate sub-annual statistics
-Vanern_subannual = aggregate(-Vanern_subannual$PipeProc_gm2y, by=list(Vanern_subannual$Year), FUN='mean')
-colnames(Vanern_subannual) = c('Year','mean')
-Vanern_subannual$Lake = rep('Vanern',nrow(Vanern_subannual))
-Harp_subannual = aggregate(-Harp_subannual$PipeProc_gm2y, by=list(Harp_subannual$Year), FUN='mean')
-colnames(Harp_subannual) = c('Year','mean')
-Harp_subannual$Lake = rep('Harp',nrow(Harp_subannual))
-Trout_subannual = aggregate(-Trout_subannual$PipeProc_gm2y, by=list(Trout_subannual$Year), FUN='mean')
-colnames(Trout_subannual) = c('Year','mean')
-Trout_subannual$Lake = rep('Trout',nrow(Trout_subannual))
-Toolik_subannual = aggregate(-Toolik_subannual$PipeProc_gm2y, by=list(Toolik_subannual$Year), FUN='mean')
-colnames(Toolik_subannual) = c('Year','mean')
-Toolik_subannual$Lake = rep('Toolik',nrow(Toolik_subannual))
-Monona_subannual = aggregate(-Monona_subannual$PipeProc_gm2y, by=list(Monona_subannual$Year), FUN='mean')
-colnames(Monona_subannual) = c('Year','mean')
-Monona_subannual$Lake = rep('Monona',nrow(Monona_subannual))
-
-# merge into single data frame
-All_lakes_subannual = rbind.data.frame(Harp_subannual, Monona_subannual, Toolik_subannual, Trout_subannual, Vanern_subannual)
+# 
+# # subset to specific months
+# first_month = 5 #e.g., 5=May
+# last_month = 8
+# Vanern_subannual = subset(Vanern_fullyears, as.numeric(format(Date, "%m")) %in% first_month:last_month) #e.g., 5:8 is May-Aug
+# Trout_subannual = subset(Trout_fullyears, as.numeric(format(Date, "%m")) %in% first_month:last_month)
+# Harp_subannual = subset(Harp_fullyears, as.numeric(format(Date, "%m")) %in% first_month:last_month)
+# Toolik_subannual = subset(Toolik_fullyears, as.numeric(format(Date, "%m")) %in% first_month:last_month)
+# Monona_subannual = subset(Monona_fullyears, as.numeric(format(Date, "%m")) %in% first_month:last_month)
+# 
+# # calculate sub-annual statistics
+# Vanern_subannual = aggregate(-Vanern_subannual$PipeProc_gm2y, by=list(Vanern_subannual$Year), FUN='mean')
+# colnames(Vanern_subannual) = c('Year','mean')
+# Vanern_subannual$Lake = rep('Vanern',nrow(Vanern_subannual))
+# Harp_subannual = aggregate(-Harp_subannual$PipeProc_gm2y, by=list(Harp_subannual$Year), FUN='mean')
+# colnames(Harp_subannual) = c('Year','mean')
+# Harp_subannual$Lake = rep('Harp',nrow(Harp_subannual))
+# Trout_subannual = aggregate(-Trout_subannual$PipeProc_gm2y, by=list(Trout_subannual$Year), FUN='mean')
+# colnames(Trout_subannual) = c('Year','mean')
+# Trout_subannual$Lake = rep('Trout',nrow(Trout_subannual))
+# Toolik_subannual = aggregate(-Toolik_subannual$PipeProc_gm2y, by=list(Toolik_subannual$Year), FUN='mean')
+# colnames(Toolik_subannual) = c('Year','mean')
+# Toolik_subannual$Lake = rep('Toolik',nrow(Toolik_subannual))
+# Monona_subannual = aggregate(-Monona_subannual$PipeProc_gm2y, by=list(Monona_subannual$Year), FUN='mean')
+# colnames(Monona_subannual) = c('Year','mean')
+# Monona_subannual$Lake = rep('Monona',nrow(Monona_subannual))
+# 
+# # merge into single data frame
+# All_lakes_subannual = rbind.data.frame(Harp_subannual, Monona_subannual, Toolik_subannual, Trout_subannual, Vanern_subannual)
 
 # png(paste0('R/ResultsViz/Figures/SubAnnualNetOCBoxplot.png'),width = 11,height = 9,units = 'in',res=300)
 #   par(mfrow=c(1,1))
