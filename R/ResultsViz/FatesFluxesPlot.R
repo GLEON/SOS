@@ -2,11 +2,14 @@
 # Single plot of fluxes and fates over time 
 # Combo of the colored flux plot and the black/gold "steeler" plot showing SOS
 # Date: 3-25-17 by Ian McC
-# Updated: 4-6-2017 by Ian McC
+# Updated: 11-14-2017 by Ian McC
 ##################################################################################
 
-# setwd('C:/Users/immcc/Desktop/SOS/')
+## NOTE: summarise_each seems to have been deprecated, so switched to summarise_all
+# This even happened when I switched to r 3.3.2, which we had been using for the SOS project
 
+# setwd('C:/Users/immcc/Desktop/SOS/')
+# setwd("C:/Users/FWL/Documents/SOS")
 library(lubridate)
 library(dplyr)
 #library(viridis)
@@ -49,7 +52,7 @@ SOS_fate = function(LakeName, monthlyFlag){
     POC_df = POC_df %>%
       mutate(month = as.numeric(format(Date, "%m")), year = as.numeric(format(Date, "%Y")), day = 1) %>%
       group_by(month, year) %>%
-      summarise_each(funs(mean(., na.rm = TRUE))) %>%
+      summarise_all(funs(mean(., na.rm = TRUE))) %>%
       ungroup() %>% mutate(month_day_year = as.Date(paste0(month,'/',day,'/',year), format = "%m/%d/%Y")) %>%
       dplyr::select(Date,FlowIn_gm2y,NPPin_gm2y,FlowOut_gm2y,sedOut_gm2y,POCtotal_conc_gm3,POCload_g,POCout_g) %>%
       arrange(Date)
@@ -58,7 +61,7 @@ SOS_fate = function(LakeName, monthlyFlag){
     DOC_df = DOC_df %>%
       mutate(month = as.numeric(format(Date, "%m")), year = as.numeric(format(Date, "%Y")), day = 1) %>%
       group_by(month, year) %>%
-      summarise_each(funs(mean(., na.rm = TRUE))) %>%
+      summarise_all(funs(mean(., na.rm = TRUE))) %>%
       ungroup() %>% mutate(month_day_year = as.Date(paste0(month,'/',day,'/',year), format = "%m/%d/%Y")) %>%
       dplyr::select(Date,FlowIn_gm2y,NPPin_gm2y,FlowOut_gm2y,respOut_gm2y,DOCtotal_conc_gm3,DOCload_g,DOCout_g) %>%
       arrange(Date)
@@ -161,8 +164,8 @@ fate_plot <- function(LakeName){
   plot(lake$Budget_left_gm2y~lake$Date,col=alloch_col,type='n',
        ylim=ylim_fate,ylab=ylabs,xlab='',main= LakeName,las=1) # Inflow (alloch) 
   
-  polygon(x = c(lake$Date,rev(lake$Date)),y = c(-lake$R_gm2y,rep(0,length(-lake$R_gm2y))),col = burial_col)
-  polygon(x = c(lake$Date,rev(lake$Date)),y = c(-lake$S_gm2y - lake$R_gm2y,rev(-lake$R_gm2y)),col = 'black')
+  polygon(x = c(lake$Date,rev(lake$Date)),y = c(-lake$R_gm2y,rep(0,length(-lake$R_gm2y))),col = resp_col)
+  polygon(x = c(lake$Date,rev(lake$Date)),y = c(-lake$S_gm2y - lake$R_gm2y,rev(-lake$R_gm2y)),col = burial_col)
   polygon(x = c(lake$Date,rev(lake$Date)),y = c(lake$Budget_left_gm2y - lake$S_gm2y - lake$R_gm2y,rev(-lake$S_gm2y - lake$R_gm2y)),col = 'grey70')
 }
 
