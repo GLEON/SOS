@@ -1,0 +1,747 @@
+---
+title: "Code and Figures for Long-Term Lamprey Data"
+author: "Alison Appling"
+date: "Sunday, May 10, 2015"
+output:
+  html_document:
+    toc: true
+    theme: united
+---
+
+```{r, echo=FALSE, message=FALSE}
+## Code to set up this file
+set.seed(7531)
+
+# stay in or get into the main project directory
+if(("src" != basename(getwd())) & !("src" %in% dir())) {
+  stop("This file should be run from within the 'src' or main directories, e.g., with the Knit HTML button in RStudio")
+} else {
+  main_dir <- if("src" %in% dir()) "." else ".."
+}
+
+# Set options for producing the html file & figures
+library(knitr)
+opts_chunk$set(echo=FALSE, message=FALSE)
+
+# Load libraries we'll use, suppressing messages via message=FALSE option to knitr chunk
+library(loadflex)
+library(plyr)
+library(dplyr)
+library(gridExtra)
+library(ggplot2)
+library(rloadest)
+
+# A utility function
+isBetween <- function(series, limits, format="%Y-%m-%d") {
+  parsed_limits <- as.POSIXct(limits, format=format, tz="EST5EDT")
+  (series >= parsed_limits[1] & series < parsed_limits[2])
+}
+```
+
+```{r colorscheme, fig.height=2, fig.width=7}
+colorscheme <- c(flow="#006561", flux="#A40004", conc="#FF7100", concR="#A64A00", concV="#FFA900") # http://colorschemedesigner.com/csd-3.5/, hue=29deg, Angle=30deg, RGB=FF7100, accented analogic
+ggplot(data.frame(x=ordered(names(colorscheme), names(colorscheme))), aes(x=x, y=1)) + 
+  geom_point(size=32, shape=22, color=NA, aes(fill=x)) + 
+  theme(
+    panel.background=element_rect(fill=NA),
+    axis.ticks = element_line(colour=NA), 
+    axis.text.y = element_text(colour=NA),
+    axis.text.x = element_text(size=20)) +
+  xlab("") + ylab("") + 
+  scale_fill_manual("Type", breaks=names(colorscheme), values=colorscheme, guide=FALSE)
+```
+
+```{r theme}
+# a ggplot theme for figures for Ecosphere, i.e., Arial, 8-pt font, at 300 dpi,
+# 6.1 inches wide, and ~4.6 (max 6.8) inches high
+theme_ecosphere <- function(base_size=9, base_family="") {
+  theme_bw(base_size=base_size, base_family=base_family) %+replace% 
+    theme(
+      axis.text = element_text(size = rel(0.8), colour = "black"),
+      legend.key.size = unit(0.7, "lines"),
+      legend.key = element_rect(fill=NA, colour=NA),
+      legend.background=element_rect(fill=NA, colour=NA),
+      strip.background=element_blank(), 
+      strip.text.x=element_text(size = rel(1.2)), 
+      strip.text.y=element_text(size = rel(1), angle = -90), 
+      panel.grid.minor = element_blank(),
+      panel.background = element_rect(fill="white"),
+      panel.border = element_rect(color="grey70", fill=NA),
+      plot.margin = unit(c(2, 2, 2, 2), "points"))
+}
+```
+
+
+Figure 2: Data
+---------------------------
+Separate data into those to be used for interpolation, calibration, estimation, and validation
+```{r}
+# Interpolation data: Packers Falls NO3 grab sample observations
+data(lamprey_nitrate)
+intdat <- lamprey_nitrate[c("DATE","DISCHARGE","NO3")]
+
+# Calibration data: Restrict to points separated by sufficient time
+regdat <- subset(lamprey_nitrate, REGR)[c("DATE","DISCHARGE","NO3")]
+
+# Estimation data: Packers Falls discharge
+data(lamprey_discharge)
+estdat <- subset(lamprey_discharge, DATE < as.POSIXct("2012-10-01 00:00:00", tz="EST5EDT"))
+#estdat <- estdat[seq(1, nrow(estdat), by=96/4),] # just use four obs per day so it goes [a LOT] faster
+
+# Validation data: Packers Falls discharge & Wiswall sensor data
+data(lamprey_sensor, verbose=FALSE)
+if(exists("lamprey_sensor")) { 
+  valdat <- subset(lamprey_sensor, isBetween(DATE, c("2012-10-01 00:00:00","2014-10-01 00:00:00"), "%Y-%m-%d %H:%M:%S"))
+} else { # if sensor data are unavailable, generate random NO3 values
+  warning("valdat nitrate values are being randomly generated")
+  valdat <- subset(lamprey_discharge,  isBetween(DATE, c("2012-10-01 00:00:00","2014-10-01 00:00:00"), "%Y-%m-%d %H:%M:%S"))
+  valdat <- transmute(valdat, DATE=DATE, NO3=rnorm(nrow(valdat), 0.16, 0.02), DISCHARGE=DISCHARGE)
+}
+
+# Example of a subset of the validation data: only Tuesdays just after noon
+valexdat <- subset(valdat, format(DATE, "%a %H:%M") == "Tue 12:15")
+```
+
+
+Figure 2: Nitrate and discharge data from the Lamprey River, NH. Flood Effects Data (left panels) are those used here to demonstrate model fitting, prediction, aggregation, and simple tests of whether nitrate dynamics were altered by the two large floods in May 2006 and April 2007. Metrics Data (right panels) are those used to assess and compare the four load models. Nitrate measurements from grab samples (top left panel) or example simulated grab samples (symbols, top right panel) are used for interpolation (×) or both interpolation and regression calibration (× and +), where regression data are a subset of interpolation data to reduce autocorrelation. The sensor-based, quasi-continuous nitrate data (line, top right panel) are used to compute model performance metrics. Discharge observations (bottom panels) are used both for calibration and prediction.
+
+```{r fig_2, results="hide"}
+# Combine data for plotting in one ggplot
+variables=c(N="Nitrate (Grab or Sensor)", Q="Discharge (Gage)") #c(N=" ", Q="  ") #
+purposes=c(demo="Demonstration & Flood Effects Data", eval="Metrics Data")
+ggcolors=c(Nr=colorscheme[["concR"]], Ni=colorscheme[["conc"]], Nv=colorscheme[["concV"]], Qp=colorscheme[["flow"]])
+psymbols=c(Nr=3, Ni=4, Nv=NA, Qp=NA)
+guidelabs=c(Nr="Regression & Interpolation", Ni="Interpolation", Nv="Validation", Qp="Prediction")
+ltypes=c(Nr="blank", Ni="blank", Nv="solid", Qp="solid")
+library(lubridate)
+dateticks <- mdy(paste0("10-01-",seq(1999,2013,by=1)))
+names(dateticks) <- sprintf("'%02d",0:14)
+input_data <- 
+  rbind(
+    data.frame(Date=intdat$DATE, Variable=variables[["N"]], Value=intdat$NO3,   Purpose=purposes[["demo"]], Aes="Ni") %>%
+      filter(!(Date %in% regdat$DATE)),
+    data.frame(Date=regdat$DATE, Variable=variables[["N"]], Value=regdat$NO3,   Purpose=purposes[["demo"]], Aes="Nr"),
+    data.frame(Date=estdat$DATE, Variable=variables[["Q"]], Value=estdat$DISCHARGE,   Purpose=purposes[["demo"]], Aes="Qp"),
+    data.frame(Date=valdat$DATE, Variable=variables[["N"]], Value=valdat$NO3,       Purpose=purposes[["eval"]], Aes="Nv"),
+    data.frame(Date=valdat$DATE, Variable=variables[["Q"]], Value=valdat$DISCHARGE, Purpose=purposes[["eval"]], Aes="Qp"),
+    data.frame(Date=valexdat$DATE, Variable=variables[["N"]], Value=valexdat$NO3,     Purpose=purposes[["eval"]], Aes="Nr") %>%
+      filter(as.numeric(format(Date, "%d")) < 22), # approximately every 3 of 4 observations
+    data.frame(Date=valexdat$DATE, Variable=variables[["N"]], Value=valexdat$NO3,     Purpose=purposes[["eval"]], Aes="Ni") %>%
+      filter(as.numeric(format(Date, "%d")) >= 22)) %>% 
+  transform(
+    Variable = ordered(Variable, variables),
+    Purpose= ordered(Purpose, purposes),
+    Value = ifelse(Variable==variables[["Q"]], Value*0.0283168, Value)) # 0.0283168 m3/ft3
+fig2_panel_letters <- data.frame(
+  Variable=rep(levels(input_data$Variable),times=2), 
+  Purpose=rep(levels(input_data$Purpose),each=2),
+  X=rep(as.POSIXct(c("2000-01-02 00:00:00","2013-01-02 00:00:00")), each=2), 
+  Y=rep(c(0.78, 260),times=2), 
+  Letter=LETTERS[1:4], stringsAsFactors=FALSE)
+
+# Plot
+figure2 <- function() {
+  suppressWarnings(
+    print(
+      ggplot(input_data, aes(x=Date, y=Value)) + 
+        geom_line(aes(color=Aes, linetype=Aes)) + 
+        geom_point(aes(color=Aes, shape=Aes), size=1.4) + 
+        scale_color_manual("Data used for", breaks=names(ggcolors), values=ggcolors, labels=guidelabs) + 
+        scale_shape_manual("Data used for", breaks=names(psymbols), values=psymbols, labels=guidelabs) + 
+        scale_linetype_manual("Data used for", breaks=names(ltypes), values=ltypes, labels=guidelabs) + 
+        facet_grid(Variable ~ Purpose, scales="free", space="free_x") + 
+        scale_x_datetime(breaks=unname(dateticks), labels=names(dateticks), expand=c(0,0)) +
+        theme_ecosphere() + ylim(0, NA) +
+        geom_text(data=fig2_panel_letters, aes(x=X, y=Y, label=Letter), size=3) +
+        theme(panel.margin = unit(0, "lines"), legend.position=c(.17, .86),
+              strip.text.x=element_text(color=NA), strip.text.y=element_text(color=NA)) +
+        xlab("Water Year (October 1 - September 30)") + #http://water.usgs.gov/nwc/explain_data.html
+        ylab(parse(text="'     '~Discharge~(m^3/s)~'                          '~NO[3]^'-'-N~Concentration~(mg/L)"))
+    )
+  )
+}
+if(!exists("lamprey_sensor")) warning("reminder: metrics concentration data is randomly generated")
+figure2()
+
+# Export plot
+tiff(paste0(main_dir, "/figures/input-data.tif"), width=300*6.1, height=300*4.6, res=300, compression="lzw")
+figure2()
+dev.off()
+```
+
+
+Code (Figure 1), Part A-B: Fit the models
+---------------
+```{r fig_1A, echo=TRUE}
+# A) Create a metadata description of the dataset & desired output
+meta <- metadata(constituent="NO3", flow="DISCHARGE", 
+  dates="DATE", conc.units="mg L^-1", flow.units="cfs", load.units="kg", 
+  load.rate.units="kg d^-1", station="Lamprey River, NH")
+```
+
+```{r fig_1B, echo=TRUE, message=FALSE}
+# B) Fit four models: interpolation, linear, rloadest, and composite
+no3_interp <- loadInterp(interp.format="conc", interp.fun=rectangularInterpolation, 
+  data=intdat, metadata=meta)
+no3_lm <- loadLm(formula=log(NO3) ~ log(DISCHARGE), pred.format="conc", 
+  data=regdat, metadata=meta, retrans=exp)
+no3_reg2 <- loadReg2(loadReg(NO3 ~ model(9), data=regdat,
+  flow="DISCHARGE", dates="DATE", time.step="instantaneous", 
+  flow.units="cfs", conc.units="mg/L", load.units="kg"))
+no3_comp <- loadComp(reg.model=no3_reg2, interp.format="conc", 
+  interp.data=intdat)
+```
+
+Code (Figure 1), Part C: Make predictions
+----------------------
+```{r fig_1C, echo=TRUE}
+# C) Generate point predictions from each model
+preds_li <- predictSolute(no3_interp, "flux", estdat, se.pred=TRUE, date=TRUE)
+preds_lm <- predictSolute(no3_lm, "flux", estdat, se.pred=TRUE, date=TRUE)
+preds_lr <- predictSolute(no3_reg2, "flux", estdat, se.pred=TRUE, date=TRUE)
+preds_lc <- predictSolute(no3_comp, "flux", estdat, se.pred=TRUE, date=TRUE)
+```
+
+Biogeochemical analysis, Part 1: Fit the models to before, during, and after (bda) periods separately.
+```{r}
+abc_lims <- as.POSIXct(c("2000-10-01 00:00:00","2005-10-01 00:00:00","2007-10-01 00:00:00","2012-10-01 00:00:00"), tz="EST5EDT")
+intdat_abc <- intdat %>% filter(isBetween(DATE, abc_lims[c(1,4)])) %>% mutate(ABC=ordered(ifelse(DATE < abc_lims[2], "A", ifelse(DATE < abc_lims[3], "B", "C"))))
+regdat_abc <- regdat %>% filter(isBetween(DATE, abc_lims[c(1,4)])) %>% mutate(ABC=ordered(ifelse(DATE < abc_lims[2], "A", ifelse(DATE < abc_lims[3], "B", "C"))))
+estdat_abc <- estdat %>% filter(isBetween(DATE, abc_lims[c(1,4)])) %>% mutate(ABC=ordered(ifelse(DATE < abc_lims[2], "A", ifelse(DATE < abc_lims[3], "B", "C"))))
+
+no3_interp_a <- loadInterp(interp.format="conc", interp.fun=rectangularInterpolation, data=filter(intdat_abc, ABC=="A"), metadata=meta)
+no3_interp_b <- loadInterp(interp.format="conc", interp.fun=rectangularInterpolation, data=filter(intdat_abc, ABC=="B"), metadata=meta)
+no3_interp_c <- loadInterp(interp.format="conc", interp.fun=rectangularInterpolation, data=filter(intdat_abc, ABC=="C"), metadata=meta)
+
+no3_lm_a <- loadLm(formula=log(NO3) ~ log(DISCHARGE), pred.format="conc", data=filter(regdat_abc, ABC=="A"), metadata=meta, retrans=exp)
+no3_lm_b <- loadLm(formula=log(NO3) ~ log(DISCHARGE), pred.format="conc", data=filter(regdat_abc, ABC=="B"), metadata=meta, retrans=exp)
+no3_lm_c <- loadLm(formula=log(NO3) ~ log(DISCHARGE), pred.format="conc", data=filter(regdat_abc, ABC=="C"), metadata=meta, retrans=exp)
+
+no3_reg2_a <- loadReg2(loadReg(NO3 ~ model(9), data=filter(regdat_abc, ABC=="A"), flow="DISCHARGE", dates="DATE", time.step="instantaneous", flow.units="cfs", conc.units="mg/L", load.units="kg"))
+no3_reg2_b <- loadReg2(loadReg(NO3 ~ model(9), data=filter(regdat_abc, ABC=="B"), flow="DISCHARGE", dates="DATE", time.step="instantaneous", flow.units="cfs", conc.units="mg/L", load.units="kg"))
+no3_reg2_c <- loadReg2(loadReg(NO3 ~ model(9), data=filter(regdat_abc, ABC=="C"), flow="DISCHARGE", dates="DATE", time.step="instantaneous", flow.units="cfs", conc.units="mg/L", load.units="kg"))
+
+no3_comp_a <- loadComp(reg.model=no3_reg2_a, interp.format="conc", interp.data=filter(intdat_abc, ABC=="A"))
+no3_comp_b <- loadComp(reg.model=no3_reg2_b, interp.format="conc", interp.data=filter(intdat_abc, ABC=="B"))
+no3_comp_c <- loadComp(reg.model=no3_reg2_c, interp.format="conc", interp.data=filter(intdat_abc, ABC=="C"))
+```
+
+
+Figure 3: Model illustrations
+------------------------
+
+```{r}
+# Get predictions (again) & observations, this time in a format that's easier to plot than the above.
+
+# Generate and combine the point predictions
+point_preds <- do.call(
+  "rbind",
+  lapply(
+    list(loadInterp=no3_interp, loadLm=no3_lm, loadReg2=no3_reg2, loadComp=no3_comp), 
+    function(loadmodel) {
+      do.call("rbind", lapply(c("conc","flux"), function(fluxconc) {
+        data.frame(
+          estdat,
+          Model=c(loadInterp="no3_interp", loadLm="no3_lm", loadReg2="no3_reg2", loadComp="no3_comp")[as.character(class(loadmodel))],
+          Type=loadflex:::.sentenceCase(fluxconc),
+          Value=predictSolute(load.model = loadmodel, flux.or.conc = fluxconc, newdata = estdat, interval = "none"))
+        }))
+      })
+  )
+rownames(point_preds) <- NULL
+point_preds$Model <- ordered(point_preds$Model, levels=c("no3_interp","no3_lm","no3_reg2","no3_comp"))
+
+# Munge the observations for comparison to predictions
+point_obs <- do.call(
+  "rbind",
+  lapply(
+    list(loadInterp=no3_interp, loadLm=no3_lm, loadReg2=no3_reg2, loadComp=no3_comp), 
+    function(loadmodel) {
+      do.call("rbind", lapply(c("conc","flux"), function(fluxconc) {
+        data.frame(
+          DATE=loadmodel@data$DATE,
+          Model=c(loadInterp="no3_interp", loadLm="no3_lm", loadReg2="no3_reg2", loadComp="no3_comp")[as.character(class(loadmodel))],
+          Type=loadflex:::.sentenceCase(fluxconc),
+          Value=observeSolute(loadmodel@data, fluxconc, meta))
+        }))
+      })
+  )
+rownames(point_obs) <- NULL
+point_obs$Model <- ordered(point_obs$Model, levels=c("no3_interp","no3_lm","no3_reg2","no3_comp"))
+```
+
+```{r}
+# Plot concentration predictions and show how the composite method works
+
+# Pick out the data we want for the plot on the left - focus on Conc for
+# simplicity and restrict the date range to make it clearer what's happening
+left_panel_preds <- subset(point_preds, Type=="Conc") # & Model != "loadComp")
+left_panel_obs <- subset(point_obs, Type=="Conc")
+lims <- c("2002-10-01", "2003-10-01") #c("2006-05-01", "2006-09-01")
+left_panel_preds <- subset(left_panel_preds, isBetween(DATE, lims))
+left_panel_obs <- subset(left_panel_obs, isBetween(DATE, lims))
+
+# Pick out the data we want for the plot on the right
+intermediates_lc <- predictSolute(no3_comp, "conc", estdat, se.pred=TRUE, date=TRUE, fit.reg = TRUE, fit.resid=TRUE, fit.resid.raw=TRUE)
+demoCM_preds <- subset(intermediates_lc, isBetween(date, lims))
+demoCM_obs <- intdat
+demoCM_obs$preds <- predictSolute(no3_comp@fit@reg.model, "conc", intdat)
+demoCM_obs <- subset(demoCM_obs, isBetween(DATE, lims))
+steps <- c("Find regression residuals", "Interpolate residuals", "Add to regr. predictions")
+demoCM <- rbind(
+  data.frame(Step=steps[1], Series="RegPreds", Date=demoCM_preds$date, Y=log(demoCM_preds$fit.reg), YMin=NA),
+  data.frame(Step=steps[1], Series="Resids", Date=demoCM_obs$DATE, Y=log(demoCM_obs$NO3), YMin=log(demoCM_obs$preds)),
+  data.frame(Step=steps[1], Series="ResidPreds", Date=demoCM_preds$date, Y=NA, YMin=NA),
+  data.frame(Step=steps[2], Series="RegPreds", Date=demoCM_preds$date, Y=0, YMin=NA),
+  data.frame(Step=steps[2], Series="Resids", Date=demoCM_obs$DATE, Y=log(demoCM_obs$NO3) - log(demoCM_obs$preds), YMin=0),
+  data.frame(Step=steps[2], Series="ResidPreds", Date=demoCM_preds$date, Y=demoCM_preds$fit.resid.raw, YMin=0),
+  data.frame(Step=steps[3], Series="RegPreds", Date=demoCM_preds$date, Y=log(demoCM_preds$fit.reg), YMin=NA),
+  data.frame(Step=steps[3], Series="Resids", Date=demoCM_obs$DATE, Y=log(demoCM_obs$NO3), YMin=log(demoCM_obs$preds)),
+  data.frame(Step=steps[3], Series="ResidPreds", Date=demoCM_preds$date, Y=log(demoCM_preds$fit), YMin=log(demoCM_preds$fit.reg))
+  )
+demoCM$Step <- ordered(demoCM$Step, steps)
+scalebreaks <- ordered(c("RegPreds","Resids","ResidPreds"), c("RegPreds","Resids","ResidPreds"))
+```
+
+Figure 3: Models fitted to NO3- data from the Lamprey River, NH using functions in the loadflex package (see Figure 1). Panels A-D show concentration observations (brown points) and concentration predictions from each of the four models (orange lines) for the 2003 water year. Panels E, F, and G (right column) illustrate the steps taken to fit a composite model, i.e., to move from the regression predictions in C to those in D. Panel E: predictions and observations as in C but log-transformed; residuals are represented by brown vertical lines. Panel F: residuals from E are interpolated, in this case by a piecewise linear function. Panel G: the composite method prediction is the brown line, representing the sum of the regression predictions (orange line in E and G) and the interpolated residuals (brown line in F).
+
+```{r fig_3, results="hide"}
+# Make the plot
+left_panels <- data.frame(Column=1, Model=ordered(levels(left_panel_obs$Model),levels(left_panel_obs$Model)), X=ymd(lims[1]), Y=0.3, Letter=c("A","B","C","D"))
+right_panels <- data.frame(Column=2, Step=ordered(levels(demoCM$Step),levels(demoCM$Step)), X=ymd(lims[1]), Y=c(-1.25, 0.4, -1.22), Letter=c("E","F","G"))
+
+figure3 <- function() {
+  suppressWarnings(
+    grid.arrange(
+      ggplot(left_panel_preds, aes(x=DATE, y=Value)) + 
+        geom_line(color=colorscheme[["conc"]]) + facet_grid(Model ~ .) + 
+        geom_point(data=left_panel_obs, color=colorscheme[["concR"]], size=1.2) +
+        xlab("Date") + ylab(parse(text="NO[3]^'-'-N~Concentration~(mg/L)")) + 
+        geom_text(data=left_panels, aes(x=X, y=Y, label=Letter), size=3) +
+        theme_ecosphere(),
+      #ggtitle("Predictions & Observations by Model Type"),
+      ggplot(demoCM, aes(x=Date, y=Y, color=Series)) + 
+        geom_ribbon(data=subset(demoCM, Series=="ResidPreds"), aes(ymin=YMin, ymax=Y, fill=Series), color=NA, alpha=0.2) +
+        geom_errorbar(data=subset(demoCM, Series=="Resids"), aes(ymin=YMin, ymax=Y), width=0, alpha=0.6) +
+        geom_point(aes(shape=Series), size=1.2) +
+        geom_line(data=subset(demoCM, Series%in% c("RegPreds","ResidPreds")), aes(linetype=Series)) +
+        scale_fill_manual(guide="none", breaks=scalebreaks, values=c(RegPreds=NA,Resids=NA,ResidPreds=colorscheme[["concR"]])) +
+        scale_color_manual(guide="none", breaks=scalebreaks, values=c(RegPreds=colorscheme[["conc"]],Resids=colorscheme[["concR"]],ResidPreds=colorscheme[["concR"]])) +
+        scale_shape_manual(guide="none", breaks=scalebreaks, values=c(RegPreds=NA,Resids=19,ResidPreds=NA)) +
+        scale_linetype_manual(guide="none", breaks=scalebreaks, values=c(RegPreds="solid",Resids="blank",ResidPreds="solid")) +
+        geom_text(data=right_panels, aes(x=X, y=Y, label=Letter), size=3, color="black", linetype=NA, shape=NA) +
+        theme_ecosphere() +
+        facet_grid(Step ~ ., scales="free_y") + ylab(parse(text="Log(NO[3]^'-'-N~Concentration~(mg/L))")),
+      #ggtitle("Steps in Composite Method"),
+      ncol=2
+    )
+  )
+}
+figure3()
+
+tiff(paste0(main_dir, "/figures/model-illustrations-one.tif"), width=300*6.1, height=300*4.6, res=300, compression="lzw")
+figure3()
+dev.off()
+```
+
+Code (Figure 1), Part D: Model diagnostics
+---------------
+
+Inspect the models and residuals.
+```{r fig_1D, echo=TRUE, eval=FALSE}
+# D) A few ways to inspect the models
+summary(getFittedModel(no3_lm))
+qplot(x=Date, y=Resid, data=getResiduals(no3_interp, newdata=intdat))
+residDurbinWatson(no3_reg2, "conc", newdata=regdat, irreg=TRUE)
+residDurbinWatson(no3_reg2, "conc", newdata=intdat, irreg=TRUE)
+estimateRho(no3_reg2, "conc", newdata=regdat, irreg=TRUE)$rho
+estimateRho(no3_reg2, "conc", newdata=intdat, irreg=TRUE)$rho
+getCorrectionFraction(no3_comp, "flux", newdat=estdat)
+```
+
+Diagnostics whose values are reported in the manuscript:
+```{r, echo=TRUE}
+summary(getFittedModel(no3_reg2)$cfit)
+residDurbinWatson(no3_reg2, "conc", newdata=regdat, irreg=TRUE, plot=FALSE)
+estimateRho(no3_reg2, "conc", newdata=regdat, irreg=TRUE, plot=FALSE)$rho
+residDurbinWatson(no3_reg2, "conc", newdata=intdat, irreg=TRUE, plot=FALSE)
+estimateRho(no3_reg2, "conc", newdata=intdat, irreg=TRUE, plot=FALSE)$rho
+getCorrectionFraction(loadComp(reg.model=no3_reg2, interp.format="conc", interp.data=intdat, store=c()), "conc", newdata=estdat)
+getCorrectionFraction(loadComp(reg.model=no3_lm, interp.format="conc", interp.data=intdat, store=c()), "conc", newdata=estdat)
+if(!exists("lamprey_sensor")) warning("reminder: valdat contains randomly generated concentrations")
+unlist(estimateRho(no3_reg2, "conc", newdata=valdat, irreg=TRUE, plot=FALSE)[1:2])
+point_obs %>% filter(Type=="Conc") %>% summarize(min=min(Value), max=max(Value))
+point_obs %>% filter(Type=="Flux") %>% summarize(min=min(Value), max=max(Value))
+```
+
+
+Figure 4: Predictions with PIs
+----------------------------
+
+```{r}
+# Generate and combine the point predictions, this time also with uncertainties
+point_preds_CIs <- do.call(
+  "rbind",
+  lapply(
+    list(loadInterp=no3_interp, loadLm=no3_lm, loadReg2=no3_reg2, loadComp=no3_comp),
+    function(loadmodel) {
+      do.call("rbind", lapply(c("conc","flux"), function(fluxconc) {
+        data.frame(
+          estdat,
+          Model=c(loadInterp="no3_interp", loadLm="no3_lm", loadReg2="no3_reg2", loadComp="no3_comp")[as.character(class(loadmodel))],
+          Type=loadflex:::.sentenceCase(fluxconc),
+          predictSolute(load.model = loadmodel, flux.or.conc = fluxconc, newdata = estdat, 
+                              interval = "prediction", se.pred=TRUE))
+        }))
+      })
+  )
+rownames(point_preds_CIs) <- NULL
+point_preds_CIs$Model <- ordered(point_preds_CIs$Model, levels=c("no3_interp","no3_lm","no3_reg2","no3_comp"))
+
+# And again, but for the models fit piecewise to 3 time periods
+point_preds_CIs_abc <- do.call(
+  "rbind",
+  lapply(
+    list(loadInterp=list(no3_interp_a, no3_interp_b, no3_interp_c), 
+         loadLm=list(no3_lm_a, no3_lm_b, no3_lm_c), 
+         loadReg2=list(no3_reg2_a, no3_reg2_b, no3_reg2_c), 
+         loadComp=list(no3_comp_a, no3_comp_b, no3_comp_c)),
+    function(loadmodels) {
+      do.call("rbind", lapply(c("conc","flux"), function(fluxconc) {
+        data.frame(
+          estdat_abc,
+          Model=c(loadInterp="no3_interp", loadLm="no3_lm", loadReg2="no3_reg2", loadComp="no3_comp")[as.character(class(loadmodels[[1]]))],
+          Type=loadflex:::.sentenceCase(fluxconc),
+          rbind(
+            predictSolute(load.model=loadmodels[[1]], fluxconc, filter(estdat_abc, ABC=="A"), interval="pred", se.pred=TRUE) %>% mutate(Period="A"),
+            predictSolute(load.model=loadmodels[[2]], fluxconc, filter(estdat_abc, ABC=="B"), interval="pred", se.pred=TRUE) %>% mutate(Period="B"),
+            predictSolute(load.model=loadmodels[[3]], fluxconc, filter(estdat_abc, ABC=="C"), interval="pred", se.pred=TRUE) %>% mutate(Period="C")))
+        }))
+      })
+  )
+rownames(point_preds_CIs_abc) <- NULL
+point_preds_CIs_abc$Model <- ordered(point_preds_CIs_abc$Model, levels=c("no3_interp","no3_lm","no3_reg2","no3_comp"))
+
+# Add calculated fluxes to the observed concentration data
+no3_obs <- do.call("rbind", lapply(c("conc","flux"), function(fluxconc) {
+  do.call("rbind", lapply(
+    list(loadInterp=no3_interp, loadLm=no3_lm, loadReg2=no3_reg2, loadComp=no3_comp), function(loadmodel) {
+      thismodel <- subset(point_preds_CIs_abc, 
+                          Model==c(loadInterp="no3_interp", loadLm="no3_lm", loadReg2="no3_reg2", loadComp="no3_comp")[as.character(class(loadmodel))] & 
+                            Type==loadflex:::.sentenceCase(fluxconc))
+      data.frame(
+        intdat,
+        Model=c(loadInterp="no3_interp", loadLm="no3_lm", loadReg2="no3_reg2", loadComp="no3_comp")[as.character(class(loadmodel))],
+        Type=loadflex:::.sentenceCase(fluxconc),
+        fit=observeSolute(data = intdat, flux.or.conc = fluxconc, metadata = meta))
+    }))
+}))
+```
+
+Figure 4: Point predictions with 95% prediction intervals from each of the four models for both concentration (left column) and flux (right column). 
+
+```{r fig_4, results="hide"}
+# Plot the predicted and observed nitrate flux rates for comparison
+fig4_panel_letters <- data.frame(
+  Model=rep(levels(point_preds_CIs$Model), times=2),
+  Type=rep(levels(point_preds_CIs$Type), each=4),
+  X=as.POSIXct("2000-04-12 00:00:00"), 
+  Y=rep(c(0.57, 2840), each=4), 
+  Letter=LETTERS[1:8], stringsAsFactors=FALSE)
+
+figure4 <- function(point_preds_CIs) {
+  grid.arrange(
+    ggplot(subset(point_preds_CIs, Type=="Conc"), aes(x=DATE, y=fit)) + facet_grid(Model ~ .) + 
+      geom_ribbon(aes(ymin=lwr, ymax=upr), fill=colorscheme[["conc"]], alpha=0.3) + 
+      geom_line(color=colorscheme[["conc"]]) + 
+      scale_x_datetime(breaks=unname(dateticks), labels=names(dateticks), expand=c(0,0)) +
+      coord_cartesian(ylim=c(-0.01,0.63)) +
+      geom_text(data=subset(fig4_panel_letters, Type=="Conc"), aes(x=X, y=Y, label=Letter), size=3) +
+      xlab("Water Year (Oct. 1 - Sept. 30)") + ylab(parse(text="NO[3]^'-'-N~Concentration~(mg/L)")) +
+      theme_ecosphere() + theme(plot.margin=unit(c(2,0,0,2), "point")),
+    ggplot(
+      subset(point_preds_CIs, Type=="Flux"),
+      aes(x=DATE, y=fit)) + facet_grid(Model ~ .) + 
+      geom_ribbon(aes(ymin=lwr, ymax=upr), fill=colorscheme[["flux"]], alpha=0.3) + 
+      geom_line(color=colorscheme[["flux"]]) + 
+      scale_x_datetime(breaks=unname(dateticks), labels=names(dateticks), expand=c(0,0)) +
+      coord_cartesian(ylim = c(-50,3200)) + 
+      geom_text(data=subset(fig4_panel_letters, Type=="Flux"), aes(x=X, y=Y, label=Letter), size=3) +
+      xlab("Water Year (Oct. 1 - Sept. 30)") + ylab(parse(text="NO[3]^'-'-N~Flux~Rate~(kg/d)")) +
+      theme_ecosphere() + theme(plot.margin=unit(c(2,0,0,2), "point")),
+    ncol=2)
+}
+figure4(point_preds_CIs)
+# figure4(point_preds_CIs_abc)
+
+tiff(paste0(main_dir, "/figures/preds-and-PIs-one.tif"), width=300*6.1, height=300*4.6, res=300, compression="lzw")
+figure4(point_preds_CIs)
+dev.off()
+# tiff(paste0(main_dir, "/figures/preds-and-PIs-abc.tif"), width=300*6.1, height=300*4.6, res=300, compression="lzw")
+# figure4(point_preds_CIs_abc)
+# dev.off()
+```
+
+Code (Figure 1), Part E: Aggregation
+------------------
+
+```{r fig_1E, echo=TRUE}
+# E) Aggregate from point predictions to monthly predictions from each model
+aggs_li <- aggregateSolute(preds_li, meta, "flux rate", "month")
+aggs_lm <- aggregateSolute(preds_lm, meta, "flux rate", "month")
+aggs_lr <- aggregateSolute(preds_lr, meta, "flux rate", "month")
+aggs_lc <- aggregateSolute(preds_lc, meta, "flux rate", "month")
+```
+
+Figure 5: Aggregated values (and Biogeochemical analysis, Part 2: aggregate)
+---------------
+
+```{r}
+# Aggregate the predictions in plotting format
+get_aggs <- function(point_preds_CIs_any) {
+  do.call(
+  "rbind",
+  lapply(unique(point_preds_CIs_any$Model), function(lmname) {
+    do.call(
+      "rbind",
+      lapply(c("conc","flux"), function(fluxconc) {
+        dat <- subset(point_preds_CIs_any, Model==lmname & Type==loadflex:::.sentenceCase(fluxconc))
+        fluxrateconc <- ifelse(fluxconc=="flux", "flux rate", fluxconc)
+        agg <- aggregateSolute(
+          preds=dat$fit, se.preds=dat$se.pred, dates=dat$DATE,
+          format=fluxrateconc, metadata=meta, agg.by="month")
+        names(agg)[2] <- "Value"
+        transform(
+          data.frame(Model=lmname, Type=loadflex:::.sentenceCase(fluxconc), agg, 
+                     MonthDate=as.POSIXct(paste0(agg$Month,"-15"), format="%Y-%m-%d", tz="EST5EDT"), 
+                     MonthMin=as.POSIXct(paste0(agg$Month,"-01"), format="%Y-%m-%d", tz="EST5EDT")),
+          MonthMax=c(MonthMin[-1] - as.difftime(1, u="hours"), MonthMin[nrow(agg)] + as.difftime(30, u="days")))
+        }))
+    }))
+  }
+system.time({
+  aggdf <- get_aggs(point_preds_CIs)
+})
+system.time({
+  aggdf_abc <- get_aggs(point_preds_CIs_abc)
+})
+
+# create a step-like timeseries by repeating each row once for the beginning and
+# once for the end of the month
+aggsteps <- rbind(transform(aggdf, MonthDate=MonthMin), transform(aggdf, MonthDate=MonthMax))
+aggsteps <- aggsteps[order(aggsteps$Model, aggsteps$Type, aggsteps$MonthDate),]
+aggsteps_abc <- rbind(transform(aggdf_abc, MonthDate=MonthMin), transform(aggdf_abc, MonthDate=MonthMax))
+aggsteps_abc <- aggsteps_abc[order(aggsteps_abc$Model, aggsteps_abc$Type, aggsteps_abc$MonthDate),]
+```
+
+Figure 5: Aggregate monthly predictions with 95% uncertainty intervals from each of the four models, for both concentration (left column) and flux rate (right column).
+
+```{r fig_5, results="hide"}
+# Plot the predictions
+fig5_panel_letters <- data.frame(
+  Model=rep(levels(point_preds_CIs$Model), times=2),
+  Type=rep(levels(point_preds_CIs$Type), each=4),
+  X=as.POSIXct("2000-04-12 00:00:00"), 
+  Y=rep(c(0.41, 625), each=4), 
+  Letter=LETTERS[1:8], stringsAsFactors=FALSE)
+
+figure5 <- function(aggsteps_any) {
+  grid.arrange(
+    ggplot(subset(aggsteps_any, Type=="Conc"), aes(x=MonthDate, y=Value)) + 
+      geom_ribbon(aes(ymin=CI_lower, ymax=CI_upper), fill=colorscheme[["conc"]], alpha=0.3) + 
+      geom_line(color=colorscheme[["conc"]]) + 
+      scale_x_datetime(breaks=unname(dateticks), labels=names(dateticks), expand=c(0,0)) +
+      coord_cartesian(ylim = c(-0.01,0.45)) +
+      geom_text(data=subset(fig5_panel_letters, Type=="Conc"), aes(x=X, y=Y, label=Letter), size=3) +
+      xlab("Water Year (Oct. 1 - Sept. 30)") + ylab(parse(text="NO[3]^'-'-N~Concentration~(mg/L)")) +
+      theme_ecosphere() + theme(plot.margin=unit(c(2,0,0,2), "point"), strip.background=element_blank()) + facet_grid(Model ~ .),
+    ggplot(subset(aggsteps_any, Type=="Flux"), aes(x=MonthDate, y=Value)) + 
+      geom_ribbon(aes(ymin=CI_lower, ymax=CI_upper), fill=colorscheme[["flux"]], alpha=0.3) + 
+      geom_line(color=colorscheme[["flux"]]) + 
+      scale_x_datetime(breaks=unname(dateticks), labels=names(dateticks), expand=c(0,0)) +
+      coord_cartesian(ylim = c(-20,700)) +
+      geom_text(data=subset(fig5_panel_letters, Type=="Flux"), aes(x=X, y=Y, label=Letter), size=3) +
+      xlab("Water Year (Oct. 1 - Sept. 30)") + ylab(parse(text="NO[3]^'-'-N~Flux~Rate~(kg/d)")) +
+      theme_ecosphere() + theme(plot.margin=unit(c(2,0,0,2), "point"), strip.background=element_blank()) + facet_grid(Model ~ .),
+    ncol=2)  
+  }
+figure5(aggsteps)
+# figure5(aggsteps_abc)
+
+tiff(paste0(main_dir, "/figures/aggs-and-CIs-one.tif"), width=300*6.1, height=300*4.6, res=300, compression="lzw")
+figure5(aggsteps)
+dev.off()
+# tiff(paste0(main_dir, "/figures/aggs-and-CIs-abc.tif"), width=300*6.1, height=300*4.6, res=300, compression="lzw")
+# figure5(aggsteps_abc)
+# dev.off()
+```
+
+Biogeochemical analysis, Part 3: compare events & periods
+-----------------------
+```{r}
+# Floods: from 14 May to 17 May 2006 and from 16 April to 19 April 2007. Also a large storm (smaller flood) in October 2005
+change_dates <- c(AB=as.POSIXct("2005-10-01 00:00:00", tz="EST5EDT"), BC=as.POSIXct("2007-10-01 00:00:00", tz="EST5EDT"))
+
+# decide which set of models to use going forward: choose the _abc version in line with reviewer suggestion
+aggsteps_any <- aggsteps_abc
+aggdf_any <- aggdf_abc
+
+aggsteps_any <- transform(
+  aggsteps_any,
+  WYMonth=as.factor(as.character((as.numeric(format(MonthDate, "%m"))+2)%%12)),
+  WaterYear=as.factor(format(MonthDate+as.difftime(110,units="days"), "%Y")),
+  FloodStatus=ifelse(MonthDate < change_dates["AB"], "A", ifelse(MonthDate < change_dates["BC"], "B", "C")))
+aggdf_any <- transform(
+  aggdf_any,
+  WYMonth=as.factor(as.character((as.numeric(format(MonthDate, "%m"))+2)%%12)),
+  WaterYear=as.factor(format(MonthDate+as.difftime(110,units="days"), "%Y")),
+  FloodStatus=ifelse(MonthDate < change_dates["AB"], "A", ifelse(MonthDate < change_dates["BC"], "B", "C")))
+```
+
+```{r}
+datelims <- as.POSIXct(c("2003-10-01","2009-10-01"), format="%Y-%m-%d", tz="EST5EDT")
+stormplotdates <- data.frame(
+  Type=rep(c("Conc","Flux"), each=3),
+  MonthDate=rep(as.POSIXct(c("2005-10-15","2006-05-15","2007-04-17"), format="%Y-%m-%d", tz="EST5EDT"), times=2),
+  Value=rep(c(0.25,550), each=3))
+compmonths <- data.frame(
+    Model=ordered(rep(levels(aggdf_any$Model), each=4), levels(aggdf_any$Model)),
+    Type=rep(rep(c("Conc","Flux"), each=2), times=4),
+    MonthDate=rep(as.POSIXct(c("2006-05-15","2007-04-15"), format="%Y-%m-%d", tz="EST5EDT"), times=8),
+    Value=NA)
+for(i in 1:nrow(compmonths)) {
+  compmonths[i,"Value"] <- aggdf_any[
+    aggdf_any$Model==compmonths[i,"Model"] & aggdf_any$Type==compmonths[i,"Type"] & aggdf_any$MonthDate %in% compmonths[i,"MonthDate"],"Value"]
+} 
+compmonths <- transform(compmonths, Model=ordered(Model, levels(aggdf_any$Model)))
+```
+
+Figure 6: Aggregate monthly predictions for the three years before, during, and after the two large floods of May 2005 and April 2006. The storm months are indicated with colorscheme[["flow"]] vertical lines. The two months for which we directly compared fluxes by z-test are circled in colorscheme[["conc"]]. The Before, During, and After periods for the regression model are delineated by the x-axis tick marks at '06 (2005-10-01) and '08 (2007-10-01).
+
+```{r fig_6, results="hide"}
+fig6_panel_letters <- data.frame(
+  Model=rep(levels(aggsteps_any$Model), times=2),
+  Type=rep(levels(aggsteps_any$Type), each=4),
+  X=as.POSIXct("2003-11-24 00:00:00"), 
+  Y=rep(c(0.425, 730), each=4), 
+  Letter=LETTERS[1:8], stringsAsFactors=FALSE)
+
+figure6 <- function() {
+  grid.arrange(
+    ggplot(subset(aggsteps_any, Type=="Conc" & MonthDate >= datelims[1] & MonthDate <= datelims[2]), aes(x=MonthDate, y=Value)) + 
+      geom_vline(data=subset(stormplotdates, Type=="Conc"), aes(xintercept=as.numeric(MonthDate)), color=colorscheme[["flow"]], linetype=2) +
+      geom_ribbon(aes(ymin=CI_lower, ymax=CI_upper), fill=colorscheme[["conc"]], alpha=0.3) + 
+      geom_point(data=subset(aggdf_any, Type=="Conc" & MonthDate >= datelims[1] & MonthDate <= datelims[2]), 
+                 color=colorscheme[["conc"]], size=0) + geom_line(color=colorscheme[["conc"]]) + 
+      geom_point(data=subset(compmonths, Type=="Conc"), color=colorscheme[["flow"]], pch=1, size=7) + 
+      theme_ecosphere() + theme(plot.margin=unit(c(2,0,0,2), "points")) + 
+      geom_text(data=subset(fig6_panel_letters, Type=="Conc"), aes(x=X, y=Y, label=Letter), size=3) +
+      facet_grid(Model ~ .) + ylab("Concentration (mg/L)") +
+      scale_x_datetime(breaks=unname(dateticks), labels=names(dateticks), expand=c(0.02,0.02)) + 
+      xlab("Water Year (Oct. 1 - Sept. 30)") + ylab(parse(text="NO[3]^'-'-N~Concentration~(mg/L)")),
+    ggplot(subset(aggsteps_any, Type=="Flux" & MonthDate >= datelims[1] & MonthDate <= datelims[2]), aes(x=MonthDate, y=Value)) + 
+      geom_vline(data=subset(stormplotdates, Type=="Flux"), aes(xintercept=as.numeric(MonthDate)), color=colorscheme[["flow"]], linetype=2) +
+      geom_ribbon(aes(ymin=CI_lower, ymax=CI_upper), fill=colorscheme[["flux"]], alpha=0.3) + 
+      geom_point(data=subset(aggdf_any, Type=="Flux" & MonthDate >= datelims[1] & MonthDate <= datelims[2]), 
+                 color=colorscheme[["flux"]], size=0) + geom_line(color=colorscheme[["flux"]]) + 
+      geom_point(data=subset(compmonths, Type=="Flux"), color=colorscheme[["flow"]], pch=1, size=7) + 
+      theme_ecosphere() + theme(plot.margin=unit(c(2,0,0,2), "points")) + 
+      geom_text(data=subset(fig6_panel_letters, Type=="Flux"), aes(x=X, y=Y, label=Letter), size=3) +
+      facet_grid(Model ~ .) + ylab("Flux (kg/d)") +
+      scale_x_datetime(breaks=unname(dateticks), labels=names(dateticks), expand=c(0.02,0.02)) +
+      xlab("Water Year (Oct. 1 - Sept. 30)") + ylab(parse(text="NO[3]^'-'-N~Flux~Rate~(kg/d)")),
+    ncol=2)  
+}
+figure6()
+
+tiff(paste0(main_dir, "/figures/months-and-storms-abc.tif"), width=300*6.1, height=300*4.6, res=300, compression="lzw")
+figure6()
+dev.off()
+```
+
+Compare the floods
+-----------
+
+```{r}
+# Try distinguishing between the two floods in concentration & flux
+
+# A z test can be used to compare two sample means for distributions of the mean
+# statistic that are assumed to be normal. (The test is equivalent to a t-test
+# with infinite degrees of freedom.)
+month_tests <- do.call("rbind", lapply(c("Conc","Flux"), function(type) {
+  do.call("rbind", lapply(levels(aggdf_any$Model), function(model) {
+    flood06 <- subset(aggdf_any, Model==model & Type==type & Month == "2006-05")
+    flood07 <- subset(aggdf_any, Model==model & Type==type & Month == "2007-04")
+    sx1x2 <- sqrt(flood06$SE^2 + flood07$SE^2)
+    data.frame(
+      model=model,
+      type=type,
+      flood06=flood06$Value,
+      flood07=flood07$Value,
+      diff=flood07$Value-flood06$Value,
+      z.stat=(flood07$Value - flood06$Value)/sx1x2,
+      p.val=pt(-abs((flood07$Value - flood06$Value)/sx1x2), df=Inf),
+      sig=(-abs((flood07$Value - flood06$Value)/sx1x2) < qt(0.05, df=Inf))
+      )
+    }))
+  }))
+month_tests
+p_cuts <- list(breaks=c(0,0.0001,0.001,0.01,0.05,1), labels=c("<0.0001","<0.001","<0.01","<0.05","n.s."))
+month_tests$p.val.cut <- cut(month_tests$p.val, breaks=p_cuts[["breaks"]], labels=p_cuts[["labels"]])
+
+month_tests_table <- data.frame(model=month_tests[1:4,"model"], conc=month_tests[1:4, c("flood06","flood07","diff","z.stat","p.val.cut")], flux=month_tests[5:8,c("flood06","flood07","diff","z.stat","p.val.cut")])
+month_tests_table <- transform(
+  month_tests_table,
+  conc.diff=round(conc.diff, 3),
+  conc.z.stat=round(conc.z.stat, 2),
+  flux.diff=round(flux.diff, 0),
+  flux.z.stat=round(flux.z.stat, 2))
+
+write.csv(month_tests_table, file=paste0(main_dir, "/tables/month-test-abc.csv"))
+```
+
+```{r}
+# Fit flood models of Conc or Flux for each of the four load models with fixed
+# effects for (1) month of year and (2) whether the year is before Oct 2005
+# (phase A), during Oct 2005-Sept 2007 (phase B), or after Sept 2007 (phase C).
+month_models <- 
+  do.call("cbind", lapply(c("Conc","Flux"), function(type) {
+    do.call("rbind", lapply(levels(aggdf_any$Model), function(model) {
+      mylm <- lm(Value ~ WYMonth + FloodStatus, data=subset(
+          aggdf_any, Model==model & Type==type & isBetween(MonthDate, c("2000-09-30","2012-09-30"))))
+      keycoefs <- as.data.frame(coef(summary(mylm))[
+        c("(Intercept)","FloodStatusB","FloodStatusC"),c("Estimate","Pr(>|t|)")])
+      df <- data.frame(Model=model, 
+                 Before.Icpt=keycoefs["(Intercept)","Estimate"], 
+                 During.E=keycoefs["FloodStatusB","Estimate"], 
+                 During.P=keycoefs["FloodStatusB","Pr(>|t|)"], 
+                 After.E=keycoefs["FloodStatusC","Estimate"], 
+                 After.P=keycoefs["FloodStatusC","Pr(>|t|)"],
+                 R.sq=summary(mylm)$adj.r.squared)
+      names(df) <- paste0(type,".",names(df))
+      df
+      }))
+    }))
+month_models <- transform(
+  month_models,
+  Conc.During.P=cut(Conc.During.P, breaks=p_cuts[["breaks"]], labels=p_cuts[["labels"]]),
+  Conc.After.P=cut(Conc.After.P, breaks=p_cuts[["breaks"]], labels=p_cuts[["labels"]]),
+  Flux.During.P=cut(Flux.During.P, breaks=p_cuts[["breaks"]], labels=p_cuts[["labels"]]),
+  Flux.After.P=cut(Flux.After.P, breaks=p_cuts[["breaks"]], labels=p_cuts[["labels"]])
+)
+month_models_table <- transform(
+  month_models, 
+  Model=Conc.Model,
+  "Conc Before"=sprintf("%.2f", Conc.Before.Icpt),
+  "Conc During-Before"=sprintf("%.3f (%5s)", Conc.During.E, Conc.During.P),
+  "Conc After-Before"=sprintf("%.3f (%5s)", Conc.After.E, Conc.After.P),
+  "Conc R2"=sprintf("%.2f", Conc.R.sq),
+  "Flux Before"=sprintf("%2.0f", Flux.Before.Icpt),
+  "Flux During-Before"=sprintf("%2.0f (%7s)", Flux.During.E, Flux.During.P),
+  "Flux After-Before"=sprintf("%2.0f (%5s)", Flux.After.E, Flux.After.P),
+  "Flux R2"=sprintf("%.2f", Flux.R.sq)
+  )[-c(1:14)]
+month_models_table
+
+write.csv(month_models_table, file=paste0(main_dir, "/tables/month-model-abc.csv"))
+```
