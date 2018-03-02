@@ -3,7 +3,7 @@
 pacman::p_load(tidyverse, lubridate, readxl)
 
 # Vanern ####
-startDate <- ymd("2001-04-25")
+startDate <- ymd("2001-04-01")
 
 # Inflow DOC: Originally in gather_data.R, "Surface water DOC" section
   # Inflow DOC (mg/L) estimated from TOC (mg/L); raw file has multiple inflow tribs and mean 
