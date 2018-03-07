@@ -1,23 +1,18 @@
 library(loadflex)
 
 # DOC
-vanern = read.csv('../../VanernLake/Vanern_inflow_DOC_noInterp.csv',stringsAsFactors = F)
-head(vanern)
-vanern$datetime = as.POSIXct(strptime(vanern$datetime,'%Y-%m-%d'))
-plot(vanern$datetime,vanern$SW_DOC)
-
-# Inflow
-inflow = read.csv('../../VanernLake/Vanern_inflow_volume_noInterp.csv',stringsAsFactors = F)
-head(inflow)
-inflow$datetime = as.POSIXct(strptime(inflow$datetime,'%Y-%m-%d'))
+monona = read.csv('../../MononaLake/MononaTS.csv',stringsAsFactors = F)
+head(monona)
+monona$datetime = as.POSIXct(strptime(monona$datetime,'%Y-%m-%d'))
+plot(monona$datetime,monona$SW_DOC)
 
 
 inflow.doc = function(lakename){
   # Site 3
-  h3 = vanern %>% 
+  h3 = monona %>% 
     dplyr::select(Dates = datetime,Solute = SW_DOC)
   
-  i3 = inflow %>% 
+  i3 = monona %>% 
     dplyr::select(Dates = datetime,Flow = FlowIn) %>%
     left_join(h3,'Dates') %>%
     dplyr::filter(!duplicated(Dates)) %>%
@@ -57,11 +52,11 @@ inflow.doc = function(lakename){
   
   
   # Plot
-  png(paste0(lakename,'/fig_',which.site,'.png'),
+  png(paste0(lakename,'/fig.png'),
       width = 7,height = 5,units = 'in',res = 300)
     par(mar=c(3,3,3,1),mgp=c(1.5,0.5,0))
     plot(d3$Dates,d3$Solute,type='o',col='red3',pch=16,
-         xlab = 'Date',ylab = 'DOC (mg/L)',main = which.site)
+         xlab = 'Date',ylab = 'DOC (mg/L)',main = lakename)
     lines(p.lr$date,p.lr$fit,type='o',col='navy',pch=16,cex=0.2)
     lines(p.lc$date,p.lc$fit,type='o',col='seagreen',pch=16,cex=0.2)
     legend('topleft',fill = c('red3','navy','seagreen'),
@@ -70,12 +65,10 @@ inflow.doc = function(lakename){
   dev.off()
   
   
-  write.csv(p.lr,paste0(lakename,'/loadestReg_',which.site,'.csv'),row.names = F)
-  write.csv(p.lc,paste0(lakename,'/loadestComp_',which.site,'.csv'),row.names = F)
-  write.csv(d3,paste0(lakename,'/observed_',which.site,'.csv'),row.names = F)
+  write.csv(p.lr,paste0(lakename,'/loadestReg.csv'),row.names = F)
+  write.csv(p.lc,paste0(lakename,'/loadestComp.csv'),row.names = F)
+  write.csv(d3,paste0(lakename,'/observed.csv'),row.names = F)
 }
 
-sites = unique(harp$site_name)
-for (i in 1:length(sites)){
-  inflow.doc('Harp',sites[i])
-}
+inflow.doc('Monona')
+

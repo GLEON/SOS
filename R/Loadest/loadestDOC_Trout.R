@@ -1,15 +1,15 @@
 library(loadflex)
 
 # DOC
-trout = read.csv('../../TroutLake/Trout_inflow_DOC_noInterp.csv',stringsAsFactors = F)
+trout = read.csv('../../TroutLake/Staging Files/TL_Dugan/outflowDOC.csv',stringsAsFactors = F)
 head(trout)
-trout$datetime = as.POSIXct(strptime(trout$datetime,'%Y-%m-%d'))
+trout$datetime = as.POSIXct(strptime(trout$date,'%Y-%m-%d'))
 plot(trout$datetime,trout$SW_DOC)
 
 # Inflow
-inflow = read.csv('../../TroutLake/Trout_inflow_volume_noInterp.csv',stringsAsFactors = F)
+inflow = read.csv('../../TroutLake/Staging Files/TL_Dugan/outflowQ.csv',stringsAsFactors = F)
 head(inflow)
-inflow$datetime = as.POSIXct(strptime(inflow$datetime,'%Y-%m-%d'))
+inflow$datetime = as.POSIXct(strptime(inflow$date,'%Y-%m-%d'))
 
 
 inflow.doc = function(lakename){
@@ -18,7 +18,7 @@ inflow.doc = function(lakename){
     dplyr::select(Dates = datetime,Solute = SW_DOC)
   
   i3 = inflow %>% 
-    dplyr::select(Dates = datetime,Flow = FlowIn) %>%
+    dplyr::select(Dates = datetime,Flow = discharge_m3s) %>%
     left_join(h3,'Dates') %>%
     dplyr::filter(!duplicated(Dates)) %>%
     dplyr::filter(!is.na(Flow)) %>%
@@ -38,7 +38,7 @@ inflow.doc = function(lakename){
   print(paste0('best model = ',(a$model.no)))
   
   # Models 
-  lr9 <- loadReg2(loadReg(Solute ~ model(9), data = s3, flow = "Flow",
+  lr9 <- loadReg2(loadReg(Solute ~ model(4), data = s3, flow = "Flow",
                  dates = "Dates",conc.units="mg/L"))
   lrC <- loadComp(reg.model = lr9, interp.format = "conc",
                   interp.data = s3)
@@ -70,12 +70,12 @@ inflow.doc = function(lakename){
   dev.off()
   
   
-  write.csv(p.lr,paste0(lakename,'/loadestReg_',which.site,'.csv'),row.names = F)
-  write.csv(p.lc,paste0(lakename,'/loadestComp_',which.site,'.csv'),row.names = F)
-  write.csv(d3,paste0(lakename,'/observed_',which.site,'.csv'),row.names = F)
+  write.csv(p.lr,paste0(lakename,'/loadestReg.csv'),row.names = F)
+  write.csv(p.lc,paste0(lakename,'/loadestComp.csv'),row.names = F)
+  write.csv(d3,paste0(lakename,'/observed.csv'),row.names = F)
 }
 
 sites = unique(harp$site_name)
 for (i in 1:length(sites)){
-  inflow.doc('Harp',sites[i])
+  inflow.doc('Trout',sites[i])
 }
