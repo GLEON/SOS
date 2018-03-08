@@ -1,5 +1,5 @@
 setwd("~/Documents/SOS")
-LakeName = 'Monona'
+LakeName = 'Trout'
 
 ##### LOAD PACKAGES ########################
 library(lubridate)
@@ -23,12 +23,24 @@ FreeParFile <- paste('./R/FMEresults/',LakeName,'_fitpars.csv',sep='')
 ValidationFileDOC <- paste('./',LakeName,'Lake/',LakeName,'ValidationDOC.csv',sep='')
 ValidationFileDO <- paste('./',LakeName,'Lake/',LakeName,'ValidationDO.csv',sep='')
 timestampFormat =	'%Y-%m-%d'
+InflowQFile = paste0('./R/Loadest/',LakeName,'/','observed.csv')
+InflowDOCFile = paste0('./R/Loadest/',LakeName,'/loadestComp.csv')
 
 ##### READ MAIN INPUT FILE #################
-RawData <- read.csv(TimeSeriesFile,header=T) #Read main data file with GLM outputs (physical input) and NPP input
+RawData <- read.csv(TimeSeriesFile,header=T,stringsAsFactors = F) #Read main data file with GLM outputs (physical input) and NPP input
 RawData$datetime <- as.POSIXct(strptime(RawData$datetime,timestampFormat),tz="GMT") #Convert time to POSIX
 cc = which(complete.cases(RawData))
 RawData = RawData[cc[1]:tail(cc,1),]
+
+# Read LOADEST files
+inflowQ = read.csv(InflowQFile,stringsAsFactors = F)
+inflowQ$Dates = as.POSIXct(strptime(inflowQ$Dates,timestampFormat),tz="GMT") #Convert time to POSIX
+inflowDOC = read.csv(InflowDOCFile,stringsAsFactors = F)
+inflowDOC$date = as.POSIXct(strptime(inflowDOC$date,timestampFormat),tz="GMT") #Convert time to POSIX
+
+RawData = RawData %>% left_join(inflowQ,by=c('datetime'='Dates')) %>%
+  left_join(inflowDOC,by=c('datetime'='date')) %>%
+  dplyr::select(datetime,Volume,FlowIn = 'Flow',FlowOut = 'Flow',Rain:Chla,SW_DOC='fit',Secchi)
 
 # Fill time-series gaps (linear interpolation)
 ts_new <- data.frame(datetime = seq(RawData$datetime[1],RawData$datetime[nrow(RawData)],by="day")) #Interpolate gapless time-series
@@ -48,25 +60,24 @@ if (LakeName=='Toolik') {
 
 #DOC Validation Output Setup
 ValidationDataDOC <- read.csv(ValidationFileDOC,header=T,stringsAsFactors = F)
-ValidationDataDOC$datetime <- as.Date(as.POSIXct(strptime(ValidationDataDOC$datetime,timestampFormat),tz="GMT")) #Convert time to POSIX
-ValidationDataDOC = ValidationDataDOC[complete.cases(ValidationDataDOC),]
-outlier.limit = (mean(ValidationDataDOC$DOC) + 3*(sd(ValidationDataDOC$DOC))) # Calculate mean + 3 SD of DOC column
-ValidationDataDOC = ValidationDataDOC[ValidationDataDOC$DOC <= outlier.limit,] # Remove rows where DOC > outlier.limit
-ValidationDataDOC = ddply(ValidationDataDOC,'datetime',summarize,DOC=mean(DOC),DOCwc=mean(DOCwc))
+outlier.limit = (mean(ValidationDataDOC$DOC,na.rm=T) + 3*(sd(ValidationDataDOC$DOC,na.rm=T))) # Calculate mean + 3 SD of DOC column
 
-#DO Validation 
+ValidationDataDOC = ValidationDataDOC %>% mutate(datetime = (as.POSIXct(strptime(datetime,timestampFormat),tz="GMT"))) %>%
+  filter(complete.cases(.)) %>%
+  filter(DOC <= outlier.limit) %>%
+  group_by(datetime) %>%
+  summarise_all(mean)
+
 #DO Validation Output Setup
 ValidationDataDO <- read.csv(ValidationFileDO,header=T)
-ValidationDataDO$datetime <- as.Date(as.POSIXct(strptime(ValidationDataDO$datetime,timestampFormat),tz="GMT")) #Convert time to POSIX
-ValidationDataDO = ValidationDataDO[complete.cases(ValidationDataDO),]
 k <- 0.7 #m/d
 PhoticDepth <- data.frame(datetime = InputData$datetime,PhoticDepth = log(100)/(1.7/InputData$Secchi))
-IndxVal = ValidationDataDO$datetime %in% as.Date(PhoticDepth$datetime)
-IndxPhotic = as.Date(PhoticDepth$datetime) %in% ValidationDataDO$datetime
 
-ValidationDataDO = ValidationDataDO[IndxVal,]
-ValidationDataDO$DO_sat <- o2.at.sat(ValidationDataDO[,1:2])[,2]  
-ValidationDataDO$Flux <- k*(ValidationDataDO$DO_con - ValidationDataDO$DO_sat)/(0.5*PhoticDepth$PhoticDepth[IndxPhotic]) #g/m3/d
+ValidationDataDO = ValidationDataDO %>% mutate(datetime = as.POSIXct(strptime(datetime,timestampFormat),tz="GMT")) %>%
+  filter(complete.cases(.)) %>%
+  inner_join(PhoticDepth,by='datetime') %>%
+  mutate(DO_sat = o2.at.sat.base(temp = wtr)) %>%
+  mutate(Flux = k*(DO_con - DO_sat)/(0.5*PhoticDepth)) #g/m3/d
 
 ##### READ PARAMETER FILE ##################
 parameters <- read.table(file = ParameterFile,header=TRUE,comment.char="#",stringsAsFactors = F)

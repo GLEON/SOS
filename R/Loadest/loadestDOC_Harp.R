@@ -1,13 +1,13 @@
 library(loadflex)
 
 # DOC
-harp = read.csv('C:/Users/hdugan/Documents/Rpackages/SOS/HarpLake/StagingFiles/DOC_Sw.csv',stringsAsFactors = F)
+harp = read.csv('../../HarpLake/StagingFiles/DOC_Sw.csv',stringsAsFactors = F)
 head(harp)
 harp$sampledate = as.POSIXct(strptime(harp$sampledate,'%m/%d/%Y'))
 plot(harp$sampledate,harp$doc)
 
 # Inflow
-inflow = read.csv('C:/Users/hdugan/Documents/Rpackages/SOS/HarpLake/StagingFiles/Harp_inflow.csv',stringsAsFactors = F)
+inflow = read.csv('../../HarpLake/StagingFiles/Harp_inflow.csv',stringsAsFactors = F)
 head(inflow)
 inflow$SDATE = as.POSIXct(strptime(inflow$SDATE,'%m/%d/%Y'))
 
@@ -81,3 +81,31 @@ sites = unique(harp$site_name)
 for (i in 1:length(sites)){
   inflow.doc('Harp',sites[i])
 }
+
+
+#### Join Harp Inflows ####
+library(dplyr)
+lakename = 'Harp'
+sites = unique(harp$site_name)
+a = list(); b=list(); c=list()
+for (i in 1:length(sites)) {
+  
+  a[[i]] = read.csv(paste0(lakename,'/loadestReg_',sites[i],'.csv'),stringsAsFactors = F)
+  a[[i]]$date = as.Date(a[[i]]$date)
+  b[[i]] = read.csv(paste0(lakename,'/loadestComp_',sites[i],'.csv'),stringsAsFactors = F)
+  c[[i]] = read.csv(paste0(lakename,'/observed_',sites[i],'.csv'),stringsAsFactors = F)
+  
+  a[[i]]$Mass = a[[i]]$fit * c[[i]]$Flow
+}
+d = lapply(a, `[`, 1)
+d = unname(sapply(a, `[[`, 1))
+df <- data.frame(matrix(unlist(d), nrow = nrow(a[[1]]), byrow=T))
+
+# Find gaps in dates
+rDOY <- range(a[[1]]$date); 
+rnDOY <- seq.Date(rDOY[1],rDOY[2],by='day') 
+rnDOY[!rnDOY %in% a[[1]]$date]
+
+write.csv(p.lr,paste0(lakename,'/loadestReg.csv'),row.names = F)
+write.csv(p.lc,paste0(lakename,'/loadestComp.csv'),row.names = F)
+write.csv(d3,paste0(lakename,'/observed.csv'),row.names = F)
