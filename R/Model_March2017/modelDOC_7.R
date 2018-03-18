@@ -57,16 +57,6 @@ modelDOC <- function (DOCR_RespParam,DOCL_RespParam,BurialFactor_R,BurialFactor_
     POCR_mass <- SWGW$Load_POC * (1-(Q_out*3600*24)/LakeVolume) #g/day
     POCL_mass <- PPdata_NPP_POCL_mass * (1-(Q_out*3600*24)/LakeVolume) #g/day
 
-    #Burial Recalitrant
-    # if (BurialFactor_R < 0 ){ BurialFactor_R = 0}
-    MAR_Roc <- POCR_mass * BurialFactor_R * 365/LakeArea #g OC/(m^2 * yr)
-    SedR_POC_burial <- POCR_mass * BurialFactor_R #g/d; Timestep with conversion from years to timestep units - days
-    #Burial Labile
-    # if (BurialFactor_L < 0 ){ BurialFactor_L = 0}
-    MAR_Loc <- POCL_mass*BurialFactor_L*365/LakeArea #g OC/(m^2 * yr)
-    SedL_POC_burial <-  POCL_mass*BurialFactor_L #g/d; Timestep with conversion from years to timestep units - days
-    Sed_out[i] = MAR_Loc + MAR_Roc
-    
     #Calc outflow subtractions (assuming outflow concentrations = mixed lake concentrations)
     SWGW_DOCR_outflow <- DOC_out$DOCR_conc_gm3[i]*Q_out*60*60*24*TimeStep #g
     SWGW_DOCL_outflow <- DOC_out$DOCL_conc_gm3[i]*Q_out*60*60*24*TimeStep #g
@@ -79,10 +69,6 @@ modelDOC <- function (DOCR_RespParam,DOCL_RespParam,BurialFactor_R,BurialFactor_
       #Update POC and DOC concentration values (g/m3) for whole lake
       Fatm = 0.7*(Metabolism_out$oxy_conc[i] - o2.at.sat.base(InputData$EpiTemp[i]))/(PhoticDepth/2)
       Metabolism_out$oxy_conc[i+1] = Metabolism_out$oxy_conc[i] + Metabolism_out$oxy_mass[i] - Fatm
-      
-      POC_out$POCL_conc_gm3[i] <-  (POCL_mass - POCL_leachOut - SedL_POC_burial)/LakeVolume #g/m3
-      POC_out$POCR_conc_gm3[i] <-  (POCR_mass - POCR_leachOut - SedR_POC_burial)/LakeVolume
-      POC_out$POCtotal_conc_gm3[i] = POC_out$POCR_conc_gm3[i] + POC_out$POCL_conc_gm3[i]
 
       DOC_out$DOCL_conc_gm3[i+1] <- DOC_out$DOCL_conc_gm3[i] + ((PPdata_NPP_DOCL_mass + POCL_leachOut - SWGW_DOCL_outflow - PPdata_DOCL_massRespired)/LakeVolume) #g/m3
       DOC_out$DOCR_conc_gm3[i+1] <- DOC_out$DOCR_conc_gm3[i] + ((SWGW$Load_DOC + POCR_leachOut - SWGW_DOCR_outflow - PPdata_DOCR_massRespired)/LakeVolume) #g/m3
@@ -92,7 +78,6 @@ modelDOC <- function (DOCR_RespParam,DOCL_RespParam,BurialFactor_R,BurialFactor_
   
   # Final output
   return(data.frame('datetime' = as.Date(InputData$datetime), 'DOC_conc' = DOC_out$DOCtotal_conc_gm3,
-                    'POC_conc' = POC_out$POCtotal_conc_gm3,
-                    'MetabOxygen' = Metabolism_out,'SedData_MAR' = Sed_out))
+                    'MetabOxygen' = Metabolism_out$oxy_conc))
 }
 

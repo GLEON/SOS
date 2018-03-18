@@ -64,8 +64,8 @@ ValidationDataDOC <- read.csv(ValidationFileDOC,header=T,stringsAsFactors = F)
 outlier.limit = (mean(ValidationDataDOC$DOC,na.rm=T) + 3*(sd(ValidationDataDOC$DOC,na.rm=T))) # Calculate mean + 3 SD of DOC column
 
 ValidationDataDOC = ValidationDataDOC %>% mutate(datetime = (as.POSIXct(strptime(datetime,timestampFormat),tz="GMT"))) %>%
-  filter(complete.cases(.)) %>%
-  filter(DOC <= outlier.limit) %>%
+  dplyr::filter(complete.cases(.)) %>%
+  dplyr::filter(DOC <= outlier.limit) %>%
   group_by(datetime) %>%
   summarise_all(mean) %>%
   mutate(datetime = as.Date(datetime))
@@ -76,7 +76,7 @@ k <- 0.7 #m/d
 PhoticDepth <- data.frame(datetime = InputData$datetime,PhoticDepth = log(100)/(1.7/InputData$Secchi))
 
 ValidationDataDO = ValidationDataDO %>% mutate(datetime = as.POSIXct(strptime(datetime,timestampFormat),tz="GMT")) %>%
-  filter(complete.cases(.)) %>%
+  dplyr::filter(complete.cases(.)) %>%
   inner_join(PhoticDepth,by='datetime') %>%
   mutate(DO_sat = o2.at.sat.base(temp = wtr)) %>%
   mutate(Flux = k*(DO_con - DO_sat)/(0.5*PhoticDepth)) %>% #g/m3/d
@@ -105,7 +105,7 @@ DOC_DO_diff <- function(pars){
   joinDOC = inner_join(ValidationDataDOC,modeled,by='datetime')
   resDOC = joinDOC$DOC - joinDOC$DOC_conc
   joinDO = inner_join(ValidationDataDO,modeled,by='datetime')
-  resDO = joinDO$DO_con - joinDO$MetabOxygen.oxy_conc
+  resDO = joinDO$DO_con - joinDO$MetabOxygen
   lengthScale = length(resDO)/length(resDOC)
   return(c(resDOC,resDO/lengthScale))
 }
@@ -116,7 +116,7 @@ testACF <- function(pars){
   resDOC = joinDOC$DOC - joinDOC$DOC_conc
   acf(resDOC)
   joinDO = inner_join(ValidationDataDO,modeled,by='datetime')
-  resDO = joinDO$DO_con - joinDO$MetabOxygen.oxy_conc
+  resDO = joinDO$DO_con - joinDO$MetabOxygen
   acf(resDO)
 }
 par(mfrow=c(2,1),mgp=c(1.5,0.5,0))
@@ -129,8 +129,6 @@ testACF(pars)
 
 # Starting parameters cannot be negative, because of bounds we set 
 parStart = pars
-# lowerBound = c(0.0003,0.003,0,0)
-# upperBound = c(0.003,0.3,1,1)
 lowerBound = c(0.00003,0.0003,0,0)
 upperBound = c(0.03,3,1,1)
 parStart[(parStart - lowerBound) < 0] = lowerBound[(parStart - lowerBound) < 0]
@@ -139,7 +137,7 @@ names(parStart) = c('DOCR_RespParam','DOCL_RespParam','BurialFactor_R','BurialFa
 
 # For difficult problems it may be efficient to perform some iterations with Pseudo, which will bring the algorithm 
 # near the vicinity of a (the) minimum, after which the default algorithm (Marq) is used to locate the minimum more precisely.
-Fit2 <- modFit(f = DOC_DO_diff, p=parStart,method = 'Pseudo',
+Fit2 <- modFit(f = DOC_DO_diff, p=parStart,method = 'Marq',
                lower= lowerBound,
                upper= upperBound)
 
@@ -176,19 +174,19 @@ fitTest <- function(pars,plot=F){
     legend('bottomleft',legend = c('ObsSurf','ObsWC','Mod'),col=c('black','grey50','red3'),pch=16)
     
     plot(joinDO$datetime,joinDO$DO_con,xlab='Date',type='o',ylab = 'DO (mg/L)',pch=16,main=LakeName)
-    lines(joinDO$datetime,joinDO$MetabOxygen.oxy_conc,type='o',col='red3',pch=16)
+    lines(joinDO$datetime,joinDO$MetabOxygen,type='o',col='red3',pch=16)
     if (plot == T){
       dev.off()
     }
   #Goodness of fit
   library(hydroGOF)
-  print(paste('RMSE = ',rmse(c(joinDOC$DOC,joinDO$DO_con), c(joinDOC$DOC_conc,joinDO$MetabOxygen.oxy_conc))))
-  print(paste('NSE = ',NSE(c(joinDOC$DOC,joinDO$DO_con), c(joinDOC$DOC_conc,joinDO$MetabOxygen.oxy_conc))))
+  print(paste('RMSE = ',rmse(c(joinDOC$DOC,joinDO$DO_con), c(joinDOC$DOC_conc,joinDO$MetabOxygen))))
+  print(paste('NSE = ',NSE(c(joinDOC$DOC,joinDO$DO_con), c(joinDOC$DOC_conc,joinDO$MetabOxygen))))
 }
 
 fitTest(pars,plot=F)
 fitTest(Fit2$par,plot=T)
-fitTest(Fit3$par)
+
 
 # Save summary Data
 summary(Fit2)

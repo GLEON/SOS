@@ -57,7 +57,8 @@ SWGWFunction <- function(Q_sw,Q_gw,Rainfall,Aoc_day, PC, lakePerim, Woc_day, PW,
   InflowData$Load_DOC <- InflowData$DOC_Wetland + InflowData$DOC_GW + InflowData$DOC_SW + InflowData$DOC_Precip # g/d DOC
   
   # Internal POC (g/d)
-  InflowData$POC_SW <- (InflowData$DOC_Wetland + InflowData$DOC_SW)*0.1 #inflow POC load is 10% of inflow DOC load from wetlands and surface flows
+  POCDOC = runif(1, 0.01, 0.2) # Randomly select POC:DOC ratio from uniform distribution
+  InflowData$POC_SW <- (InflowData$DOC_Wetland + InflowData$DOC_SW) * POCDOC #inflow POC load is 10% of inflow DOC load from wetlands and surface flows
   
   # LOAD POC (g/d)
   InflowData$Load_POC <- InflowData$POC_Aerial + InflowData$POC_SW # g/d POC roughly estimated as (0.1 * DOC)
