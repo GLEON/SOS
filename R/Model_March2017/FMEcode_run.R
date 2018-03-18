@@ -40,7 +40,8 @@ inflowDOC$date = as.POSIXct(strptime(inflowDOC$date,timestampFormat),tz="GMT") #
 
 RawData = RawData %>% left_join(inflowQ,by=c('datetime'='Dates')) %>%
   left_join(inflowDOC,by=c('datetime'='date')) %>%
-  dplyr::select(datetime,Volume,FlowIn = 'Flow',FlowOut = 'Flow',Rain:Chla,SW_DOC='fit',Secchi)
+  dplyr::select(datetime,Volume,FlowIn = 'Flow',Rain:Chla,SW_DOC='fit',Secchi) %>%
+  mutate(FlowOut = FlowIn)
 
 # Fill time-series gaps (linear interpolation)
 ts_new <- data.frame(datetime = seq(RawData$datetime[1],RawData$datetime[nrow(RawData)],by="day")) #Interpolate gapless time-series
@@ -66,7 +67,8 @@ ValidationDataDOC = ValidationDataDOC %>% mutate(datetime = (as.POSIXct(strptime
   filter(complete.cases(.)) %>%
   filter(DOC <= outlier.limit) %>%
   group_by(datetime) %>%
-  summarise_all(mean)
+  summarise_all(mean) %>%
+  mutate(datetime = as.Date(datetime))
 
 #DO Validation Output Setup
 ValidationDataDO <- read.csv(ValidationFileDO,header=T)
@@ -77,7 +79,8 @@ ValidationDataDO = ValidationDataDO %>% mutate(datetime = as.POSIXct(strptime(da
   filter(complete.cases(.)) %>%
   inner_join(PhoticDepth,by='datetime') %>%
   mutate(DO_sat = o2.at.sat.base(temp = wtr)) %>%
-  mutate(Flux = k*(DO_con - DO_sat)/(0.5*PhoticDepth)) #g/m3/d
+  mutate(Flux = k*(DO_con - DO_sat)/(0.5*PhoticDepth)) %>% #g/m3/d
+  mutate(datetime = as.Date(datetime)) 
 
 ##### READ PARAMETER FILE ##################
 parameters <- read.table(file = ParameterFile,header=TRUE,comment.char="#",stringsAsFactors = F)
@@ -140,7 +143,7 @@ Fit2 <- modFit(f = DOC_DO_diff, p=parStart,method = 'Pseudo',
                lower= lowerBound,
                upper= upperBound)
 
-Fit2par = Fit2$par
+Fit2par = Fit2$par # 0.001612197    0.018551566    0.999999949    0.000000000 (Trout)
 
 # Constrain burial factors == 1
 Fit3 <- modFit(f = DOC_DO_diff, p=c(pars[1:2],1,1),method = 'Pseudo',
@@ -183,13 +186,13 @@ fitTest <- function(pars,plot=F){
   print(paste('NSE = ',NSE(c(joinDOC$DOC,joinDO$DO_con), c(joinDOC$DOC_conc,joinDO$MetabOxygen.oxy_conc))))
 }
 
-fitTest(pars,plot=T)
+fitTest(pars,plot=F)
 fitTest(Fit2$par,plot=T)
 fitTest(Fit3$par)
 
 # Save summary Data
 summary(Fit2)
-write.csv(summary(Fit2),paste0('R/FMEresults/',LakeName,'_fitsummary.csv'))
+# write.csv(summary(Fit2),paste0('R/FMEresults/',LakeName,'_fitsummary.csv'))
 capture.output(summary(Fit2), file = paste0('R/FMEresults/',LakeName,'_fitsummary.csv'))
 
 Fit2$par
@@ -211,7 +214,7 @@ collin(sF)
 plot(collin(sF), log="y")
 write.csv(collin(sF),paste0('R/FMEresults/',LakeName,'_collinearity.csv'),row.names = F)
 
-##------------------------------------------------------------------------------
+ ##------------------------------------------------------------------------------
 ##   Sensitivity range
 ##------------------------------------------------------------------------------
 
