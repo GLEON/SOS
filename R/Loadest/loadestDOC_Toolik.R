@@ -1,23 +1,17 @@
 library(loadflex)
 
 # DOC
-vanern = read.csv('../../VanernLake/Vanern_inflow_DOC_noInterp.csv',stringsAsFactors = F)
-head(vanern)
-vanern$datetime = as.POSIXct(strptime(vanern$datetime,'%Y-%m-%d'))
-plot(vanern$datetime,vanern$SW_DOC)
-
-# Inflow
-inflow = read.csv('../../VanernLake/Vanern_inflow_volume_noInterp.csv',stringsAsFactors = F)
-head(inflow)
-inflow$datetime = as.POSIXct(strptime(inflow$datetime,'%Y-%m-%d'))
-
+toolik = read.csv('../../ToolikLake/ToolikTS.csv',stringsAsFactors = F)
+head(toolik)
+toolik$datetime = as.POSIXct(strptime(toolik$datetime,'%Y-%m-%d'))
+plot(toolik$datetime,toolik$SW_DOC)
 
 inflow.doc = function(lakename){
   # Site 3
-  h3 = vanern %>% 
+  h3 = toolik %>% 
     dplyr::select(Dates = datetime,Solute = SW_DOC)
   
-  i3 = inflow %>% 
+  i3 = toolik %>% 
     dplyr::select(Dates = datetime,Flow = FlowIn) %>%
     left_join(h3,'Dates') %>%
     dplyr::filter(!duplicated(Dates)) %>%
@@ -57,7 +51,7 @@ inflow.doc = function(lakename){
   
   
   # Plot
-  png(paste0(lakename,'/fig_',lakename,'.png'),
+  png(paste0(lakename,'/fig.png'),
       width = 7,height = 5,units = 'in',res = 300)
     par(mar=c(3,3,3,1),mgp=c(1.5,0.5,0))
     plot(d3$Dates,d3$Solute,type='o',col='red3',pch=16,
@@ -69,11 +63,10 @@ inflow.doc = function(lakename){
            bty='n')
   dev.off()
   
-  
   write.csv(p.lr,paste0(lakename,'/loadestReg.csv'),row.names = F)
   write.csv(p.lc,paste0(lakename,'/loadestComp.csv'),row.names = F)
   write.csv(d3,paste0(lakename,'/observed.csv'),row.names = F)
 }
 
-inflow.doc('Vanern')
+inflow.doc('Toolik')
 
