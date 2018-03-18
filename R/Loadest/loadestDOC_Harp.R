@@ -1,4 +1,5 @@
 library(loadflex)
+library(dplyr)
 
 # DOC
 harp = read.csv('../../HarpLake/StagingFiles/DOC_Sw.csv',stringsAsFactors = F)
@@ -11,15 +12,34 @@ inflow = read.csv('../../HarpLake/StagingFiles/Harp_inflow.csv',stringsAsFactors
 head(inflow)
 inflow$SDATE = as.POSIXct(strptime(inflow$SDATE,'%m/%d/%Y'))
 
+startDate = as.Date('1991-01-01')
+endDate = as.Date('2001-12-31')
 
 which.site = 'HARP INFLOW #3'
+
+
+library(tidyr)
+winflow = spread(inflow,key = INFO,value = DISCHARGE)
+icor = cor(winflow[,2:7])[3,] #correlation table with inflow #4
+
+sites = unique(harp$site_name)
+for (i in sites){
+  useCor = icor[names(icor) == i]
+  a = winflow[,names(winflow) == i]
+  b = winflow[,names(winflow) == 'HARP INFLOW #4']
+  indx = which(is.na(a) | a<=0)
+  a[indx] = b[indx] * useCor
+  winflow[,names(winflow) == i] = a
+}
+newinflow = gather(winflow,key = SDATE,value = DISCHARGE)
+names(newinflow) = c('SDATE','INFO','DISCHARGE')
 
 inflow.doc = function(lakename,which.site){
   # Site 3
   h3 = harp %>% dplyr::filter(site_name == which.site) %>%
     dplyr::select(Dates = sampledate,Solute = doc)
   
-  i3 = inflow %>% dplyr::filter(INFO == which.site) %>%
+  i3 = newinflow %>% dplyr::filter(INFO == which.site) %>%
     dplyr::select(Dates = SDATE,Flow = DISCHARGE) %>%
     left_join(h3,'Dates') %>%
     dplyr::filter(!duplicated(Dates)) %>%
@@ -57,6 +77,8 @@ inflow.doc = function(lakename,which.site){
   p.lr = predictSolute(lr9, "conc", d3, se.pred=TRUE, date=TRUE)
   p.lc = predictSolute(lrC, "conc", d3, se.pred=TRUE, date=TRUE)
   
+  p.lr$Flow = d3$Flow
+  p.lc$Flow = d3$Flow
   
   # Plot
   png(paste0(lakename,'/fig_',which.site,'.png'),
@@ -93,18 +115,43 @@ for (i in 1:length(sites)) {
   a[[i]] = read.csv(paste0(lakename,'/loadestReg_',sites[i],'.csv'),stringsAsFactors = F)
   a[[i]]$date = as.Date(a[[i]]$date)
   b[[i]] = read.csv(paste0(lakename,'/loadestComp_',sites[i],'.csv'),stringsAsFactors = F)
+  b[[i]]$date = as.Date(b[[i]]$date)
   c[[i]] = read.csv(paste0(lakename,'/observed_',sites[i],'.csv'),stringsAsFactors = F)
+  c[[i]]$Dates = as.Date(c[[i]]$Dates)
   
-  a[[i]]$Mass = a[[i]]$fit * c[[i]]$Flow
+  a[[i]]$Mass = a[[i]]$fit * a[[i]]$Flow
+  b[[i]]$Mass = b[[i]]$fit * b[[i]]$Flow
+  c[[i]]$Mass = c[[i]]$Solute * b[[i]]$Flow
 }
-d = lapply(a, `[`, 1)
-d = unname(sapply(a, `[[`, 1))
-df <- data.frame(matrix(unlist(d), nrow = nrow(a[[1]]), byrow=T))
 
-# Find gaps in dates
-rDOY <- range(a[[1]]$date); 
-rnDOY <- seq.Date(rDOY[1],rDOY[2],by='day') 
-rnDOY[!rnDOY %in% a[[1]]$date]
+
+# REGRESSION MODEL: total of inflows
+d = lapply(a, `[`, 5)
+df <- data.frame(matrix(unlist(d), nrow = nrow(a[[1]]), byrow=F))
+mass = rowSums(df) #g/sec
+totInflow = rowSums(winflow[,2:7])
+p.lr = data.frame("date" = winflow$SDATE,"fit" = mass/totInflow,"se.pred" = NA)
+
+
+# COMPOSITE MODEL: total of inflows
+d = lapply(b, `[`, 5)
+df <- data.frame(matrix(unlist(d), nrow = nrow(b[[1]]), byrow=F))
+mass = rowSums(df) #g/sec
+totInflow = rowSums(winflow[,2:7])
+p.lc = data.frame("date" = winflow$SDATE,"fit" = mass/totInflow,"se.pred" = NA)
+
+
+# OBSERVATIONS: total of inflows
+d = lapply(c, `[`, 2)
+df <- data.frame(matrix(unlist(d), nrow = nrow(c[[1]]), byrow=F))
+totInflow = rowSums(df) #g/sec
+
+e = lapply(c, `[`, 4)
+df <- data.frame(matrix(unlist(e), nrow = nrow(c[[1]]), byrow=F))
+mass = rowSums(df) #g/sec
+
+d3 = data.frame("Dates" = c[[1]]$Dates,"Flow" = totInflow,"Solute" = mass/totInflow)
+
 
 write.csv(p.lr,paste0(lakename,'/loadestReg.csv'),row.names = F)
 write.csv(p.lc,paste0(lakename,'/loadestComp.csv'),row.names = F)
