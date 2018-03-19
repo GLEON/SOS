@@ -1,5 +1,5 @@
 setwd("~/Documents/SOS")
-LakeName = 'Trout'
+LakeName = 'Vanern'
 
 ##### LOAD PACKAGES ########################
 library(lubridate)
@@ -137,7 +137,7 @@ names(parStart) = c('DOCR_RespParam','DOCL_RespParam','BurialFactor_R','BurialFa
 
 # For difficult problems it may be efficient to perform some iterations with Pseudo, which will bring the algorithm 
 # near the vicinity of a (the) minimum, after which the default algorithm (Marq) is used to locate the minimum more precisely.
-Fit2 <- modFit(f = DOC_DO_diff, p=parStart,method = 'Marq',
+Fit2 <- modFit(f = DOC_DO_diff, p=parStart,method = 'Pseudo',
                lower= lowerBound,
                upper= upperBound)
 
@@ -212,7 +212,7 @@ collin(sF)
 plot(collin(sF), log="y")
 write.csv(collin(sF),paste0('R/FMEresults/',LakeName,'_collinearity.csv'),row.names = F)
 
- ##------------------------------------------------------------------------------
+##------------------------------------------------------------------------------
 ##   Sensitivity range
 ##------------------------------------------------------------------------------
 

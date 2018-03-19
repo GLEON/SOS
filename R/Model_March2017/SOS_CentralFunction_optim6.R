@@ -1,10 +1,10 @@
 # setwd('C:/Users/hdugan/Documents/Rpackages/SOS/')
 # setwd("~/Documents/Rpackages/SOS")
 #Flags 1 for yes, else no.
-LakeName = 'Trout'
-ValidationFlag = 0
-WriteFiles = 0
-BootstrapFlag = 0
+LakeName = 'Vanern'
+ValidationFlag = 1
+WriteFiles = 1
+BootstrapFlag = 1
 
 ##### LOAD PACKAGES ########################
 library(lubridate)
@@ -374,7 +374,7 @@ if (BootstrapFlag==1){
                           timestampFormat = timestampFormat)
     ## New parameters from optimization output
     bootParams[b,] <- loopOut
-    write.csv(bootParams,paste0('./',LakeName,'Lake/','Results/',LakeName,'_boostrapResults2.csv'),row.names = F,quote=F)
+    write.csv(bootParams,paste0('./',LakeName,'Lake/','Results/',LakeName,'_boostrapResults_MARQ.csv'),row.names = F,quote=F)
   } # Loop instead?
   
   write.csv(bootParams,paste0('./',LakeName,'Lake/','Results/',LakeName,'_boostrapResults.csv'),row.names = F,quote=F)
