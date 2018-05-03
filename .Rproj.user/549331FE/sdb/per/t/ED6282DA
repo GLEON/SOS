@@ -1,0 +1,17 @@
+{
+    "contents" : "\nResp <- function(DOC,CHL){\n  #DOC in g/m3\n  #CHL in mg/m3 or ug/L\n  \n  logR <- -0.92 + 0.41*log(CHL) + 0.30*log(DOC)\n  \n  #logR <- -0.81 + 0.56*log(CHL)\n  \n  R <- 10^logR #mmol/m3/hr\n\n  R <- R*(1/1000)*(16)*(24/1) #g O2/m3/d \n  #Output: R  (O2 mmol/m3/hr) --> * (1mol /1000 mmol) * (16g O2/mol) * (24h/1day)  -->  g/m3/d \n\n  #Assume O2 respired is one-to-one with grams of DOC removed\n  Resp_DOC_out <- R #g C/m3/d\n\n  return(Resp_DOC_out/10)  #divided by ten to avoid crashing program\n}",
+    "created" : 1444786279673.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "2825635677",
+    "id" : "ED6282DA",
+    "lastKnownWriteTime" : 1444723337,
+    "path" : "~/Documents/Rpackages/SOS/R/Model/SOS_Resp.R",
+    "project_path" : "R/Model/SOS_Resp.R",
+    "properties" : {
+    },
+    "relative_order" : 2,
+    "source_on_save" : false,
+    "type" : "r_source"
+}

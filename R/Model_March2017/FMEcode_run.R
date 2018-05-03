@@ -1,5 +1,5 @@
 setwd("~/Documents/SOS")
-LakeName = 'Monona'
+LakeName = 'Vanern'
 
 ##### LOAD PACKAGES ########################
 library(lubridate)
@@ -23,12 +23,25 @@ FreeParFile <- paste('./R/FMEresults/',LakeName,'_fitpars.csv',sep='')
 ValidationFileDOC <- paste('./',LakeName,'Lake/',LakeName,'ValidationDOC.csv',sep='')
 ValidationFileDO <- paste('./',LakeName,'Lake/',LakeName,'ValidationDO.csv',sep='')
 timestampFormat =	'%Y-%m-%d'
+InflowQFile = paste0('./R/Loadest/',LakeName,'/','observed.csv')
+InflowDOCFile = paste0('./R/Loadest/',LakeName,'/loadestComp.csv')
 
 ##### READ MAIN INPUT FILE #################
-RawData <- read.csv(TimeSeriesFile,header=T) #Read main data file with GLM outputs (physical input) and NPP input
+RawData <- read.csv(TimeSeriesFile,header=T,stringsAsFactors = F) #Read main data file with GLM outputs (physical input) and NPP input
 RawData$datetime <- as.POSIXct(strptime(RawData$datetime,timestampFormat),tz="GMT") #Convert time to POSIX
 cc = which(complete.cases(RawData))
 RawData = RawData[cc[1]:tail(cc,1),]
+
+# Read LOADEST files
+inflowQ = read.csv(InflowQFile,stringsAsFactors = F)
+inflowQ$Dates = as.POSIXct(strptime(inflowQ$Dates,timestampFormat),tz="GMT") #Convert time to POSIX
+inflowDOC = read.csv(InflowDOCFile,stringsAsFactors = F)
+inflowDOC$date = as.POSIXct(strptime(inflowDOC$date,timestampFormat),tz="GMT") #Convert time to POSIX
+
+RawData = RawData %>% left_join(inflowQ,by=c('datetime'='Dates')) %>%
+  left_join(inflowDOC,by=c('datetime'='date')) %>%
+  dplyr::select(datetime,Volume,FlowIn = 'Flow',Rain:Chla,SW_DOC='fit',Secchi) %>%
+  mutate(FlowOut = FlowIn)
 
 # Fill time-series gaps (linear interpolation)
 ts_new <- data.frame(datetime = seq(RawData$datetime[1],RawData$datetime[nrow(RawData)],by="day")) #Interpolate gapless time-series
@@ -48,25 +61,26 @@ if (LakeName=='Toolik') {
 
 #DOC Validation Output Setup
 ValidationDataDOC <- read.csv(ValidationFileDOC,header=T,stringsAsFactors = F)
-ValidationDataDOC$datetime <- as.Date(as.POSIXct(strptime(ValidationDataDOC$datetime,timestampFormat),tz="GMT")) #Convert time to POSIX
-ValidationDataDOC = ValidationDataDOC[complete.cases(ValidationDataDOC),]
-outlier.limit = (mean(ValidationDataDOC$DOC) + 3*(sd(ValidationDataDOC$DOC))) # Calculate mean + 3 SD of DOC column
-ValidationDataDOC = ValidationDataDOC[ValidationDataDOC$DOC <= outlier.limit,] # Remove rows where DOC > outlier.limit
-ValidationDataDOC = ddply(ValidationDataDOC,'datetime',summarize,DOC=mean(DOC),DOCwc=mean(DOCwc))
+outlier.limit = (mean(ValidationDataDOC$DOC,na.rm=T) + 3*(sd(ValidationDataDOC$DOC,na.rm=T))) # Calculate mean + 3 SD of DOC column
 
-#DO Validation 
+ValidationDataDOC = ValidationDataDOC %>% mutate(datetime = (as.POSIXct(strptime(datetime,timestampFormat),tz="GMT"))) %>%
+  dplyr::filter(complete.cases(.)) %>%
+  dplyr::filter(DOC <= outlier.limit) %>%
+  group_by(datetime) %>%
+  summarise_all(mean) %>%
+  mutate(datetime = as.Date(datetime))
+
 #DO Validation Output Setup
 ValidationDataDO <- read.csv(ValidationFileDO,header=T)
-ValidationDataDO$datetime <- as.Date(as.POSIXct(strptime(ValidationDataDO$datetime,timestampFormat),tz="GMT")) #Convert time to POSIX
-ValidationDataDO = ValidationDataDO[complete.cases(ValidationDataDO),]
 k <- 0.7 #m/d
 PhoticDepth <- data.frame(datetime = InputData$datetime,PhoticDepth = log(100)/(1.7/InputData$Secchi))
-IndxVal = ValidationDataDO$datetime %in% as.Date(PhoticDepth$datetime)
-IndxPhotic = as.Date(PhoticDepth$datetime) %in% ValidationDataDO$datetime
 
-ValidationDataDO = ValidationDataDO[IndxVal,]
-ValidationDataDO$DO_sat <- o2.at.sat(ValidationDataDO[,1:2])[,2]  
-ValidationDataDO$Flux <- k*(ValidationDataDO$DO_con - ValidationDataDO$DO_sat)/(0.5*PhoticDepth$PhoticDepth[IndxPhotic]) #g/m3/d
+ValidationDataDO = ValidationDataDO %>% mutate(datetime = as.POSIXct(strptime(datetime,timestampFormat),tz="GMT")) %>%
+  dplyr::filter(complete.cases(.)) %>%
+  inner_join(PhoticDepth,by='datetime') %>%
+  mutate(DO_sat = o2.at.sat.base(temp = wtr)) %>%
+  mutate(Flux = k*(DO_con - DO_sat)/(0.5*PhoticDepth)) %>% #g/m3/d
+  mutate(datetime = as.Date(datetime)) 
 
 ##### READ PARAMETER FILE ##################
 parameters <- read.table(file = ParameterFile,header=TRUE,comment.char="#",stringsAsFactors = F)
@@ -91,7 +105,7 @@ DOC_DO_diff <- function(pars){
   joinDOC = inner_join(ValidationDataDOC,modeled,by='datetime')
   resDOC = joinDOC$DOC - joinDOC$DOC_conc
   joinDO = inner_join(ValidationDataDO,modeled,by='datetime')
-  resDO = joinDO$DO_con - joinDO$MetabOxygen.oxy_conc
+  resDO = joinDO$DO_con - joinDO$MetabOxygen
   lengthScale = length(resDO)/length(resDOC)
   return(c(resDOC,resDO/lengthScale))
 }
@@ -102,7 +116,7 @@ testACF <- function(pars){
   resDOC = joinDOC$DOC - joinDOC$DOC_conc
   acf(resDOC)
   joinDO = inner_join(ValidationDataDO,modeled,by='datetime')
-  resDO = joinDO$DO_con - joinDO$MetabOxygen.oxy_conc
+  resDO = joinDO$DO_con - joinDO$MetabOxygen
   acf(resDO)
 }
 par(mfrow=c(2,1),mgp=c(1.5,0.5,0))
@@ -115,8 +129,6 @@ testACF(pars)
 
 # Starting parameters cannot be negative, because of bounds we set 
 parStart = pars
-# lowerBound = c(0.0003,0.003,0,0)
-# upperBound = c(0.003,0.3,1,1)
 lowerBound = c(0.00003,0.0003,0,0)
 upperBound = c(0.03,3,1,1)
 parStart[(parStart - lowerBound) < 0] = lowerBound[(parStart - lowerBound) < 0]
@@ -129,7 +141,7 @@ Fit2 <- modFit(f = DOC_DO_diff, p=parStart,method = 'Pseudo',
                lower= lowerBound,
                upper= upperBound)
 
-Fit2par = Fit2$par
+Fit2par = Fit2$par # 0.001612197    0.018551566    0.999999949    0.000000000 (Trout)
 
 # Constrain burial factors == 1
 Fit3 <- modFit(f = DOC_DO_diff, p=c(pars[1:2],1,1),method = 'Pseudo',
@@ -162,23 +174,23 @@ fitTest <- function(pars,plot=F){
     legend('bottomleft',legend = c('ObsSurf','ObsWC','Mod'),col=c('black','grey50','red3'),pch=16)
     
     plot(joinDO$datetime,joinDO$DO_con,xlab='Date',type='o',ylab = 'DO (mg/L)',pch=16,main=LakeName)
-    lines(joinDO$datetime,joinDO$MetabOxygen.oxy_conc,type='o',col='red3',pch=16)
+    lines(joinDO$datetime,joinDO$MetabOxygen,type='o',col='red3',pch=16)
     if (plot == T){
       dev.off()
     }
   #Goodness of fit
   library(hydroGOF)
-  print(paste('RMSE = ',rmse(c(joinDOC$DOC,joinDO$DO_con), c(joinDOC$DOC_conc,joinDO$MetabOxygen.oxy_conc))))
-  print(paste('NSE = ',NSE(c(joinDOC$DOC,joinDO$DO_con), c(joinDOC$DOC_conc,joinDO$MetabOxygen.oxy_conc))))
+  print(paste('RMSE = ',rmse(c(joinDOC$DOC,joinDO$DO_con), c(joinDOC$DOC_conc,joinDO$MetabOxygen))))
+  print(paste('NSE = ',NSE(c(joinDOC$DOC,joinDO$DO_con), c(joinDOC$DOC_conc,joinDO$MetabOxygen))))
 }
 
-fitTest(pars,plot=T)
+fitTest(pars,plot=F)
 fitTest(Fit2$par,plot=T)
-fitTest(Fit3$par)
+
 
 # Save summary Data
 summary(Fit2)
-write.csv(summary(Fit2),paste0('R/FMEresults/',LakeName,'_fitsummary.csv'))
+# write.csv(summary(Fit2),paste0('R/FMEresults/',LakeName,'_fitsummary.csv'))
 capture.output(summary(Fit2), file = paste0('R/FMEresults/',LakeName,'_fitsummary.csv'))
 
 Fit2$par

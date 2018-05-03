@@ -3,6 +3,20 @@ bootstrapDOC <- function(newObs,num,datetimeDOC,datetimeDO,LakeName,timestampFor
   pseudo_DOC = data.frame(datetime = datetimeDOC, DOC = newObs[1:num], DOCwc = newObs[1:num])
   pseudo_DO = data.frame(datetime = datetimeDO, DO = newObs[(num+1):length(newObs)])
   
+  ##### LOAD PACKAGES ########################
+  library(lubridate)
+  library(LakeMetabolizer)
+  library(dplyr)
+  library(FME)
+  library(zoo)
+  library(plyr)
+  ##### LOAD FUNCTIONS #######################
+  source("./R/Model_March2017/SOS_Sedimentation.R")
+  source("./R/Model_March2017/SOS_SWGW.R")
+  source("./R/Model_March2017/SOS_GPP.R")
+  source("./R/Model_March2017/SOS_Resp.R")
+  source("./R/Model_March2017/modelDOC_7.R")
+  source("./R/Model_March2017/SOS_fixToolik.R")
   ##### INPUT FILE NAMES ################
   TimeSeriesFile <- paste('./',LakeName,'Lake/',LakeName,'TS.csv',sep='')
   RainFile <- paste('./',LakeName,'Lake/',LakeName,'Rain.csv',sep='')
@@ -10,23 +24,67 @@ bootstrapDOC <- function(newObs,num,datetimeDOC,datetimeDO,LakeName,timestampFor
   FreeParFile <- paste('./R/FMEresults/',LakeName,'_fitpars.csv',sep='')
   ValidationFileDOC <- paste('./',LakeName,'Lake/',LakeName,'ValidationDOC.csv',sep='')
   ValidationFileDO <- paste('./',LakeName,'Lake/',LakeName,'ValidationDO.csv',sep='')
-  ##### LOAD PACKAGES ########################
-  library(signal)
-  library(zoo)
-  library(lubridate)
-  library(LakeMetabolizer)
-  library(plyr)
-  library(dplyr)
-  library(parallel)
-  library(FME)
+  timestampFormat =	'%Y-%m-%d'
+  InflowQFile = paste0('./R/Loadest/',LakeName,'/','observed.csv')
+  InflowDOCFile = paste0('./R/Loadest/',LakeName,'/loadestComp.csv')
   
-  ##### LOAD FUNCTIONS #######################
-  source("./R/Model_March2017//SOS_Sedimentation.R")
-  source("./R/Model_March2017/SOS_SWGW.R")
-  source("./R/Model_March2017/SOS_GPP.R")
-  source("./R/Model_March2017/SOS_Resp.R")
-  source("./R/Model_March2017/modelDOC_7.R")
-  source("./R/Model_March2017/SOS_fixToolik.R")
+  ##### READ MAIN INPUT FILE #################
+  RawData <- read.csv(TimeSeriesFile,header=T,stringsAsFactors = F) #Read main data file with GLM outputs (physical input) and NPP input
+  RawData$datetime <- as.POSIXct(strptime(RawData$datetime,timestampFormat),tz="GMT") #Convert time to POSIX
+  cc = which(complete.cases(RawData))
+  RawData = RawData[cc[1]:tail(cc,1),]
+  
+  # Read LOADEST files
+  inflowQ = read.csv(InflowQFile,stringsAsFactors = F)
+  inflowQ$Dates = as.POSIXct(strptime(inflowQ$Dates,timestampFormat),tz="GMT") #Convert time to POSIX
+  inflowDOC = read.csv(InflowDOCFile,stringsAsFactors = F)
+  inflowDOC$date = as.POSIXct(strptime(inflowDOC$date,timestampFormat),tz="GMT") #Convert time to POSIX
+  
+  RawData = RawData %>% left_join(inflowQ,by=c('datetime'='Dates')) %>%
+    left_join(inflowDOC,by=c('datetime'='date')) %>%
+    dplyr::select(datetime,Volume,FlowIn = 'Flow',Rain:Chla,SW_DOC='fit',Secchi) %>%
+    mutate(FlowOut = FlowIn)
+  
+  # Fill time-series gaps (linear interpolation)
+  ts_new <- data.frame(datetime = seq(RawData$datetime[1],RawData$datetime[nrow(RawData)],by="day")) #Interpolate gapless time-series
+  InputData <- merge(RawData,ts_new,all=T)
+  for (col in 2:ncol(InputData)){
+    InputData[,col] <- na.approx(InputData[,col],na.rm = T)}
+  InputData$Chla[InputData$Chla == 0] = 0.0001
+  
+  ##### READ RAIN FILE #######################
+  RainData <- read.csv(RainFile,header=T,stringsAsFactors = F) #Read daily rain file (units=mm) Read separately and added back to main file to avoid issues of linear interpolation with rain data in length units
+  RainData$datetime <- as.POSIXct(strptime(RainData$datetime,timestampFormat,tz='GMT'))
+  InputData$Rain <- RainData$Rain[RainData$datetime %in% InputData$datetime] #Plug daily rain data into InputData file to integrate with original code.
+  #### For TOOLIK ONLY #### (dealing with ice season)
+  if (LakeName=='Toolik') {
+    InputData = fixToolik(InputData,LakeName)
+  }
+  
+  #DOC Validation Output Setup
+  ValidationDataDOC <- read.csv(ValidationFileDOC,header=T,stringsAsFactors = F)
+  outlier.limit = (mean(ValidationDataDOC$DOC,na.rm=T) + 3*(sd(ValidationDataDOC$DOC,na.rm=T))) # Calculate mean + 3 SD of DOC column
+  
+  ValidationDataDOC = ValidationDataDOC %>% mutate(datetime = (as.POSIXct(strptime(datetime,timestampFormat),tz="GMT"))) %>%
+    dplyr::filter(complete.cases(.)) %>%
+    dplyr::filter(DOC <= outlier.limit) %>%
+    group_by(datetime) %>%
+    summarise_all(mean) %>%
+    mutate(datetime = as.Date(datetime))
+  
+  #DO Validation Output Setup
+  ValidationDataDO <- read.csv(ValidationFileDO,header=T)
+  k <- 0.7 #m/d
+  PhoticDepth <- data.frame(datetime = InputData$datetime,PhoticDepth = log(100)/(1.7/InputData$Secchi))
+  
+  ValidationDataDO = ValidationDataDO %>% mutate(datetime = as.POSIXct(strptime(datetime,timestampFormat),tz="GMT")) %>%
+    dplyr::filter(complete.cases(.)) %>%
+    inner_join(PhoticDepth,by='datetime') %>%
+    mutate(DO_sat = o2.at.sat.base(temp = wtr)) %>%
+    mutate(Flux = k*(DO_con - DO_sat)/(0.5*PhoticDepth)) %>% #g/m3/d
+    mutate(datetime = as.Date(datetime)) 
+  #SedData MAR OC 
+  ValidationDataMAROC <- ObservedMAR_oc #g/m2
   
   ##### READ PARAMETER FILE ##################
   parameters <- read.table(file = ParameterFile,header=TRUE,comment.char="#",stringsAsFactors = F)
@@ -38,62 +96,9 @@ bootstrapDOC <- function(newObs,num,datetimeDOC,datetimeDO,LakeName,timestampFor
   for (i in 1:4){ # assign parameters
     assign(freeParamsNames[i],freeParams[i,1])
   }
-  ##### READ MAIN INPUT FILE #################
-  RawData <- read.csv(TimeSeriesFile,header=T) #Read main data file with GLM outputs (physical input) and NPP input
-  RawData$datetime <- as.POSIXct(strptime(RawData$datetime,timestampFormat),tz="GMT") #Convert time to POSIX
-  cc = which(complete.cases(RawData))
-  RawData = RawData[cc[1]:tail(cc,1),]
-  
-  # Fill time-series gaps (linear interpolation)
-  ts_new <- data.frame(datetime = seq(RawData$datetime[1],RawData$datetime[nrow(RawData)],by="day")) #Interpolate gapless time-series
-  InputData <- merge(RawData,ts_new,all=T)
-  for (col in 2:ncol(InputData)){
-    InputData[,col] <- na.approx(InputData[,col],na.rm = T)}
-  InputData$Chla[InputData$Chla == 0] = 0.0001
-  
-  
-  ##### READ RAIN FILE #######################
-  RainData <- read.csv(RainFile,header=T,stringsAsFactors = F) #Read daily rain file (units=mm) Read separately and added back to main file to avoid issues of linear interpolation with rain data in length units
-  RainData$datetime <- as.POSIXct(strptime(RainData$datetime,timestampFormat,tz='GMT'))
-  
-  InputData$Rain <- RainData$Rain[RainData$datetime %in% InputData$datetime] #Plug daily rain data into InputData file to integrate with original code.
-  
-  #### For TOOLIK ONLY #### (dealing with ice season)
-  if (LakeName=='Toolik') {
-    InputData = fixToolik(InputData,LakeName)
-  }
-  
   ###### Run Period and Time Step Setup #####
   TimeStep <- as.numeric(InputData$datetime[2]-InputData$datetime[1]) #days
   steps <- nrow(InputData)
-  
-  ####################### Validation Output Setup ######################################
-  
-  #DOC Validation Output Setup
-  ValidationDataDOC <- read.csv(ValidationFileDOC,header=T)
-  ValidationDataDOC$datetime <- as.Date(strptime(ValidationDataDOC$datetime,timestampFormat),tz="GMT") #Convert time to POSIX
-  ValidationDataDOC = ValidationDataDOC[complete.cases(ValidationDataDOC),]
-  outlier.limit = (mean(ValidationDataDOC$DOC) + 3*(sd(ValidationDataDOC$DOC))) # Calculate mean + 3 SD of DOC column
-  ValidationDataDOC = ValidationDataDOC[ValidationDataDOC$DOC <= outlier.limit,] # Remove rows where DOC > outlier.limit
-  ValidationDataDOC = ddply(ValidationDataDOC,'datetime',summarize,DOC=mean(DOC),DOCwc=mean(DOCwc))
-  
-  #DO Validation Output Setup
-  ValidationDataDO <- read.csv(ValidationFileDO,header=T)
-  ValidationDataDO$datetime <- as.Date(strptime(ValidationDataDO$datetime,timestampFormat),tz="GMT") #Convert time to POSIX
-  ValidationDataDO = ValidationDataDO[complete.cases(ValidationDataDO),]
-  #Only compare to DO data during "production season."
-  ValidationDataDO = ValidationDataDO[yday(ValidationDataDO$datetime)>ProdStartDay & yday(ValidationDataDO$datetime)<ProdEndDay,]
-  ValidationDataDO = ddply(ValidationDataDO,'datetime',summarize,wtr=mean(wtr,na.rm = T),DO_con=mean(DO_con))
-  
-  k <- 0.7 #m/d
-  PhoticDepth <- data.frame(datetime = InputData$datetime,PhoticDepth = log(100)/(1.7/InputData$Secchi))
-  IndxVal = ValidationDataDO$datetime %in% as.Date(PhoticDepth$datetime)
-  IndxPhotic = as.Date(PhoticDepth$datetime) %in% ValidationDataDO$datetime
-  ValidationDataDO = ValidationDataDO[IndxVal,]
-  ValidationDataDO$DO_sat <- o2.at.sat(ValidationDataDO[,1:2])[,2]  
-  ValidationDataDO$Flux <- k*(ValidationDataDO$DO_con - ValidationDataDO$DO_sat)/(0.5*PhoticDepth$PhoticDepth[IndxPhotic]) #g/m3/d
-  #SedData MAR OC 
-  ValidationDataMAROC <- ObservedMAR_oc #g/m2
   
   ############################################################################
   
@@ -207,15 +212,13 @@ bootstrapDOC <- function(newObs,num,datetimeDOC,datetimeDO,LakeName,timestampFor
   
   # Starting parameters cannot be negative, because of bounds we set 
   parStart = c(DOCR_RespParam,DOCL_RespParam,BurialFactor_R,BurialFactor_L)
-  # lowerBound = c(0.0003,0.003,0,0)
-  # upperBound = c(0.003,0.3,1,1)
   lowerBound = c(0.00003,0.0003,0,0)
   upperBound = c(0.03,3,1,1)
   names(parStart) = c('DOCR_RespParam','DOCL_RespParam','BurialFactor_R','BurialFactor_L')
   
   # For difficult problems it may be efficient to perform some iterations with Pseudo, which will bring the algorithm 
   # near the vicinity of a (the) minimum, after which the default algorithm (Marq) is used to locate the minimum more precisely.
-  Fit2 <- modFit(f = DOC_DO_diff, p=parStart,method = 'Pseudo',
+  Fit2 <- modFit(f = DOC_DO_diff, p=parStart,method = 'Marq',
                  cal_DOC = pseudo_DOC,
                  cal_DO = pseudo_DO,
                  lower= lowerBound,

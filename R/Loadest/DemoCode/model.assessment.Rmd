@@ -1,0 +1,723 @@
+---
+title: "Code and Figures for Short-Term Lamprey Data"
+author: "Alison Appling"
+date: "Sunday, May 10, 2015"
+output:
+html_document:
+toc: true
+theme: united
+---
+
+
+```{r, echo=FALSE, message=FALSE}
+## Code to set up this file
+
+# stay in or get into the main project directory
+if(("src" != basename(getwd())) & !("src" %in% dir())) {
+  stop("This file should be run from within the 'src' or main directories, e.g., with the Knit HTML button in RStudio")
+} else {
+  main_dir <- if("src" %in% dir()) "." else ".."
+}
+# find/make directory for caching files to make this .Rmd run faster when repeated
+cache_dir <- paste0(main_dir,"/reports/model.assessment.cache/")
+if(!file.exists(paste0(cache_dir,"."))) dir.create(cache_dir, recursive=TRUE)
+
+# declare whether we want to rerun certain time-intensive code chunks
+redo_acs <- TRUE # compute effect of 70% subsampling on autocorrelation and uncertainty estimates
+if(!redo_acs) {
+  acs_filename <- "" #e.g., "Autocor_metrics_20150510_182158.RData"
+}
+redo_boots <- TRUE # compute model metrics in a loop of bootstrapped resampling from the sensor data
+if(!redo_boots) {
+  st_final_filename <- "" #e.g., ""Final_20150510_231625_nrow=560952_k=100.RData"
+}
+reinit_boots <- TRUE # redo even the initial model metrics computation (rather than adding to partly-done results)
+if(!reinit_boots) {
+  st_initial_filename <- "" #e.g., ""Labels_20150510_170210_nrow=560952.RData" # file name of initial model metrics table with row info
+  st_partial_filename <- "" #e.g., ""Partial_20150510_170211_nrow=560952_k=0.RData" # file name of partly-done results to build on
+}
+
+# Set options for producing the html filee
+library(knitr)
+opts_chunk$set(echo=FALSE, message=FALSE, warn=FALSE)
+
+# Load libraries we'll use, suppressing messages via message=FALSE option to knitr chunk
+library(loadflex)
+library(rloadest)
+library(gridExtra)
+library(MASS)
+library(lubridate)
+library(plyr)
+library(dplyr)
+
+# A utility function
+isBetween <- function(series, limits, format="%Y-%m-%d") {
+  parsed_limits <- as.POSIXct(limits, format=format, tz="EST5EDT")
+  (series >= parsed_limits[1] & series < parsed_limits[2])
+}
+```
+
+
+Test Models with 2 Years of Sensor Data
+---------------
+
+Use Wiswall Dam data to calculate metrics for each method. In order to get a more stable set of metrics, robust to data outliers and to the discreteness of some metrics (especially for monthly values), we will resample the observation data a few (100) times, each time refitting each model, making new predictions, and computing the metrics. To do this we will:
+
+* Organize the data and metadata for our intended analyses
+```{r munge}
+# Estimation data: exactly two years of just the columns we need
+data(lamprey_sensor, verbose=FALSE)
+if(exists("lamprey_sensor")) { 
+  wiswall_est_NO3 <- lamprey_sensor
+} else { # if sensor data are unavailable, generate random NO3 values
+  warning("valdat nitrate values are being randomly generated")
+  data(lamprey_discharge)
+  wiswall_est_NO3 <- subset(lamprey_discharge,  isBetween(DATE, c("2012-09-07 13:44:00", "2014-11-16 12:01:00"), "%Y-%m-%d %H:%M:%S"))
+  wiswall_est_NO3 <- mutate(wiswall_est_NO3, NO3=rnorm(nrow(wiswall_est_NO3), 0.16, 0.02))
+}
+wiswall_est_boot_NO3 <- subset(wiswall_est_NO3, isBetween(DATE, c("2012-09-21", "2014-10-11"))) # slightly larger than 2 years to resample for exactly 106 weeks
+
+# Create a metadata description of the dataset
+meta <- metadata(
+  constituent="NO3", flow="DISCHARGE", load.rate="", dates="DATE", 
+  conc.units="mg L^-1", flow.units="ft^3 s^-1", load.units="kg", load.rate.units="kg d^-1",
+  station="Lamprey River at Wiswall Dam, NH")
+
+# Define sampling windows. We will sample for 106 weeks, with one sample in either week straddling the 2-water-year period of interest
+point_windows <- seq(match(ymd_hms("2012-09-24 13:45:00", tz="EST5EDT"), wiswall_est_NO3$DATE),
+                     match(ymd_hms("2014-10-08 13:45:00", tz="EST5EDT"), wiswall_est_NO3$DATE),
+                     by=96*7)
+point_windows_boot <- point_windows + 
+  match(ymd_hms("2012-09-24 13:45:00", tz="EST5EDT"), wiswall_est_boot_NO3$DATE) -
+  match(ymd_hms("2012-09-24 13:45:00", tz="EST5EDT"), wiswall_est_NO3$DATE)
+
+# Identify the date at the beginning of each point sampling window
+point_window_dates <- wiswall_est_NO3[point_windows[-length(point_windows)],"DATE"]
+point_window_boot_dates <- wiswall_est_boot_NO3[point_windows_boot[-length(point_windows_boot)],"DATE"]
+
+# Define aggregation windows. We will aggregate to monthly means and will only be interested in the two full water years
+agg_window_dates <- as.POSIXct(sprintf("20%02d-%02d-01", rep(c(12,13,14), times=c(3, 12, 10)), 1+(9+0:24)%%12), format="%Y-%m-%d", tz="EST5EDT")
+agg_windows <- 1:24
+```
+
+* Compute the "true" or "benchmark" values for concentration and flux, 15-minute and monthly
+```{r benchmarks}
+# Benchmark data for aggregation need only include exactly the 2 water years of interest
+estdat <- wiswall_est_2yr_NO3 <- subset(wiswall_est_NO3, isBetween(DATE, c("2012-10-01", "2014-10-01")))
+
+# Get point benchmarks
+point_bench <- rbind(
+  data.frame(Model="Benchmark", Type="Conc", DATE=wiswall_est_2yr_NO3$DATE, fit=wiswall_est_2yr_NO3$NO3),
+  data.frame(Model="Benchmark", Type="Flux", DATE=wiswall_est_2yr_NO3$DATE, fit=observeSolute(wiswall_est_2yr_NO3, "flux", meta, calculate=TRUE)))
+#point_windows_test <- point_windows + (match(ymd_hms("2012-10-01 00:01:00", tz="EST"), wiswall_est_2yr_NO3$DATE)-match(ymd_hms("2012-10-01 00:01:00", tz="EST"), wiswall_est_NO3$DATE))
+
+# Get aggregate benchmarks
+agg_bench_conc <- aggregateSolute(
+  preds=subset(point_bench, Type=="Conc")$fit, se.preds = rep(0,nrow(wiswall_est_2yr_NO3)), 
+  format = "conc", metadata=meta, dates=wiswall_est_2yr_NO3$DATE, agg.by = "month", se.agg=FALSE, ci.agg=FALSE)
+agg_bench_flux <- aggregateSolute(
+  preds=subset(point_bench, Type=="Flux")$fit, se.preds = rep(0,nrow(wiswall_est_2yr_NO3)), 
+  format = "flux rate", metadata=meta, dates=wiswall_est_2yr_NO3$DATE, agg.by = "month", se.agg=FALSE, ci.agg=FALSE)
+agg_bench <- rbind(
+  data.frame(Model="Benchmark", Type="Conc", setNames(agg_bench_conc, c("Month","Value","SE"))),
+  data.frame(Model="Benchmark", Type="Flux", setNames(agg_bench_flux, c("Month","Value","SE"))))
+agg_bench$Date <- as.POSIXct(paste0(agg_bench$Month,"-15"), format="%Y-%m-%d", tz="EST5EDT")
+#agg_windows_test <- match(format(agg_window_dates, "%Y-%m"), agg_bench_conc$Month)
+```
+
+* Define functions to compute the model metrics of interest
+```{r metrics}
+# Autocorrelation of prediction errors
+getAutocorrelation <- function(preds, obs) {
+  arima.model <- arima(preds-obs, order = c(1, 0, 0), include.mean = FALSE)
+  coef(arima.model)[["ar1"]]
+}
+
+## Implementations of metrics described by Vigiak et al. 2013 (quotes are from them):
+
+# Adjusted R2: "a measure of variance explained by the model adjusted for the
+# number of explanatory variables in the model" - is this applicable?
+
+# Bias: "the median prediction error (bias b) as a measure of predicted load accuracy"
+getBias <- function(preds, obs) {
+  median(preds - obs)
+}
+
+# RRMSE: "the relative Root-Mean-Square Error (RRMSE) as a measure of accuracy
+# and precision of predicted loads"
+getRRMSE <- function(preds, obs) {
+  sqrt(mean(((preds - obs)/obs)^2))
+}
+
+# MARE (not in Vigiak): mean absolute relative error. An interesting enhancement
+# would be to compute this by week.
+getMRE <- function(preds, obs) {
+  mean(abs(preds - obs)/obs)
+}
+
+# Concordance: "Lin's [1989, 2000] concordance coefficient rc as a measure of agreement"
+
+# ARIL: "average relative interval length (ARIL, [Jin et al., 2010]): 
+# ARIL=(1/M)sum[1:M]((Limit_up_m - Limit_low_m)/O_m)" where the limits are 95%
+# CIs and O_m is the benchmark load. "A low ARIL indicates precise loads."
+# It's pretty simple: Just the average of the CIs relative to the mean (true)
+# values at each point.
+getARIL <- function(predCIs, obs, na.rm=TRUE, msg=TRUE) {
+  if(na.rm) {
+    completes <- complete.cases(predCIs) & complete.cases(obs)
+    if(msg) {
+      if(length(which(completes)) < length(obs)) {
+        warning(length(obs) - length(which(completes))," observations removed to compute ARIL")
+      }
+    }
+    predCIs <- predCIs[completes,]
+    obs <- obs[completes]
+  }
+  mean(abs(predCIs[,2] - predCIs[,1])/obs)
+}
+
+# Bracketing frequency: "the fraction P95(%) of benchmark loads that were 
+# bracketed by the 95% prediction intervals [Li et al., 2010]....It is
+# important to note that the bracketing frequency P95 cannot be expected to be
+# as high as the theoretical coverage (95%), because the latter is the
+# coverage that would occur in the long term, when multiple independent
+# samples were to be collected. In our practical case study, the bracketing
+# frequency P95 refers instead only to a single independent sample."
+getBracketingFrequency <- function(predCIs, obs) {
+  in_bracket <- (obs >= predCIs[,1]) & (obs <= predCIs[,2])
+  length(which(in_bracket))/length(obs)
+}
+```
+
+* Define a function to compute a metric for the factorial suite of models, formats, and resolutions
+```{r metric_collector}
+# Function to pull out statistics for each model, fluxorconc, and pointoragg combination
+collectStats <- function(statfun, coltype, data.list, as=c("vector","data.frame","array","predictions")) {
+  dim_names <- list(
+    Model=c("loadInterp", "loadLm", "loadReg2", "loadComp"),
+    Type=c("Conc", "Flux"),
+    Resolution=c("Point","Agg"))
+  
+  run_statfun <- function(statfun, model, fluxconc, res, valuecol) {
+    preds <- subset(data.list[[paste0(tolower(res),"_preds")]], Model==model & Type==fluxconc)
+    bench <- subset(data.list[[paste0(tolower(res),"_bench")]], Type==fluxconc)
+    statfun(preds[,valuecol[[1]]], bench[,valuecol[[2]]])
+  }
+  
+  stat <- lapply(dim_names$Model, function(model) {
+    sapply(dim_names$Type, function(fluxconc) {
+      if(coltype=="mean") {
+        sapply(dim_names$Resolution, function(res) {
+          run_statfun(statfun, model, fluxconc, res, switch(res, Point=list("fit","fit"), Agg=c("Value","Value")))
+        })
+      } else if(coltype=="CI_mean") {
+        sapply(dim_names$Resolution, function(res) {
+          run_statfun(statfun, model, fluxconc, res, switch(
+            res, Point=list(c("lwr","upr"),"fit"), Agg=list(c("CI_lower","CI_upper"), "Value")))
+        })
+      }
+    })
+  })
+  
+  as <- match.arg(as)
+  if(as=="array") {
+    if(length(stat) > 16) warning("as==array fails for functions that predict more than one point per category")
+    # reshape from list of matrices into a 3D array
+    array(unlist(stat), dim=c(2,2,4), dimnames=dim_names[c(3,2,1)])
+  } else if(as=="vector") {
+    unlist(stat)
+  } else if(as %in% c("data.frame","predictions")) {
+    var <- substring(as.character(substitute(statfun)), 4)
+    label_grid <- do.call("expand.grid", dim_names[c(3,2,1)])
+    if(length(unlist(stat)) > 16) {
+      date <- rep(c(point_window_dates, agg_window_dates), times=4)
+      label_grid <- label_grid[rep(seq(1,15,by=2), each=length(point_window_dates)+length(agg_window_dates)) + c(rep(0,length(point_window_dates)), rep(1, length(agg_window_dates))),]
+    } else {
+      date <- NA
+    }
+    cbind(data.frame(Variable=var), label_grid, data.frame(Date=date, Value=unlist(stat)))
+  }
+}
+```
+
+
+* Write some functions for computing running means and standard deviations. These will allow us to collect the means and SDs while avoiding oversized matrices.
+```{r running_means}
+#' Compute running means and SDs of the predictions and/or errors
+#'
+#' @param size the length of the means and sds vectors desired
+initializeStats <- function(size) {
+  list(
+    k=0,
+    means=rep(0, size),
+    sds=rep(0, size))
+}
+
+#' @param stats a list such as that returned by initializeStats
+updateStats <- function(stats, newvals) {
+  # Use Welford's 1962 algorithm, apparently presented in Knuth's Art of 
+  # Computer Programming, V2, p232, E3, and implemented here based on 
+  # http://www.johndcook.com/blog/standard_deviation/. Unlike other analytically
+  # correct solutions (e.g., s2=(1/(n(n-1)))*(n*sum(x^2)-sum(x)^2)), this one is
+  # also numerically robust because it avoids adding very small and very large
+  # numbers together.
+  
+  # Save the previous (k-1) means for use in the SD calculations
+  old_means <- stats$means
+  old_sds <- stats$sds
+  
+  # Update the counter (k), means, and SDs. This is vectorized for means and SDs.
+  stats$k <- stats$k + 1
+  stats$means <- old_means + (newvals - old_means)/stats$k
+  stats$sds <- old_sds + (newvals - old_means)*(newvals - stats$means)
+  
+  # Return the updated list
+  stats
+}
+
+getFinalStats <- function(stats) {
+  # stats$means stays the same
+  stats$vars <- stats$sds/(stats$k - 1)
+  stats$sds <- sqrt(stats$vars)
+  
+  stats
+}
+
+# A test to confirm that the above set of functions gives believable means and SDs:
+#   st <- initializeStats(10)
+#   for(i in 1:1000) {
+#     st <- updateStats(st, rnorm(10, 1:10, seq(0.1,1,by=0.1)))
+#   }
+#   getFinalStats(st)
+```
+
+* Define a function for subsampling the sensor data down to weekly 'grab' samples
+```{r subsamp}
+subsampleForBoot <- function(window.sd, calib.n.skip) {
+  ## Collect (subsample) the data
+  num_windows <- length(point_windows_boot)-1
+  # Usually, this next block will be run just once. But if sample_rows includes
+  # NAs, so run it multiple times if needed to get valid row indices
+  sample_rows <- rep(NA, num_windows)
+  while(any(is.na(sample_rows))) {
+    # Interpolation data: Define by periodic (~weekly) windows and select an 
+    # observation within each window. Choose the first window center uniformly 
+    # from an early week in the data, but late enough that even the first sample 
+    # date can be normally distributed around the first center. The last window is
+    # simply as far as the full Wiswall dataset reaches.
+    first_center <- wiswall_est_boot_NO3$DATE[sample(point_windows_boot[1]:(point_windows_boot[2]-1), size=1)]
+    # Pick window centers on the quarter hours.
+    window_centers <- as.numeric(seq(first_center, by="7 day", length.out=num_windows))
+    window_sd <- as.numeric(first_center + window.sd) - as.numeric(first_center) # just converting window.sd to numeric
+    # Sample from each window
+    window_samples <- rnorm(length(window_centers), mean=window_centers, sd=window_sd)
+    # Round to quarter hours and convert to POSIXct.
+    window_samples <- as.POSIXct(round(window_samples/(60*15))*60*15, origin="1970-01-01", tz="EST5EDT")
+    sample_rows <- match(window_samples, wiswall_est_boot_NO3$DATE)
+    if(any(is.na(sample_rows))) warning("sample_rows had NAs; resampling")
+    }  
+  # Subset to get the interpolation data for this round
+  intdat <- wiswall_est_boot_NO3[sample_rows, c("DATE","DISCHARGE","NO3")]
+  
+  # At this point we could choose to add noise to the interp data (and therefore
+  # also calib data). For now I won't, but this would be a way of building in 
+  # expected measurement error. Larger measurement errors should suggest 
+  # averaging interpolations (e.g., smoothSplineInterpolation) and/or a 
+  # regression-only model, whereas smaller measurement errors will make the
+  # composite method a better and better choice.
+  
+  # Subset further to get the calibration data
+  regdat <- wiswall_est_boot_NO3[sample_rows[seq(1,length(sample_rows),by=calib.n.skip+1)], c("DATE","DISCHARGE","NO3")]  
+  return(list(intdat=intdat, regdat=regdat))
+}
+```
+
+* Quantify the benefits of further subsampling from intdat to regdat
+```{r}
+if(redo_acs) {
+  set.seed(82.64)
+  acmetrics_all <- sapply(1:50, function(i) {
+    cat(".")
+    systime <- system.time({
+      # Get fitting data for this iteration
+      fitdat <- subsampleForBoot(window.sd=as.difftime(0.6, units="days"), calib.n.skip=0.5)
+      intdat <- fitdat$intdat
+      regdat <- fitdat$regdat
+      hlfdat <- subsampleForBoot(window.sd=as.difftime(0.6, units="days"), calib.n.skip=1.0)$regdat
+      
+      ## Fit the models, just as in model.demo.Rmd
+      
+      # B) Fit the regression-based models: interpolation, linear, rloadest, and composite
+      no3_lm_intdat <- loadLm(formula=log(NO3) ~ log(DISCHARGE), pred.format="conc", data=intdat, metadata=meta, retrans=exp)
+      no3_lm_regdat <- loadLm(formula=log(NO3) ~ log(DISCHARGE), pred.format="conc", data=regdat, metadata=meta, retrans=exp)
+      no3_lm_hlfdat <- loadLm(formula=log(NO3) ~ log(DISCHARGE), pred.format="conc", data=hlfdat, metadata=meta, retrans=exp)
+      
+      no3_lr_intdat <- loadReg2(loadReg(NO3 ~ model(9), data=intdat, flow="DISCHARGE", dates="DATE", time.step="instantaneous", flow.units="cfs", conc.units="mg/L", load.units="kg"))
+      no3_lr_regdat <- loadReg2(loadReg(NO3 ~ model(9), data=regdat, flow="DISCHARGE", dates="DATE", time.step="instantaneous", flow.units="cfs", conc.units="mg/L", load.units="kg"))
+      no3_lr_hlfdat <- loadReg2(loadReg(NO3 ~ model(9), data=hlfdat, flow="DISCHARGE", dates="DATE", time.step="instantaneous", flow.units="cfs", conc.units="mg/L", load.units="kg"))
+      
+      no3_lc_lmint <- loadComp(reg.model=no3_lm_intdat, interp.format="conc", interp.data=intdat, store=c())
+      no3_lc_lmreg <- loadComp(reg.model=no3_lm_regdat, interp.format="conc", interp.data=intdat, store=c())
+      no3_lc_lmhlf <- loadComp(reg.model=no3_lm_hlfdat, interp.format="conc", interp.data=intdat, store=c())
+      
+      no3_lc_lrint <- loadComp(reg.model=no3_lr_intdat, interp.format="conc", interp.data=intdat, store=c())
+      no3_lc_lrreg <- loadComp(reg.model=no3_lr_regdat, interp.format="conc", interp.data=intdat, store=c())
+      no3_lc_lrhlf <- loadComp(reg.model=no3_lr_hlfdat, interp.format="conc", interp.data=intdat, store=c())
+      
+      # Compute the autocorrelation of residuals for the regression models. The time
+      # steps are especially irregular for regdat, a fact we will note and now ignore
+      acmetrics <- c(
+        # apparent rho declines as the dataset is increasingly subsampled (from int to reg to hlf) largely because n is smaller
+        rhoapp_lmint = estimateRho(no3_lm_intdat, "conc", abs.or.rel.resids = "abs", use.log=TRUE, newdata=intdat[1:53,], plot.acf=FALSE, irr=TRUE)$rho,
+        rhoapp_lmreg = estimateRho(no3_lm_regdat, "conc", abs.or.rel.resids = "abs", use.log=TRUE, newdata=regdat[1:53,], plot.acf=FALSE, irr=TRUE)$rho,
+        rhoapp_lmhlf = estimateRho(no3_lm_hlfdat, "conc", abs.or.rel.resids = "abs", use.log=TRUE, newdata=hlfdat[1:53,], plot.acf=FALSE, irr=TRUE)$rho,
+        rhoapp_lrint = estimateRho(no3_lr_intdat, "conc", abs.or.rel.resids = "abs", use.log=TRUE, newdata=intdat[1:53,], plot.acf=FALSE, irr=TRUE)$rho,
+        rhoapp_lrreg = estimateRho(no3_lr_regdat, "conc", abs.or.rel.resids = "abs", use.log=TRUE, newdata=regdat[1:53,], plot.acf=FALSE, irr=TRUE)$rho,
+        rhoapp_lrhlf = estimateRho(no3_lr_hlfdat, "conc", abs.or.rel.resids = "abs", use.log=TRUE, newdata=hlfdat[1:53,], plot.acf=FALSE, irr=TRUE)$rho,
+        # TRUE rho, at the resolution of the predictions - estimated below in bootstrap section
+        #         rhotrue_lmint = estimateRho(no3_lm_intdat, "conc", abs.or.rel.resids = "abs", use.log=TRUE, newdata=estdat, plot.acf=FALSE, irr=TRUE)$rho,
+        #         rhotrue_lmreg = estimateRho(no3_lm_regdat, "conc", abs.or.rel.resids = "abs", use.log=TRUE, newdata=estdat, plot.acf=FALSE, irr=TRUE)$rho,
+        #         rhotrue_lmhlf = estimateRho(no3_lm_hlfdat, "conc", abs.or.rel.resids = "abs", use.log=TRUE, newdata=estdat, plot.acf=FALSE, irr=TRUE)$rho,
+        #         rhotrue_lrint = estimateRho(no3_lr_intdat, "conc", abs.or.rel.resids = "abs", use.log=TRUE, newdata=estdat, plot.acf=FALSE, irr=TRUE)$rho,
+        #         rhotrue_lrreg = estimateRho(no3_lr_regdat, "conc", abs.or.rel.resids = "abs", use.log=TRUE, newdata=estdat, plot.acf=FALSE, irr=TRUE)$rho,
+        #         rhotrue_lrhlf = estimateRho(no3_lr_hlfdat, "conc", abs.or.rel.resids = "abs", use.log=TRUE, newdata=estdat, plot.acf=FALSE, irr=TRUE)$rho,
+        # uncertainty estimation for the lm/lr models should improve as datasets become less autocorrelated
+        slopese_lmint = summary(getFittedModel(no3_lm_intdat))$coef["log(DISCHARGE)","Std. Error"],
+        slopese_lmreg = summary(getFittedModel(no3_lm_regdat))$coef["log(DISCHARGE)","Std. Error"],
+        slopese_lmhlf = summary(getFittedModel(no3_lm_hlfdat))$coef["log(DISCHARGE)","Std. Error"],
+        slopese_lrint = summary(getFittedModel(no3_lr_intdat)$lfit)$object$STDDEV[2], #SD on the lnQ term
+        slopese_lrreg = summary(getFittedModel(no3_lr_regdat)$lfit)$object$STDDEV[2], #SD on the lnQ term
+        slopese_lrhlf = summary(getFittedModel(no3_lr_hlfdat)$lfit)$object$STDDEV[2])# #SD on the lnQ term
+      
+      # Calculating cfmetrics is really slow. also, correction factors shouldn't 
+      # change much unless the models become worse with less data (they don't)
+      cfcmetrics <- c(
+        cfc_lclmint = getCorrectionFraction(no3_lc_lmint, "conc", newdata=estdat, plot.acf=FALSE),
+        cfc_lclmreg = getCorrectionFraction(no3_lc_lmreg, "conc", newdata=estdat, plot.acf=FALSE),
+        cfc_lclmhlf = getCorrectionFraction(no3_lc_lmhlf, "conc", newdata=estdat, plot.acf=FALSE),
+        cfc_lclrint = getCorrectionFraction(no3_lc_lrint, "conc", newdata=estdat, plot.acf=FALSE),
+        cfc_lclrreg = getCorrectionFraction(no3_lc_lrreg, "conc", newdata=estdat, plot.acf=FALSE),
+        cfc_lclrhlf = getCorrectionFraction(no3_lc_lrhlf, "conc", newdata=estdat, plot.acf=FALSE))
+      # Results for flux are almost identical to those for conc, and also very slow.
+      #     cffmetrics <- c(
+      #       cff_lclmint = getCorrectionFraction(no3_lc_lmint, "flux", newdata=estdat, plot.acf=FALSE),
+      #       cff_lclmreg = getCorrectionFraction(no3_lc_lmreg, "flux", newdata=estdat, plot.acf=FALSE),
+      #       cff_lclmhlf = getCorrectionFraction(no3_lc_lmhlf, "flux", newdata=estdat, plot.acf=FALSE),
+      #       cff_lclrint = getCorrectionFraction(no3_lc_lrint, "flux", newdata=estdat, plot.acf=FALSE),
+      #       cff_lclrreg = getCorrectionFraction(no3_lc_lrreg, "flux", newdata=estdat, plot.acf=FALSE),
+      #       cff_lclrhlf = getCorrectionFraction(no3_lc_lrhlf, "flux", newdata=estdat, plot.acf=FALSE))
+    })
+    #print(systime)
+    #print(acmetrics)
+    c(acmetrics, cfcmetrics)
+    #acmetrics
+  })
+  cat("\n")
+  acs_filename <- paste0("Autocor_metrics_", format(Sys.time(), "%Y%m%d_%H%M%S"), ".RData")
+  save(acmetrics_all, file=paste0(cache_dir, acs_filename))
+} else {
+  load(paste0(cache_dir, acs_filename))
+}  
+# apply(acmetrics_all, MARGIN=1, mean) %>% 
+#   matrix(ncol=3, byrow=TRUE, dimnames=list(rownames=c("rhoapp_lm", "rhoapp_lr", "rhotrue_lm", "rhotrue_lr", "slopese_lm", "slopese_lr"), colnames=c("int","reg","hlf"))) %>% 
+#   as.data.frame()
+apply(acmetrics_all, MARGIN=1, mean) %>% 
+  matrix(ncol=3, byrow=TRUE, dimnames=list(rownames=c("rhoapp_lm", "rhoapp_lr", "slopese_lm", "slopese_lr", "cfc_lclm", "cfc_lclr"), colnames=c("int","reg","hlf"))) %>% 
+  as.data.frame()
+# if you also compute cff metrics:
+#apply(acmetrics_all, MARGIN=1, mean) %>% matrix(ncol=3, byrow=TRUE, dimnames=list(rownames=c("rho_lm", "rho_lr", "slopese_lm", "slopese_lr", "cfc_lclm", "cfc_lclr", "cff_lclm", "cff_lclr"), colnames=c("int","reg","hlf"))) %>% as.data.frame()
+```
+
+* Define a function that will do one bootstrap iteration of fitting, prediction, aggregation, and calculating metrics
+```{r bootdef}
+#' @param window.sd The standard deviation for the rnorm draw of sampling date
+#'   for each resampling point
+#' @param calib.n.skip The number of observations in the interpolation dataset 
+#'   to skip between calibration data points. If calib.n.skip==0, the 
+#'   calibration data equal the interpolation data. If calib.n.skip==1, the 
+#'   calibration data are half the values (every other one) in the interpolation
+#'   data. This value may be fractional.
+#' @param as How should results be returned?
+bootstrap_wiswall_once <- function(window.sd=as.difftime(0.6, units="days"), 
+                                   calib.n.skip=0.5, as=c("vector","data.frame","predictions")) {
+  
+  # Check arguments
+  as <- match.arg(as)
+  
+  # Get fitting data for this iteration
+  fitdat <- subsampleForBoot(window.sd, calib.n.skip)
+  intdat <- fitdat$intdat
+  regdat <- fitdat$regdat
+  
+  ## Fit the models, just as in model.demo.Rmd
+  
+  # B) Fit four models: interpolation, linear, rloadest, and composite
+  no3_li <- loadInterp(interp.format="conc", interp.fun=rectangularInterpolation, 
+                       data=intdat, metadata=meta)
+  no3_lm <- loadLm(formula=log(NO3) ~ log(DISCHARGE), pred.format="conc", 
+                   data=regdat, metadata=meta, retrans=exp)
+  no3_lr <- loadReg2(loadReg(NO3 ~ model(9), data=regdat,
+                             flow="DISCHARGE", dates="DATE", time.step="instantaneous", 
+                             flow.units="cfs", conc.units="mg/L", load.units="kg"))
+  no3_lc <- loadComp(reg.model=no3_lr, interp.format="conc", 
+                     interp.data=intdat, n.iter=500)
+  
+  ## Predict
+  
+  # Make point predictions
+  point_time <- NULL
+  point_preds <- do.call(
+    "rbind",
+    lapply(list(no3_li, no3_lm, no3_lr, no3_lc), function(loadmodel) {
+      do.call(
+        "rbind",
+        lapply(c("conc","flux"), function(fluxconc) {
+          point_time <<- c(point_time, system.time({
+            preds <- predictSolute(loadmodel, fluxconc, estdat, interval="prediction", se.pred=TRUE)
+          })[["elapsed"]])
+        data.frame(Type=loadflex:::.sentenceCase(fluxconc), Model=c(class(loadmodel)), DATE=estdat$DATE, preds)
+      }))
+  }))
+  if(as == "vector") {
+    # point_time <- point_time
+  } else if(as %in% c("data.frame","predictions")) {
+    point_time <- data.frame(Variable="Runtime", Resolution="Point", 
+                             Type=rep(c("Conc","Flux"), times=4), 
+                             Model=rep(c("loadInterp","loadLm","loadReg2","loadComp"), each=2), 
+                             Date=NA, Value=point_time)
+  }
+  
+  # Make aggregate predictions
+  agg_time <- NULL
+  agg_preds <- do.call(
+    "rbind",
+    lapply(list(no3_li, no3_lm, no3_lr, no3_lc), function(loadmodel) {
+      do.call(
+        "rbind",
+        lapply(c("conc","flux"), function(fluxconc) {
+          dat <- subset(point_preds, Model==c(class(loadmodel)) & Type==loadflex:::.sentenceCase(fluxconc))
+          fluxrateconc <- ifelse(fluxconc=="flux", "flux rate", fluxconc)
+          agg_time <<- c(agg_time, system.time({
+            agg <- aggregateSolute(
+              preds=dat$fit, se.preds=dat$se.pred, dates=dat$DATE,
+              format=fluxrateconc, metadata=meta, agg.by="month")
+            # Extremely slow for a dataset so large, but this is how you could
+            # improve the BF by using more appropriate assumptions about the
+            # autocorrelation of error in each model:
+            # rho_est <- estimateRho(loadmodel, fluxconc, "abs", FALSE, estdat, plot.acf=FALSE, irreg=TRUE)$rho
+            # agg_rho <- aggregateSolute(
+            #   preds=dat$fit, se.preds=dat$se.pred, dates=dat$DATE,
+            #   format=fluxrateconc, metadata=meta, agg.by="month",
+            #   cormat.function=getCormatFirstOrder(
+            #     rho=rho_est, 
+            #     time.step = as.difftime(15, units="mins"),
+            #     max.tao = as.difftime(50, units="days")))
+          })[["elapsed"]])
+          names(agg)[2] <- "Value"
+          data.frame(Type=loadflex:::.sentenceCase(fluxconc), Model=c(class(loadmodel)),
+                     Date=as.POSIXct(paste0(agg$Month,"-15"), format="%Y-%m-%d", tz="EST5EDT"), agg)
+        }))
+    }))
+  if(as == "vector") {
+    # agg_time <- agg_time
+  } else if(as %in% c("data.frame","predictions")) {
+    agg_time <- data.frame(Variable="Runtime", Resolution="Agg", 
+                           Type=rep(c("Conc","Flux"), times=4), 
+                           Model=rep(c("loadInterp","loadLm","loadReg2","loadComp"), each=2), 
+                           Date=NA, Value=agg_time)
+  }
+  
+  # Prediction values for estimating bootstrapped PIs
+  if(as == "vector") {
+    point_means <- point_preds$fit
+    agg_means <- agg_preds$Value
+  } else if(as == "data.frame") {
+    point_means <- data.frame(Variable="Preds", Resolution="Point", 
+                              setNames(point_preds[c("Type","Model","DATE","fit")], c("Type","Model","Date","Value")))
+    agg_means <- data.frame(Variable="Preds", Resolution="Agg", agg_preds[c("Type","Model","Date","Value")])
+  }
+  
+  # Model performance metrics
+  data_list <- list(point_bench=point_bench, agg_bench=agg_bench, point_preds=point_preds, agg_preds=agg_preds)
+  acp <- collectStats(getAutocorrelation, "mean", data_list, as=as)
+  mare <- collectStats(getMRE, "mean", data_list, as=as)
+  bias <- collectStats(getBias, "mean", data_list, as=as)
+  rrmse <- collectStats(getRRMSE, "mean", data_list, as=as)
+  aril <- collectStats(getARIL, "CI_mean", data_list, as=as)
+  bf <- collectStats(getBracketingFrequency, "CI_mean", data_list, as=as)
+  
+  # Assemble and return a single vector or data.frame, as requested
+  if(as == "vector") {
+    c(point_means, agg_means, acp, mare, bias, rrmse, aril, bf, point_time, agg_time)
+  } else if(as == "data.frame") {
+    df <- rbind(point_means, agg_means, acp, mare, bias, rrmse, aril, bf, point_time, agg_time)
+    df <- transform(
+      df, 
+      Variable=factor(Variable),
+      Resolution=ordered(Resolution, c("Point","Agg")),
+      Type=ordered(Type, c("Conc","Flux")),
+      Model=ordered(Model, c("loadInterp","loadLm","loadReg2","loadComp")))
+    df
+  } else if(as == "predictions") {
+    metrics <- rbind(acp, mare, bias, rrmse, aril, bf, point_time, agg_time)
+    metrics <- transform(
+      metrics, 
+      Variable=factor(Variable),
+      Resolution=ordered(Resolution, c("Point","Agg")),
+      Type=ordered(Type, c("Conc","Flux")),
+      Model=ordered(Model, c("loadInterp","loadLm","loadReg2","loadComp")))    
+    list(
+      point_preds=point_preds,
+      agg_preds=agg_preds,
+      metrics=metrics)
+  }
+}
+```
+
+
+* Define a function to report the results in a tidy table.
+```{r all_metrics_table}
+library(tidyr)
+makeMetricsTable <- function(model_stats_df, filename="all_metrics", dir=paste0(main_dir,"/","tables/"), round=TRUE) {
+  metrics_by_model <- subset(model_stats_df, !(Variable %in% c("Preds","Runtime")))[
+    c("Variable","Resolution","Type","Model","means")] %>% spread(Model, means)
+  mets <- rbind(subset(metrics_by_model, Type=="Conc"), subset(metrics_by_model, Type=="Flux"))
+  mets <- mets %>% 
+    unite(MeltRow, c(Variable:Type)) %>% 
+    gather(Model, Value, loadInterp:loadComp) %>%
+    separate(MeltRow, c("Variable", "Resolution", "Type")) %>%
+    spread(Variable, Value)
+  mets <- merge(subset(mets, Resolution=="Point"), subset(mets, Resolution=="Agg"), by=c("Type","Model"), suffixes=c(".Pt",".Ag"))
+  mets <- mets %>% select(Type, Model, Autocorrelation.Pt, Autocorrelation.Ag, RRMSE.Pt, RRMSE.Ag, Bias.Pt, Bias.Ag, ARIL.Pt, ARIL.Ag, BracketingFrequency.Pt, BracketingFrequency.Ag)
+  mets <- mets[order(mets$Type, mets$Model),]
+  if(round) {
+    mets <- 
+      transform(
+        mets, 
+        "Autocorrelation.Pt"=sprintf("%.5f", Autocorrelation.Pt),
+        "Autocorrelation.Ag"=sprintf("%.5f", Autocorrelation.Ag),
+        "RRMSE.Pt"=sprintf("%.1f", RRMSE.Pt),
+        "RRMSE.Ag"=sprintf("%.2f", RRMSE.Ag),
+        "Bias.Pt"=ifelse(Type=="Conc", sprintf("%.5f", Bias.Pt), sprintf("%.2f", Bias.Pt)),
+        "Bias.Ag"=ifelse(Type=="Conc", sprintf("%.4f", Bias.Ag), sprintf("%.1f", Bias.Ag)),
+        "ARIL.Pt"=sprintf("%.1f", ARIL.Pt),
+        "ARIL.Ag"=sprintf("%.2f", ARIL.Ag),
+        "BracketingFrequency.Pt"=sprintf("%.3f", BracketingFrequency.Pt),
+        "BracketingFrequency.Ag"=sprintf("%.3f", BracketingFrequency.Ag)
+      )
+  }
+  write.csv(mets, paste0(dir, filename, ".csv"))
+  mets
+}
+```
+
+* Run all of the above in a loop, saving some intermediate results as we go
+```{r run_boots}
+if(redo_boots) {
+  # Either start from scratch or continue from a previous run (bootstrap_wiswall_once() takes a few minutes per run)
+  if(reinit_boots) {
+    set.seed(54.63)
+    systime_firstrun <- system.time({
+      one_run <- bootstrap_wiswall_once(as="data.frame") # Run once for the column labels & data size
+    })
+    message(paste("Finished initial run in",systime_firstrun[["elapsed"]],"seconds"))
+    st_initial_filename <- paste0(cache_dir,"Labels_",format(Sys.time(), "%Y%m%d_%H%M%S"),"_nrow=",nrow(one_run),".RData")
+    save(one_run, file=st_initial_filename)
+    st <- initializeStats(nrow(one_run))
+    st_partial_filename <- paste0(
+      cache_dir, "Partial_", format(Sys.time(), "%Y%m%d_%H%M%S"),"_nrow=",length(st$means),"_k=",st$k,".RData")
+    save(st, file=st_partial_filename)
+  } else {
+    load(paste0(cache_dir,st_initial_filename)) # loads one_run
+    load(paste0(cache_dir,st_partial_filename)) # loads st
+  }
+  
+  # Add more observations in two nested loops, saving at the end of each inner loop
+  for(chunk in 1:10) {
+    systime_onechunk <- system.time({
+      many_runs <- for(run in 1:10) {
+        systime_onerun <- system.time({
+          a_run <- bootstrap_wiswall_once()
+          st <- updateStats(st, a_run)
+          model_stats_df <- data.frame(one_run, getFinalStats(st)[c("means","sds","vars")])
+          mets <- makeMetricsTable(model_stats_df, round=FALSE, filename=paste0("all_metrics_running_", format(Sys.time(), "%Y%m%d_%H%M%S"), sprintf("_c%02.f_r%02.f", chunk, run)))
+          print(mets)
+        })
+      print(paste("Finished run",run,"in",systime_onerun[["elapsed"]],"seconds"))
+      }
+    })
+    print(paste("Finished chunk",chunk,"in",systime_onechunk[["elapsed"]],"seconds"))
+    st_partial_filename <- paste0(cache_dir, "Partial_", format(Sys.time(), "%Y%m%d_%H%M%S"),"_nrow=",length(st$means),"_k=",st$k,".RData")
+    save(st, file=st_partial_filename)
+  }
+  
+  # Summarize the runs and save for later
+  model_stats <- getFinalStats(st)
+  model_stats_df <- data.frame(one_run, model_stats[c("means","sds","vars")])
+  st_final_filename <- paste0(
+    cache_dir, "Final_",format(Sys.time(), "%Y%m%d_%H%M%S"),"_nrow=",length(st$means),"_k=",st$k,".RData")
+  save(model_stats_df, file=st_final_filename)
+  print(st_final_filename)
+  
+} else {
+  # Or just load from file and don't run any new bootstraps
+  load(file=paste0(cache_dir, st_final_filename))
+}
+mets <- makeMetricsTable(model_stats_df, paste0("all_metrics_raw_", format(Sys.time(), "%Y%m%d_%H%M%S")), round=FALSE)
+makeMetricsTable(model_stats_df, paste0("all_metrics_tidy_", format(Sys.time(), "%Y%m%d_%H%M%S")))
+```
+
+
+* Lastly, inspect the stats with tables and plots.
+
+```{r}
+mets
+```
+
+```{r}
+library(ggplot2)
+library(dplyr)
+plotPreds <- function(type="Conc", res="Point", showtype="Abs") {
+  models <- c("Benchmark","loadInterp","loadLm","loadReg2","loadComp")
+  models <- ordered(models, models)
+  model_colors <- c(Benchmark="black",loadInterp="purple",loadLm="blue",loadReg2="green",loadComp="red")
+  dat <- subset(model_stats_df, Variable=="Preds" & Resolution==res & Type==type)
+  if(res=="Point") {
+    bdat <- setNames(subset(point_bench, Type==type), c("Model","Type","Date","means"))
+    bdat <- bdat[seq(1, nrow(bdat), by=96/4),] # make the plotting faster
+    dat <- dat[seq(1, nrow(dat), by=96/4),] # make the plotting faster
+  } else {
+    bdat <- transform(setNames(subset(agg_bench, Type==type), c("Model","Type","Month","means","SE","Date")), Date=as.POSIXct(Date, tz="EST5EDT"))
+  }
+  dat <- rbind_all(list(dat, bdat))
+  dat <- transform(dat, WYear=ifelse(Date < ymd("2013-10-01", tz="EST5EDT"), "2013", "2014"),
+                   DOY=as.double(Date-ymd_hms("2012-09-30 23:00:00", tz="EST5EDT"), "days") %% 365,
+                   Model=ordered(Model, models),
+                   Bench=bdat[match(Date, bdat$Date),"means"]) %>%
+    transform(Resid=means-Bench)
+  
+  dat <- if(showtype=="Resid") transform(dat, Y=Resid) else transform(dat, Y=means)
+  
+  print(
+    ggplot(dat, aes(x=DOY, y=Y)) + 
+      geom_line(aes(color=Model)) + theme_classic() + 
+      scale_color_manual("Model Type", breaks=models, values=unlist(model_colors)) +
+      facet_grid(WYear ~ .) + xlab("Day of Year") + ylab(type)
+  )
+}
+plotPreds("Conc","Point","Abs")
+plotPreds("Conc","Point","Resid")
+plotPreds("Conc","Agg","Abs")
+plotPreds("Conc","Agg","Resid")
+
+plotPreds("Flux","Point","Abs")
+plotPreds("Flux","Point","Resid")
+plotPreds("Flux","Agg","Abs")
+plotPreds("Flux","Agg","Resid")
+```
+
+```{r}
+# Check out the dataset for the Model Assessments & Comparison results section
+range(subset(point_bench, Type=="Conc")$fit)
+range(subset(point_bench, Type=="Flux")$fit)
+```

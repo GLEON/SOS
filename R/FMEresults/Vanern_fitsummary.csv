@@ -1,16 +1,16 @@
 
 Parameters:
                 Estimate Std. Error t value Pr(>|t|)
-DOCR_RespParam 0.0008507  0.0006901   1.233    0.220
-DOCL_RespParam 0.0458261  0.0552348   0.830    0.408
-BurialFactor_R 1.0000000  4.5672537   0.219    0.827
-BurialFactor_L 1.0000000  1.1005732   0.909    0.365
+DOCR_RespParam 0.0008398  0.0006614   1.270    0.207
+DOCL_RespParam 0.0633791  0.0724494   0.875    0.383
+BurialFactor_R 1.0000000  4.2032406   0.238    0.812
+BurialFactor_L 1.0000000  1.0940430   0.914    0.363
 
-Residual standard error: 0.8081 on 118 degrees of freedom
+Residual standard error: 0.8066 on 118 degrees of freedom
 
 Parameter correlation:
                DOCR_RespParam DOCL_RespParam BurialFactor_R BurialFactor_L
-DOCR_RespParam        1.00000        0.03313       -0.99620        0.60911
-DOCL_RespParam        0.03313        1.00000       -0.05935       -0.09781
-BurialFactor_R       -0.99620       -0.05935        1.00000       -0.63686
-BurialFactor_L        0.60911       -0.09781       -0.63686        1.00000
+DOCR_RespParam        1.00000        0.03032       -0.99644        0.59648
+DOCL_RespParam        0.03032        1.00000       -0.04998       -0.07623
+BurialFactor_R       -0.99644       -0.04998        1.00000       -0.61851
+BurialFactor_L        0.59648       -0.07623       -0.61851        1.00000
