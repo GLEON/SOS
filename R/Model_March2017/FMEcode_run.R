@@ -1,5 +1,5 @@
 setwd("~/Documents/SOS")
-LakeName = 'Vanern'
+LakeName = 'Toolik'
 
 ##### LOAD PACKAGES ########################
 library(lubridate)
@@ -40,7 +40,7 @@ inflowDOC$date = as.POSIXct(strptime(inflowDOC$date,timestampFormat),tz="GMT") #
 
 RawData = RawData %>% left_join(inflowQ,by=c('datetime'='Dates')) %>%
   left_join(inflowDOC,by=c('datetime'='date')) %>%
-  dplyr::select(datetime,Volume,FlowIn = 'Flow',Rain:Chla,SW_DOC='fit',Secchi) %>%
+  dplyr::select(datetime,Volume,FlowIn = 'Flow',HypoTemp:Chla,SW_DOC='fit',Secchi) %>%
   mutate(FlowOut = FlowIn)
 
 # Fill time-series gaps (linear interpolation)
@@ -185,7 +185,7 @@ fitTest <- function(pars,plot=F){
 }
 
 fitTest(pars,plot=F)
-fitTest(Fit2$par,plot=T)
+fitTest(Fit2$par,plot=F)
 
 
 # Save summary Data
