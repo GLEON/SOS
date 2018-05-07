@@ -1,5 +1,5 @@
 setwd("~/Documents/SOS")
-LakeName = 'Toolik'
+LakeName = 'Harp'
 
 ##### LOAD PACKAGES ########################
 library(lubridate)
@@ -105,10 +105,11 @@ DOC_DO_diff <- function(pars){
   joinDOC = inner_join(ValidationDataDOC,modeled,by='datetime')
   resDOC = joinDOC$DOC - joinDOC$DOC_conc
   joinDO = inner_join(ValidationDataDO,modeled,by='datetime')
-  resDO = joinDO$DO_con - joinDO$MetabOxygen
+  resDO = 0.25*(joinDO$DO_con - joinDO$MetabOxygen)
   lengthScale = length(resDO)/length(resDOC)
   return(c(resDOC,resDO/lengthScale))
 }
+
 testACF <- function(pars){
   # DOC model 
   modeled = modelDOC(pars[1],pars[2],pars[3],pars[4])
@@ -185,7 +186,7 @@ fitTest <- function(pars,plot=F){
 }
 
 fitTest(pars,plot=F)
-fitTest(Fit2$par,plot=F)
+fitTest(Fit2$par,plot=T)
 
 
 # Save summary Data
