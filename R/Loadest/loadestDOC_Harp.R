@@ -11,6 +11,7 @@ plot(harp$sampledate,harp$doc)
 inflow = read.csv('../../HarpLake/StagingFiles/Harp_inflow.csv',stringsAsFactors = F)
 head(inflow)
 inflow$SDATE = as.POSIXct(strptime(inflow$SDATE,'%m/%d/%Y'))
+inflow$DISCHARGE = inflow$DISCHARGE/1000 # WAS ORIGINALLY IN L/S
 
 startDate = as.Date('1991-01-01')
 endDate = as.Date('2001-12-31')
