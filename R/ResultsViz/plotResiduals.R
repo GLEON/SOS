@@ -4,7 +4,7 @@ setwd('C:/Users/hdugan/Documents/Rpackages/SOS/')
 ##### LOAD PACKAGES ########################
 library(readr)
 library(dplyr)
-plotResiduals('aMendota',T)
+# plotResiduals('aMendota',T)
 plotResiduals('Monona',T)
 plotResiduals('Harp',T)
 plotResiduals('Trout',T)
@@ -26,9 +26,9 @@ plotResiduals <- function(LakeName,plotFile = T) {
   DOval = read_csv(file = DO_validation_filename)
   
   ######## Calculate residuals ##########
-  DOCval$ResidSurf = round(DOCval$Modelled - DOCval$Measured,3)
-  DOCval$ResidWC =  round(DOCval$Modelled - DOCval$MeasuredWC,3)
-  DOval$Resid = round(DOval$Modelled - DOval$Measured,3)
+  DOCval$ResidSurf = round(DOCval$Modelled - DOCval$DOC,3)
+  DOCval$ResidWC =  round(DOCval$Modelled - DOCval$DOC,3)
+  DOval$Resid = round(DOval$Conc_Modelled - DOval$DO_con,3)
   
   ######## Compare dataframes ###########
   InputVal = InputData %>% dplyr::select(-datetime,-Volume)
