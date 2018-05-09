@@ -158,6 +158,19 @@ rownames(fate_means) = c('Harp','Monona','Toolik','Trout','Vanern')
 #write.csv(fate_means,'FateOutputs_byLake.csv')
 #write.csv(fate_means,'FateOutputs_byLake_full_years_only.csv')
 
+# calculate SD of annual means for each lake
+Harp_annual_means <- aggregate(. ~ Year, Harp_fullyears[,2:11], mean)
+Monona_annual_means <- aggregate(. ~ Year, Monona_fullyears[,2:11], mean)
+Toolik_annual_means <- aggregate(. ~ Year, Toolik_fullyears[,2:11], mean)
+Trout_annual_means <- aggregate(. ~ Year, Trout_fullyears[,2:11], mean)
+Vanern_annual_means <- aggregate(. ~ Year, Vanern_fullyears[,2:11], mean)
+
+Harp_SD <- sapply(Harp_annual_means, sd)
+Monona_SD <- sapply(Monona_annual_means, sd)
+Toolik_SD <- sapply(Toolik_annual_means, sd)
+Trout_SD <- sapply(Trout_annual_means, sd)
+Vanern_SD <- sapply(Vanern_annual_means, sd)
+
 ##### plotting ######
 fate_plot <- function(LakeName){
   lake = get(LakeName)
