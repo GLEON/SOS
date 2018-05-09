@@ -1,4 +1,4 @@
-# update 11-4-17 by Ian
+# update 5-9-18 by Ian
 # changed loop to Harp, monona and Trout
 # Vanern and Toolik manually plotted to give manual control of axes
 # Vanern straightened out, but Toolik left as is due to year differences between DO/DOC
@@ -32,8 +32,8 @@ png(paste0('R/ResultsViz/Figures/FMEfit_all3.png'),width = 8,height = 11,units =
     
     #ylim = range(modelDO[,c(3,7)], na.rm=T)
     plot(modelDO$datetime,modelDO$Conc_Modelled,xlab='',type='o',ylab = expression(paste("DO (mg L"^"-1",")")),pch=21,main=lakenames[l],
-         ylim = c(6,16),bg=cols[1],col=cols[1],yaxt='n')
-    axis(2,at = c(6,8,10,12,14,16),labels = c('',8,'',12,'',16))
+         ylim = c(4,18),bg=cols[1],col=cols[1],yaxt='n')
+    axis(2,at = c(4,6,8,10,12,14,16,18))#,labels = c(4,'',8,'',12,'',16,''))
     lines(modelDO$datetime,modelDO$DO_con,type='o',bg=cols[2],pch=22,col=cols[2])
     abline(v = seq.POSIXt(as.POSIXct('1990-01-01'),as.POSIXct('2015-01-01'),by='year'),col='grey80',lty=2)
     
@@ -48,7 +48,7 @@ png(paste0('R/ResultsViz/Figures/FMEfit_all3.png'),width = 8,height = 11,units =
   
   ylims = extendrange(modelDOC[,c(2,4)],f = 0.1)
   plot(modelDOC$datetime,modelDOC$Modelled,type='o',xlab='',ylab = expression(paste("DOC (mg L"^"-1",")")),pch=21,
-       bg=cols[1],col=cols[1],main='Vanern', ylim = ylims,yaxt='n', xlim=c(as.POSIXct('2002-01-01'), as.POSIXct('2014-01-01')))
+       bg=cols[1],col=cols[1],main='Vanern', ylim = ylims,yaxt='n', xlim=c(as.POSIXct('2001-06-01'), as.POSIXct('2014-01-01')))
   axis(2,at = pretty(range(modelDOC[,c(2,4)], na.rm=T),n = 4),
        labels =  pretty(range(modelDOC[,c(2,4)], na.rm=T),n = 4))
   #axis(1, at=seq(2002,2014,4), labels=seq(2002,2014,4))
@@ -58,8 +58,8 @@ png(paste0('R/ResultsViz/Figures/FMEfit_all3.png'),width = 8,height = 11,units =
   
   #ylim = range(modelDO[,c(3,7)], na.rm=T)
   plot(modelDO$datetime,modelDO$Conc_Modelled,xlab='',type='o',ylab = expression(paste("DO (mg L"^"-1",")")),pch=21,main='Vanern',
-       ylim = c(6,16),bg=cols[1],col=cols[1],yaxt='n', xlim=c(as.POSIXct('2002-01-01'), as.POSIXct('2014-01-01')))
-  axis(2,at = c(6,8,10,12,14,16),labels = c('',8,'',12,'',16))
+       ylim = c(4,18),bg=cols[1],col=cols[1],yaxt='n', xlim=c(as.POSIXct('2001-06-01'), as.POSIXct('2014-01-01')))
+  axis(2,at = c(4,6,8,10,12,14,16,18))#,labels = c(4,'',8,'',12,'',16,''))
   lines(modelDO$datetime,modelDO$DO_con,type='o',bg=cols[2],pch=22,col=cols[2])
   abline(v = seq.POSIXt(as.POSIXct('1990-01-01'),as.POSIXct('2015-01-01'),by='year'),col='grey80',lty=2)
   
@@ -80,8 +80,8 @@ png(paste0('R/ResultsViz/Figures/FMEfit_all3.png'),width = 8,height = 11,units =
   
   #ylim = range(modelDO[,c(3,7)], na.rm=T)
   plot(modelDO$datetime,modelDO$Conc_Modelled,xlab='',type='o',ylab = expression(paste("DO (mg L"^"-1",")")),pch=21,main='Toolik',
-       ylim = c(6,16),bg=cols[1],col=cols[1],yaxt='n')
-  axis(2,at = c(6,8,10,12,14,16),labels = c('',8,'',12,'',16))
+       ylim = c(4,18),bg=cols[1],col=cols[1],yaxt='n')
+  axis(2,at = c(4,6,8,10,12,14,16,18))#,labels = c(4,'',8,'',12,'',16,''))
   lines(modelDO$datetime,modelDO$DO_con,type='o',bg=cols[2],pch=22,col=cols[2])
   abline(v = seq.POSIXt(as.POSIXct('1990-01-01'),as.POSIXct('2015-01-01'),by='year'),col='grey80',lty=2)
   
