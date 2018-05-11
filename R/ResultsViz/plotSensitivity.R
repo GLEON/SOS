@@ -159,7 +159,7 @@ png(paste0('R/ResultsViz/Figures/plotSensitivity_all2.png'),width = 4,height = 1
     joinDOC = read.csv(paste0('./',LakeName,'Lake','/Results/',LakeName,'_DOCvalidation.csv'),stringsAsFactors = F)
     joinDOC$datetime = as.Date(strptime(joinDOC$datetime,'%Y-%m-%d'))
     plot(joinDOC$datetime,joinDOC$DOC,type='o',ylab=expression(paste("DOC (mg L"^"-1",")"))
-         ,xlab='',pch=16,cex=0.7,ylim=c(1,9))
+         ,xlab='',pch=16,cex=0.7,ylim=c(0,11))
     mtext(text = paste0('  ',LakeName),side = 3,line=-1,adj = 0,font = 2)
     # Get Sensitivity Data
     Sens = get(paste0(LakeName,'_Sens'))
