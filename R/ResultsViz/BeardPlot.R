@@ -105,8 +105,8 @@ png(paste0('R/ResultsViz/Figures/beardplot2.png'),width = 8,height = 4,units = '
   abline(h=5,v=5,lty=2,col=adjustcolor('navy',0.7),lwd=1.5)
   mtext(text = 'Respiration',side = 4,line = -1.5,srt=90,cex=0.8,font = 2)
   mtext(text = 'Burial',side = 2,line = -1.5,srt=90,cex=0.8,font = 2)
-  mtext(text = 'Autochthony',side = 1,line = -2,srt=90,cex=0.8,font = 2)
-  mtext(text = 'Allochthony',side = 3,line = -2,srt=90,cex=0.8,font = 2)
+  mtext(text = 'Autochthonous',side = 1,line = -2,srt=90,cex=0.8,font = 2)
+  mtext(text = 'Allochthonous',side = 3,line = -2,srt=90,cex=0.8,font = 2)
 dev.off()
 
 
