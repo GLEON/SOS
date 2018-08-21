@@ -16,3 +16,6 @@ The file Jim (contact person for Harp) sent to me already have inflow volume (Fl
 I calculated the proportion of inflow represented by each of the  various tributaries (the sum of all the proportions = 1) then multiplied the proportion represented by each tributary by the DOC concentration of that tributary. Finally I sum all the values for each tributary. 
 
 Validation DOC = to DOC measure at the lake water (which was sent to me by Jim too).
+
+### 8-21-18
+IMM removed input data files in accordance with data sharing agreement from data providers
